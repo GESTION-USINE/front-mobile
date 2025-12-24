@@ -23,7 +23,7 @@ class DashboardContent extends StatelessWidget {
             style: AppTheme.headingLarge,
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Voici un aperçu de votre système de gestion',
             style: AppTheme.subtitleMedium,
           ),
@@ -77,11 +77,11 @@ class DashboardContent extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: AppColors.shadowColor,
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
@@ -131,11 +131,11 @@ class DashboardContent extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: AppColors.shadowColor,
             blurRadius: 4,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -147,6 +147,7 @@ class DashboardContent extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
+                  // ignore: deprecated_member_use
                   color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -166,7 +167,7 @@ class DashboardContent extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               color: AppColors.grey600,
             ),
@@ -204,7 +205,7 @@ class DashboardContent extends StatelessWidget {
                 ),
                 Text(
                   time,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.grey500,
                   ),

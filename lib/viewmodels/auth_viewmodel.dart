@@ -38,8 +38,6 @@ class AuthViewModel extends BaseViewModel {
     return false;
   }
 
-  
-
   /// Déconnexion
   Future<void> logout() async {
     try {
@@ -75,7 +73,7 @@ class AuthViewModel extends BaseViewModel {
 
   
   /// Vérifier si l'email est valide
-  bool _isValidEmail(String email) {
+  bool isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 }

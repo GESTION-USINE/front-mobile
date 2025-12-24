@@ -4,7 +4,6 @@ import '../core/network/api_client.dart';
 import '../core/constants/api_endpoints.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../models/request/login_request.dart';
-import '../models/request/signup_request.dart';
 import '../models/response/login_response.dart';
 import 'interfaces/i_auth_service.dart';
 

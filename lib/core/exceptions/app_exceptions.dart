@@ -11,36 +11,35 @@ class AppException implements Exception {
 
 /// Erreur de connexion réseau
 class NetworkException extends AppException {
-  NetworkException([String message = 'Erreur de connexion'])
-      : super(message);
+  NetworkException([super.message = 'Erreur de connexion']);
 }
 
 /// Erreur serveur
 class ServerException extends AppException {
-  ServerException([String message = 'Erreur serveur', int? statusCode])
-      : super(message, statusCode: statusCode);
+  ServerException([super.message = 'Erreur serveur', int? statusCode])
+      : super(statusCode: statusCode);
 }
 
 /// Non autorisé (401)
 class UnauthorizedException extends AppException {
-  UnauthorizedException([String message = 'Non autorisé'])
-      : super(message, statusCode: 401);
+  UnauthorizedException([super.message = 'Non autorisé'])
+      : super(statusCode: 401);
 }
 
 /// Ressource non trouvée (404)
 class NotFoundException extends AppException {
-  NotFoundException([String message = 'Ressource non trouvée'])
-      : super(message, statusCode: 404);
+  NotFoundException([super.message = 'Ressource non trouvée'])
+      : super(statusCode: 404);
 }
 
 /// Erreur de validation
 class ValidationException extends AppException {
   final Map<String, String>? fieldErrors;
 
-  ValidationException(String message, {this.fieldErrors}) : super(message);
+  ValidationException(super.message, {this.fieldErrors});
 }
 
 /// Erreur de cache/stockage local
 class CacheException extends AppException {
-  CacheException([String message = 'Erreur de cache']) : super(message);
+  CacheException([super.message = 'Erreur de cache']);
 }

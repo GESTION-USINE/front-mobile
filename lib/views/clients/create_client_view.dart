@@ -80,11 +80,11 @@ class _CreateClientViewState extends State<CreateClientView> {
                   decoration: BoxDecoration(
                     color: AppColors.white,
                     borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: AppColors.shadowColor,
                         blurRadius: 8,
-                        offset: const Offset(0, 4),
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
@@ -134,7 +134,9 @@ class _CreateClientViewState extends State<CreateClientView> {
                                 children: [
                                   Radio<String>(
                                     value: 'particulier',
+                                    // ignore: deprecated_member_use
                                     groupValue: _selectedType,
+                                    // ignore: deprecated_member_use
                                     onChanged: (value) {
                                       setState(() {
                                         _selectedType = value!;
@@ -160,7 +162,9 @@ class _CreateClientViewState extends State<CreateClientView> {
                                 children: [
                                   Radio<String>(
                                     value: 'entreprise',
+                                    // ignore: deprecated_member_use
                                     groupValue: _selectedType,
+                                    // ignore: deprecated_member_use
                                     onChanged: (value) {
                                       setState(() {
                                         _selectedType = value!;
@@ -291,9 +295,9 @@ class _CreateClientViewState extends State<CreateClientView> {
                                   },
                                 ),
                                 const SizedBox(width: 8),
-                                Column(
+                                const Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
+                                  children: [
                                     Text(
                                       'Autorisé à payer par chèque',
                                       style: TextStyle(

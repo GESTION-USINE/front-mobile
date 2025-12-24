@@ -40,11 +40,11 @@ class SettingsContent extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: AppColors.shadowColor,
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
@@ -141,7 +141,9 @@ class SettingsContent extends StatelessWidget {
                 ],
               ),
               value: ThemeMode.light,
+              // ignore: deprecated_member_use
               groupValue: themeProvider.themeMode,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 themeProvider.setLightMode();
                 Navigator.pop(ctx);
@@ -156,7 +158,9 @@ class SettingsContent extends StatelessWidget {
                 ],
               ),
               value: ThemeMode.dark,
+              // ignore: deprecated_member_use
               groupValue: themeProvider.themeMode,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 themeProvider.setDarkMode();
                 Navigator.pop(ctx);
@@ -171,7 +175,9 @@ class SettingsContent extends StatelessWidget {
                 ],
               ),
               value: ThemeMode.system,
+              // ignore: deprecated_member_use
               groupValue: themeProvider.themeMode,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 themeProvider.setSystemMode();
                 Navigator.pop(ctx);
@@ -204,7 +210,9 @@ class SettingsContent extends StatelessWidget {
                 ],
               ),
               value: 'fr',
+              // ignore: deprecated_member_use
               groupValue: localeProvider.locale.languageCode,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 localeProvider.setFrench();
                 Navigator.pop(ctx);
@@ -219,7 +227,9 @@ class SettingsContent extends StatelessWidget {
                 ],
               ),
               value: 'en',
+              // ignore: deprecated_member_use
               groupValue: localeProvider.locale.languageCode,
+              // ignore: deprecated_member_use
               onChanged: (value) {
                 localeProvider.setEnglish();
                 Navigator.pop(ctx);

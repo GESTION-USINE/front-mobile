@@ -35,7 +35,7 @@ class AppTheme {
   );
 
   /// Texte de placeholder/hint
-  static TextStyle hintText = TextStyle(
+  static TextStyle hintText = const TextStyle(
     color: AppColors.grey400,
     fontSize: 14,
   );
@@ -53,7 +53,7 @@ class AppTheme {
   );
 
   /// Texte de footer/copyright
-  static TextStyle footerText = TextStyle(
+  static TextStyle footerText = const TextStyle(
     fontSize: 12,
     color: AppColors.grey500,
   );
@@ -162,16 +162,16 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: const MaterialStatePropertyAll(AppColors.secondary),
-          foregroundColor: const MaterialStatePropertyAll(AppColors.primary),
-          elevation: const MaterialStatePropertyAll(4),
-          shadowColor: const MaterialStatePropertyAll(AppTheme.shadowColor),
-          shape: MaterialStatePropertyAll(
+          backgroundColor: const WidgetStatePropertyAll(AppColors.secondary),
+          foregroundColor: const WidgetStatePropertyAll(AppColors.primary),
+          elevation: const WidgetStatePropertyAll(4),
+          shadowColor: const WidgetStatePropertyAll(AppTheme.shadowColor),
+          shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          minimumSize: const MaterialStatePropertyAll(Size(double.infinity, 48)),
+          minimumSize: const WidgetStatePropertyAll(Size(double.infinity, 48)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -195,11 +195,11 @@ class AppTheme {
         hintStyle: hintText,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSmall),
-          borderSide: BorderSide(color: AppColors.grey300),
+          borderSide: const BorderSide(color: AppColors.grey300),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSmall),
-          borderSide: BorderSide(color: AppColors.grey300),
+          borderSide: const BorderSide(color: AppColors.grey300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadiusSmall),
@@ -225,13 +225,13 @@ class AppTheme {
         thickness: 0.5,
       ),
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return AppColors.industrialPrimary;
           }
           return Colors.transparent;
         }),
-        checkColor: const MaterialStatePropertyAll(AppColors.white),
+        checkColor: const WidgetStatePropertyAll(AppColors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
         ),
@@ -264,16 +264,16 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: const MaterialStatePropertyAll(AppColors.secondary),
-          foregroundColor: const MaterialStatePropertyAll(AppColors.primary),
-          elevation: const MaterialStatePropertyAll(4),
-          shadowColor: const MaterialStatePropertyAll(AppTheme.shadowColor),
-          shape: MaterialStatePropertyAll(
+          backgroundColor: const WidgetStatePropertyAll(AppColors.secondary),
+          foregroundColor: const WidgetStatePropertyAll(AppColors.primary),
+          elevation: const WidgetStatePropertyAll(4),
+          shadowColor: const WidgetStatePropertyAll(AppTheme.shadowColor),
+          shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          minimumSize: const MaterialStatePropertyAll(Size(double.infinity, 48)),
+          minimumSize: const WidgetStatePropertyAll(Size(double.infinity, 48)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -360,11 +360,11 @@ class AppTheme {
       fillColor: AppColors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(borderRadiusSmall),
-        borderSide: BorderSide(color: AppColors.grey300),
+        borderSide: const BorderSide(color: AppColors.grey300),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(borderRadiusSmall),
-        borderSide: BorderSide(color: AppColors.grey300),
+        borderSide: const BorderSide(color: AppColors.grey300),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(borderRadiusSmall),

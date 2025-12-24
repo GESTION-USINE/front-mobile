@@ -13,7 +13,9 @@ class ApiEndpoints {
 
   // client 
 
+  // ignore: constant_identifier_names
   static const String all_clients = '/clients';
+  // ignore: constant_identifier_names
   static const String create_client = '/clients/';
 
   // User

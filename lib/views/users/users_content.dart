@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 class UsersContent extends StatelessWidget {
   const UsersContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -32,7 +31,7 @@ class UsersContent extends StatelessWidget {
                
               ],
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             // Maintenant Expanded aura une taille définie
             // Expanded(
             //   child: Container(

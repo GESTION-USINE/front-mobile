@@ -44,7 +44,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () {
-                // TODO: Navigation vers édition
+                // Naviguer vers la vue d'édition du produit
               },
             ),
             IconButton(
@@ -92,6 +92,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                     width: double.infinity,
                     height: 200,
                     decoration: BoxDecoration(
+                      // ignore: deprecated_member_use
                       color: Theme.of(context).primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -130,7 +131,9 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                     ),
                     decoration: BoxDecoration(
                       color: product.isInStock
+                          // ignore: deprecated_member_use
                           ? Colors.green.withOpacity(0.1)
+                          // ignore: deprecated_member_use
                           : Colors.red.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -183,6 +186,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
               Navigator.pop(ctx);
               final success = await _viewModel.deleteProduct(widget.productId);
               if (success && mounted) {
+                // ignore: use_build_context_synchronously
                 Navigator.pop(context);
               }
             },

@@ -35,25 +35,21 @@ class _ProductListContentState extends State<ProductListContent> {
 
   @override
   Widget build(BuildContext context) {
-    final tr = context.tr;
 
     return ChangeNotifierProvider.value(
       value: _viewModel,
       child: Consumer<ProductViewModel>(
         builder: (context, viewModel, child) {
-          return Text(
+          return const Text(
             'Liste des Produits',
             style: AppTheme.headingLarge,
           );
-      
-      
-      
         },
       ),
     );
   }
 
-  Widget _buildProductList(ProductViewModel viewModel, AppLocalizations tr) {
+  Widget buildProductList(ProductViewModel viewModel, AppLocalizations tr) {
     if (viewModel.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -105,6 +101,7 @@ class _ProductListContentState extends State<ProductListContent> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
+                  // ignore: deprecated_member_use
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),

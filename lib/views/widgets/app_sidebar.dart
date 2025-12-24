@@ -21,7 +21,7 @@ class AppSidebar extends StatelessWidget {
     final menuItems = MenuConfig.getMenuForRole(userRole);
 
     return Container(
-      width: 260,
+      width: 200,
       decoration: const BoxDecoration(
         gradient: AppTheme.industrialGradient,
         boxShadow: [
@@ -48,7 +48,7 @@ class AppSidebar extends StatelessWidget {
                   child: const Icon(
                     Icons.factory_outlined,
                     color: AppColors.white,
-                    size: 28,
+                    size: 22,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -110,7 +110,7 @@ class AppSidebar extends StatelessWidget {
           onTap: () => onMenuItemTap(item.route),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
               color: isSelected
                   ? AppColors.whiteTransparent20
@@ -122,7 +122,7 @@ class AppSidebar extends StatelessWidget {
                 Icon(
                   item.icon,
                   color: AppColors.white,
-                  size: 22,
+                  size: 20,
                 ),
                 const SizedBox(width: 12),
                 Expanded(

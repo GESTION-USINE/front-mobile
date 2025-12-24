@@ -31,7 +31,7 @@ class MenuConfig {
           title: 'Clients',
           icon: Icons.person_outline,
           route: '/clients',
-          allowedRoles: ['super_admin', 'associe', 'employee'],
+          allowedRoles: [],
         ),
 
         // Gestion des utilisateurs - Admin seulement

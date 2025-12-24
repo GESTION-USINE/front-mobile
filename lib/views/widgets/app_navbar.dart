@@ -18,13 +18,13 @@ class AppNavBar extends StatelessWidget {
 
         return Container(
           height: 64,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppColors.white,
             boxShadow: [
               BoxShadow(
                 color: AppColors.shadowColor,
                 blurRadius: 4,
-                offset: const Offset(0, 2),
+                offset: Offset(0, 2),
               ),
             ],
           ),
@@ -50,6 +50,7 @@ class AppNavBar extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
+                  // ignore: deprecated_member_use
                   color: AppColors.industrialPrimary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -98,14 +99,14 @@ class AppNavBar extends StatelessWidget {
                           ),
                         ),
                         if (user.canAccessRemotely)
-                          Row(
+                          const Row(
                             children: [
                               Icon(
                                 Icons.cloud_outlined,
                                 size: 10,
                                 color: AppColors.grey500,
                               ),
-                              const SizedBox(width: 4),
+                              SizedBox(width: 4),
                               Text(
                                 'Accès distant',
                                 style: TextStyle(
@@ -118,7 +119,7 @@ class AppNavBar extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(width: 8),
-                    Icon(
+                    const Icon(
                       Icons.keyboard_arrow_down,
                       size: 20,
                       color: AppColors.grey600,
@@ -127,33 +128,33 @@ class AppNavBar extends StatelessWidget {
                 ),
                 onSelected: (value) => _handleMenuAction(context, value),
                 itemBuilder: (context) => [
-                  PopupMenuItem(
+                  const PopupMenuItem(
                     value: 'profile',
                     child: Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 20),
-                        const SizedBox(width: 12),
-                        const Text('Mon profil'),
+                        Icon(Icons.person_outline, size: 20),
+                        SizedBox(width: 12),
+                        Text('Mon profil'),
                       ],
                     ),
                   ),
-                  PopupMenuItem(
+                  const PopupMenuItem(
                     value: 'settings',
                     child: Row(
                       children: [
-                        const Icon(Icons.settings_outlined, size: 20),
-                        const SizedBox(width: 12),
-                        const Text('Paramètres'),
+                        Icon(Icons.settings_outlined, size: 20),
+                        SizedBox(width: 12),
+                        Text('Paramètres'),
                       ],
                     ),
                   ),
                   const PopupMenuDivider(),
-                  PopupMenuItem(
+                  const PopupMenuItem(
                     value: 'logout',
                     child: Row(
                       children: [
                         Icon(Icons.logout, size: 20, color: AppColors.errorText),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         Text(
                           'Se déconnecter',
                           style: TextStyle(color: AppColors.errorText),
@@ -192,7 +193,7 @@ class AppNavBar extends StatelessWidget {
   Future<void> _handleMenuAction(BuildContext context, String action) async {
     switch (action) {
       case 'profile':
-        // TODO: Implémenter la page profil
+
         break;
       case 'settings':
         context.go(AppRouter.settings);

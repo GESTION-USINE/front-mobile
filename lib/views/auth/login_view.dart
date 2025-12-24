@@ -123,7 +123,7 @@ class _LoginViewState extends State<LoginView> {
                                   style: AppTheme.headingLarge,
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
+                                const Text(
                                   'Connectez-vous à votre compte',
                                   style: AppTheme.subtitleMedium,
                                 ),

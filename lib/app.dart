@@ -19,13 +19,16 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late final GoRouter _router;
+  bool _routerInitialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Créer le router avec le UserProvider pour la redirection automatique
+    if (_routerInitialized) return;
     final userProvider = context.read<UserProvider>();
     _router = AppRouter.createRouter(userProvider);
+    _routerInitialized = true;
   }
 
   @override

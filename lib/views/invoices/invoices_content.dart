@@ -46,15 +46,15 @@ class InvoicesContent extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
                   color: AppColors.shadowColor,
                   blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
-            child: Center(
+            child: const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -63,7 +63,7 @@ class InvoicesContent extends StatelessWidget {
                     size: 64,
                     color: AppColors.grey400,
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   Text(
                     'Liste des factures',
                     style: TextStyle(
@@ -72,7 +72,7 @@ class InvoicesContent extends StatelessWidget {
                       color: AppColors.grey600,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   Text(
                     'Cette fonctionnalité sera implémentée prochainement',
                     style: TextStyle(

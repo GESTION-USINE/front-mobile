@@ -48,16 +48,6 @@ class ClientService {
         ApiEndpoints.all_clients,
         queryParameters: queryParams,
       );
-      print("----------------------------------");
-      print("----------------------------------");
-      print("----------------------------------");
-      print("----------------------------------");
-
-      print("object" + response.data.toString());
-      print("----------------------------------");
-      print("----------------------------------");
-      print("----------------------------------");
-      print("----------------------------------");
 
 
       return ClientsResponse.fromJson(response.data);
