@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../routes/app_router.dart';
 import '../../di/injection_container.dart';
 import '../../viewmodels/client_viewmodel.dart';
 import '../../providers/user_provider.dart';
@@ -44,9 +45,6 @@ class _ClientsContentState extends State<ClientsContent> {
           final String? role = context.select<UserProvider, String?>(
             (p) => p.currentUser?.role,
           );
-          final bool showAddButton = role == null
-              ? false
-              : role.toLowerCase() != 'employe';
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,13 +62,12 @@ class _ClientsContentState extends State<ClientsContent> {
                 const SizedBox(height: 10),
                 
                 // Bouton Nouveau client - aligné à gauche, pas dans un Row
-                if (showAddButton)
-                  ElevatedButton.icon(
-                    onPressed: () => context.go('/clients/create'),
-                    style: AppTheme.industrialPrimaryButton,
-                    icon: const Icon(Icons.add, size: 20),
-                    label: const Text('Nouveau client'),
-                  ),
+                ElevatedButton.icon(
+                  onPressed: () => context.go(AppRouter.clientsCreate),
+                  style: AppTheme.industrialPrimaryButton,
+                  icon: const Icon(Icons.add, size: 20),
+                  label: const Text('Nouveau client'),
+                ),
                 const SizedBox(height: 12),
 
                 // Barre de recherche et filtres
@@ -285,11 +282,13 @@ class _ClientsContentState extends State<ClientsContent> {
       items: displayedClients,
       columns: columnsToDisplay,
       showActions: !isEmployee,
+      showEditAction: true,
+      showDeleteAction: false,
       onEdit: (client) {
-
+        context.go('/clients/${client.id}/edit', extra: client);
       },
       onDelete: (client) {
-
+        // Delete action disabled
       },
       isLoading: viewModel.isLoading,
       hasError: viewModel.hasError,

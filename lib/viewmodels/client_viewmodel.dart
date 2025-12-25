@@ -2,6 +2,7 @@ import 'package:flutter_mvvm_template/core/base/base_viewmodel.dart';
 
 import '../models/entities/client.dart';
 import '../models/request/create_client_request.dart';
+import '../models/request/update_client_request.dart';
 import '../services/client_service.dart';
 
 /// ViewModel pour gérer les clients
@@ -14,10 +15,11 @@ class ClientViewModel extends BaseViewModel {
   List<Client> get clients => _clients;
 
   int _currentPage = 1;
-  final int _pageSize = 20;
+  int _pageSize = 10;
   int _total = 0;
   int get currentPage => _currentPage;
-  int get totalPages => (_total / _pageSize).ceil();
+  int get pageSize => _pageSize;
+  int get totalPages => _total > 0 ? (_total / _pageSize).ceil() : 1;
   int get total => _total;
   bool get hasNextPage => _currentPage < totalPages;
   bool get hasPreviousPage => _currentPage > 1;
@@ -42,7 +44,7 @@ class ClientViewModel extends BaseViewModel {
     if (refresh) {
       _currentPage = 1;
     }
-
+   
     final result = await runAsync(() async {
       return await _clientService.getClients(
         search: _searchQuery,
@@ -59,6 +61,7 @@ class ClientViewModel extends BaseViewModel {
     if (result != null) {
       _clients = result.items;
       _currentPage = result.page;
+      _pageSize = result.pageSize;
       _total = result.total;
       notifyListeners();
     }
@@ -144,6 +147,20 @@ class ClientViewModel extends BaseViewModel {
 
     if (result != null) {
       // Recharger la liste après création
+      await loadClients(refresh: true);
+      return true;
+    }
+    return false;
+  }
+
+  /// Met à jour un client existant
+  Future<bool> updateClient(int clientId, UpdateClientRequest request) async {
+    final result = await runAsync(() async {
+      return await _clientService.updateClient(clientId, request);
+    });
+
+    if (result != null) {
+      // Recharger la liste après mise à jour
       await loadClients(refresh: true);
       return true;
     }

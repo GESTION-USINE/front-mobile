@@ -43,6 +43,12 @@ class GenericDataTable<T> extends StatelessWidget {
   /// Afficher la colonne d'actions
   final bool showActions;
 
+  /// Afficher le bouton éditer
+  final bool showEditAction;
+
+  /// Afficher le bouton supprimer
+  final bool showDeleteAction;
+
   /// Label du bouton éditer
   final String editLabel;
 
@@ -98,6 +104,8 @@ class GenericDataTable<T> extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     this.showActions = true,
+    this.showEditAction = true,
+    this.showDeleteAction = true,
     this.editLabel = 'Éditer',
     this.deleteLabel = 'Supprimer',
     this.total = 0,
@@ -296,16 +304,18 @@ class GenericDataTable<T> extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () => onEdit(item),
-                    icon: Icon(editIcon, color: actionTextColor),
-                    tooltip: editLabel,
-                  ),
-                  IconButton(
-                    onPressed: () => onDelete(item),
-                    icon: Icon(deleteIcon, color: AppColors.errorText),
-                    tooltip: deleteLabel,
-                  ),
+                  if (showEditAction)
+                    IconButton(
+                      onPressed: () => onEdit(item),
+                      icon: Icon(editIcon, color: actionTextColor),
+                      tooltip: editLabel,
+                    ),
+                  if (showDeleteAction)
+                    IconButton(
+                      onPressed: () => onDelete(item),
+                      icon: Icon(deleteIcon, color: AppColors.errorText),
+                      tooltip: deleteLabel,
+                    ),
                 ],
               ),
             ),
@@ -371,7 +381,7 @@ class GenericDataTable<T> extends StatelessWidget {
                                 ),
                               ),
                             );
-                          }).toList(),
+                          }),
                           if (showActions)
                             SizedBox(
                               width: columnWidth,
@@ -430,7 +440,7 @@ class GenericDataTable<T> extends StatelessWidget {
                                         ),
                                 ),
                               );
-                            }).toList(),
+                            }),
                             if (showActions)
                               SizedBox(
                                 width: columnWidth,
@@ -442,30 +452,32 @@ class GenericDataTable<T> extends StatelessWidget {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      IconButton(
-                                        onPressed: () => onEdit(item),
-                                        icon: Icon(
-                                          editIcon,
-                                          color: actionTextColor,
+                                      if (showEditAction)
+                                        IconButton(
+                                          onPressed: () => onEdit(item),
+                                          icon: Icon(
+                                            editIcon,
+                                            color: actionTextColor,
+                                          ),
+                                          tooltip: editLabel,
+                                          constraints: const BoxConstraints(
+                                            minWidth: 36,
+                                            minHeight: 36,
+                                          ),
                                         ),
-                                        tooltip: editLabel,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 36,
-                                          minHeight: 36,
+                                      if (showDeleteAction)
+                                        IconButton(
+                                          onPressed: () => onDelete(item),
+                                          icon: Icon(
+                                            deleteIcon,
+                                            color: AppColors.errorText,
+                                          ),
+                                          tooltip: deleteLabel,
+                                          constraints: const BoxConstraints(
+                                            minWidth: 36,
+                                            minHeight: 36,
+                                          ),
                                         ),
-                                      ),
-                                      IconButton(
-                                        onPressed: () => onDelete(item),
-                                        icon: Icon(
-                                          deleteIcon,
-                                          color: AppColors.errorText,
-                                        ),
-                                        tooltip: deleteLabel,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 36,
-                                          minHeight: 36,
-                                        ),
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -473,7 +485,7 @@ class GenericDataTable<T> extends StatelessWidget {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               );

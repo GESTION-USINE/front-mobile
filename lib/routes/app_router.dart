@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/user_provider.dart';
+import '../models/entities/client.dart';
 import '../views/auth/login_view.dart';
 import '../views/layouts/app_shell.dart';
 import '../views/home/dashboard_content.dart';
@@ -14,6 +15,7 @@ import '../views/traceability/traceability_content.dart';
 import '../views/settings/settings_content.dart';
 import '../views/clients/clients_content.dart';
 import '../views/clients/create_client_view.dart';
+import '../views/clients/edit_client_view.dart';
 
 class AppRouter {
   AppRouter._();
@@ -30,6 +32,7 @@ class AppRouter {
   static const String users = '/users';
   static const String clients = '/clients';
   static const String clientsCreate = '/clients/create';
+  static const String clientsEdit = '/clients/:id/edit';
   static const String products = '/products';
   static const String productDetail = '/products/:id';
   static const String invoices = '/invoices';
@@ -79,6 +82,20 @@ class AppRouter {
           path: clientsCreate,
           parentNavigatorKey: _rootNavigatorKey,
           builder: (context, state) => const CreateClientView(),
+        ),
+
+        // Route de modification client (hors du shell - fullscreen)
+        GoRoute(
+          path: clientsEdit,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            final client = state.extra as Client;
+            return EditClientView(
+              clientId: int.parse(id),
+              initialClient: client,
+            );
+          },
         ),
 
         // Shell avec sidebar et navbar fixes

@@ -16,7 +16,7 @@ class AppConstants {
   static const int receiveTimeout = 30000; // 30 seconds
 
   // Pagination
-  static const int defaultPageSize = 20;
+  static const int defaultPageSize = 10;
 
   // Validation
   static const int minPasswordLength = 6;

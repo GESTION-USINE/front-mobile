@@ -7,28 +7,34 @@ import '../../core/theme/app_theme.dart';
 import '../../di/injection_container.dart';
 import '../../providers/user_provider.dart';
 import '../../viewmodels/client_viewmodel.dart';
-import '../../models/request/create_client_request.dart';
+import '../../models/entities/client.dart';
+import '../../models/request/update_client_request.dart';
 import '../widgets/error_message_box.dart';
 
-/// Vue pour créer un nouveau client
-class CreateClientView extends StatefulWidget {
-  const CreateClientView({super.key});
+/// Vue pour modifier un client existant
+class EditClientView extends StatefulWidget {
+  final int clientId;
+  final Client initialClient;
+
+  const EditClientView({
+    super.key,
+    required this.clientId,
+    required this.initialClient,
+  });
 
   @override
-  State<CreateClientView> createState() => _CreateClientViewState();
+  State<EditClientView> createState() => _EditClientViewState();
 }
 
-class _CreateClientViewState extends State<CreateClientView> {
+class _EditClientViewState extends State<EditClientView> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _taxIdController = TextEditingController();
-  final _notesController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _notesController;
 
-  String _selectedType = 'particulier';
-  bool _canPayByCheck = false;
+  late bool _canPayByCheck;
+  late bool _isActive;
 
   late final ClientViewModel _viewModel;
 
@@ -36,6 +42,14 @@ class _CreateClientViewState extends State<CreateClientView> {
   void initState() {
     super.initState();
     _viewModel = getIt<ClientViewModel>();
+
+    // Initialiser les contrôleurs avec les valeurs actuelles
+    _nameController = TextEditingController(text: widget.initialClient.name);
+    _phoneController = TextEditingController(text: widget.initialClient.phone);
+    _emailController = TextEditingController(text: widget.initialClient.email ?? '');
+    _notesController = TextEditingController(text: widget.initialClient.notes ?? '');
+    _canPayByCheck = widget.initialClient.canPayByCheck;
+    _isActive = widget.initialClient.isActive;
   }
 
   @override
@@ -43,19 +57,7 @@ class _CreateClientViewState extends State<CreateClientView> {
     _nameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _addressController.dispose();
-    _taxIdController.dispose();
     _notesController.dispose();
-
-    // IMPORTANT:
-    // Ne pas faire _viewModel.dispose() ici si:
-    // - l'instance vient de getIt (singleton / shared)
-    // - et est passée via ChangeNotifierProvider.value
-    //
-    // Si tu veux gérer le cycle de vie via Provider, utilise plutôt:
-    // ChangeNotifierProvider(create: (_) => getIt<ClientViewModel>())
-    // et là Provider dispose automatiquement.
-
     super.dispose();
   }
 
@@ -73,7 +75,7 @@ class _CreateClientViewState extends State<CreateClientView> {
             onPressed: () => context.go('/clients'),
           ),
           title: const Text(
-            'Nouveau client',
+            'Modifier client',
             style: TextStyle(
               color: AppColors.industrialPrimary,
               fontWeight: FontWeight.bold,
@@ -111,7 +113,7 @@ class _CreateClientViewState extends State<CreateClientView> {
                       children: [
                         // Titre
                         const Text(
-                          'Informations du client',
+                          'Modifier les informations du client',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -119,8 +121,8 @@ class _CreateClientViewState extends State<CreateClientView> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Remplissez le formulaire ci-dessous',
+                        Text(
+                          'Type: ${widget.initialClient.type == "entreprise" ? "Entreprise" : "Particulier"}',
                           style: AppTheme.subtitleMedium,
                         ),
                         const SizedBox(height: 32),
@@ -131,69 +133,6 @@ class _CreateClientViewState extends State<CreateClientView> {
                           const SizedBox(height: 16),
                         ],
 
-                        // Type de client
-                        const Text('Type de client *', style: AppTheme.fieldLabel),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 24,
-                          runSpacing: 8,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedType = 'particulier';
-                                  _canPayByCheck = false;
-                                });
-                              },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Radio<String>(
-                                    value: 'particulier',
-                                    groupValue: _selectedType,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _selectedType = value!;
-                                        _canPayByCheck = false;
-                                      });
-                                    },
-                                  ),
-                                  const Text(
-                                    'Particulier',
-                                    style: TextStyle(color: AppColors.industrialText),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedType = 'entreprise';
-                                });
-                              },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Radio<String>(
-                                    value: 'entreprise',
-                                    groupValue: _selectedType,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _selectedType = value!;
-                                      });
-                                    },
-                                  ),
-                                  const Text(
-                                    'Entreprise',
-                                    style: TextStyle(color: AppColors.industrialText),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-
                         // Nom
                         const Text('Nom *', style: AppTheme.fieldLabel),
                         const SizedBox(height: 8),
@@ -201,7 +140,7 @@ class _CreateClientViewState extends State<CreateClientView> {
                           controller: _nameController,
                           style: const TextStyle(color: AppColors.industrialText),
                           decoration: AppTheme.industrialInputDecoration(
-                            hint: _selectedType == 'entreprise'
+                            hint: widget.initialClient.type == 'entreprise'
                                 ? 'Nom de l\'entreprise'
                                 : 'Nom complet',
                             prefixIcon: Icons.business,
@@ -263,40 +202,8 @@ class _CreateClientViewState extends State<CreateClientView> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Adresse
-                        const Text('Adresse', style: AppTheme.fieldLabel),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _addressController,
-                          style: const TextStyle(color: AppColors.industrialText),
-                          decoration: AppTheme.industrialInputDecoration(
-                            hint: 'Adresse complète',
-                            prefixIcon: Icons.location_on,
-                          ),
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: 16),
-
-                        // NIF (si entreprise)
-                        if (_selectedType == 'entreprise') ...[
-                          const Text(
-                            'Numéro d\'identification fiscale (NIF)',
-                            style: AppTheme.fieldLabel,
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _taxIdController,
-                            style: const TextStyle(color: AppColors.industrialText),
-                            decoration: AppTheme.industrialInputDecoration(
-                              hint: 'NIF-XXXXX',
-                              prefixIcon: Icons.numbers,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
                         // Paiement par chèque (si entreprise et pas employé)
-                        if (_selectedType == 'entreprise' && !isEmployee) ...[
+                        if (widget.initialClient.type == 'entreprise' && !isEmployee) ...[
                           InkWell(
                             onTap: () {
                               setState(() {
@@ -340,6 +247,51 @@ class _CreateClientViewState extends State<CreateClientView> {
                           const SizedBox(height: 16),
                         ],
 
+                        // Statut (si pas employé)
+                        if (!isEmployee) ...[
+                          InkWell(
+                            onTap: () {
+                              setState(() {
+                                _isActive = !_isActive;
+                              });
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Checkbox(
+                                  value: _isActive,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _isActive = value ?? false;
+                                    });
+                                  },
+                                ),
+                                const SizedBox(width: 8),
+                                const Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Client actif',
+                                      style: TextStyle(
+                                        color: AppColors.industrialText,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Les clients inactifs sont masqués pour les employés',
+                                      style: TextStyle(
+                                        color: AppColors.industrialTextLight,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
                         // Notes
                         const Text('Notes', style: AppTheme.fieldLabel),
                         const SizedBox(height: 8),
@@ -354,7 +306,7 @@ class _CreateClientViewState extends State<CreateClientView> {
                         ),
                         const SizedBox(height: 32),
 
-                        // Boutons (UPDATED)
+                        // Boutons
                         LayoutBuilder(
                           builder: (context, constraints) {
                             final isSmall = constraints.maxWidth < 520;
@@ -384,8 +336,9 @@ class _CreateClientViewState extends State<CreateClientView> {
                                   SizedBox(
                                     width: isSmall ? constraints.maxWidth : null,
                                     child: ElevatedButton.icon(
-                                      onPressed:
-                                          viewModel.isLoading ? null : _createClient,
+                                      onPressed: viewModel.isLoading
+                                          ? null
+                                          : _updateClient,
                                       style: AppTheme.industrialPrimaryButton,
                                       icon: viewModel.isLoading
                                           ? const SizedBox(
@@ -402,8 +355,8 @@ class _CreateClientViewState extends State<CreateClientView> {
                                             const EdgeInsets.symmetric(vertical: 2),
                                         child: Text(
                                           viewModel.isLoading
-                                              ? 'Création...'
-                                              : 'Créer le client',
+                                              ? 'Modification...'
+                                              : 'Mettre à jour',
                                         ),
                                       ),
                                     ),
@@ -425,31 +378,28 @@ class _CreateClientViewState extends State<CreateClientView> {
     );
   }
 
-  Future<void> _createClient() async {
+  Future<void> _updateClient() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final request = CreateClientRequest(
+    final request = UpdateClientRequest(
       name: _nameController.text.trim(),
-      type: _selectedType,
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-      address:
-          _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-      taxId: _taxIdController.text.trim().isEmpty ? null : _taxIdController.text.trim(),
-      canPayByCheck: _selectedType == 'entreprise'
-        ? context.read<UserProvider>().currentUser?.role.toLowerCase() == 'employe'
-          ? false
-          : _canPayByCheck
-        : false,
+      canPayByCheck: widget.initialClient.type == 'entreprise'
+          ? context.read<UserProvider>().currentUser?.role.toLowerCase() == 'employe'
+              ? false
+              : _canPayByCheck
+          : false,
+      isActive: _isActive,
       notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
     );
 
-    final success = await _viewModel.createClient(request);
+    final success = await _viewModel.updateClient(widget.clientId, request);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Client créé avec succès'),
+          content: Text('Client mis à jour avec succès'),
           backgroundColor: AppColors.success,
         ),
       );
