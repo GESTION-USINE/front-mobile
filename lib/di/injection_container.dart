@@ -9,9 +9,11 @@ import '../services/interfaces/i_product_service.dart';
 import '../services/auth_service.dart';
 import '../services/product_service.dart';
 import '../services/client_service.dart';
+import '../services/material_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/product_viewmodel.dart';
 import '../viewmodels/client_viewmodel.dart';
+import '../viewmodels/material_viewmodel.dart';
 
 final getIt = GetIt.instance;
 
@@ -40,6 +42,10 @@ Future<void> initDependencies() async {
     () => ClientService(getIt<ApiClient>()),
   );
 
+  getIt.registerLazySingleton<MaterialService>(
+    () => MaterialService(getIt<ApiClient>()),
+  );
+
   // ==================== ViewModels ====================
   // Factory car nouvelle instance par écran
   getIt.registerFactory<AuthViewModel>(
@@ -57,6 +63,10 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory<ClientViewModel>(
     () => ClientViewModel(getIt<ClientService>()),
+  );
+
+  getIt.registerFactory<MaterialViewModel>(
+    () => MaterialViewModel(getIt<MaterialService>()),
   );
 
   // ==================== Initialisation ====================

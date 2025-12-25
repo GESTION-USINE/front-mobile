@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/user_provider.dart';
 import '../models/entities/client.dart';
+import '../models/entities/material.dart' as material_entity;
 import '../views/auth/login_view.dart';
 import '../views/layouts/app_shell.dart';
 import '../views/home/dashboard_content.dart';
@@ -16,6 +17,9 @@ import '../views/settings/settings_content.dart';
 import '../views/clients/clients_content.dart';
 import '../views/clients/create_client_view.dart';
 import '../views/clients/edit_client_view.dart';
+import '../views/materials/materials_content.dart';
+import '../views/materials/create_material_view.dart';
+import '../views/materials/edit_material_view.dart';
 
 class AppRouter {
   AppRouter._();
@@ -33,6 +37,9 @@ class AppRouter {
   static const String clients = '/clients';
   static const String clientsCreate = '/clients/create';
   static const String clientsEdit = '/clients/:id/edit';
+  static const String materials = '/materials';
+  static const String materialsCreate = '/materials/create';
+  static const String materialsEdit = '/materials/:id/edit';
   static const String products = '/products';
   static const String productDetail = '/products/:id';
   static const String invoices = '/invoices';
@@ -98,6 +105,41 @@ class AppRouter {
           },
         ),
 
+        // Route de création matériau (hors du shell - fullscreen, seulement pour non-employés)
+        GoRoute(
+          path: materialsCreate,
+          parentNavigatorKey: _rootNavigatorKey,
+          redirect: (context, state) {
+            final userRole = userProvider.currentUser?.role;
+            if (userRole != null && userRole.toLowerCase() == 'employe') {
+              return '/materials'; // Rediriger les employés vers la liste
+            }
+            return null;
+          },
+          builder: (context, state) => const CreateMaterialView(),
+        ),
+
+        // Route de modification matériau (hors du shell - fullscreen, seulement pour non-employés)
+        GoRoute(
+          path: materialsEdit,
+          parentNavigatorKey: _rootNavigatorKey,
+          redirect: (context, state) {
+            final userRole = userProvider.currentUser?.role;
+            if (userRole != null && userRole.toLowerCase() == 'employe') {
+              return '/materials'; // Rediriger les employés vers la liste
+            }
+            return null;
+          },
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            final material = state.extra as material_entity.Material;
+            return EditMaterialView(
+              materialId: int.parse(id),
+              initialMaterial: material,
+            );
+          },
+        ),
+
         // Shell avec sidebar et navbar fixes
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
@@ -129,6 +171,14 @@ class AppRouter {
               path: clients,
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ClientsContent(),
+              ),
+            ),
+
+            // Matériaux (caché pour les employés)
+            GoRoute(
+              path: materials,
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: MaterialsContent(),
               ),
             ),
 

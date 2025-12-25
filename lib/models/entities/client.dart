@@ -35,9 +35,9 @@ class Client {
   factory Client.fromJson(Map<String, dynamic> json) {
     return Client(
       id: json['id'] as int,
-      name: json['name'] as String,
-      type: json['type'] as String,
-      phone: json['phone'] as String,
+      name: (json['name'] as String?) ?? '',
+      type: (json['type'] as String?) ?? 'particulier',
+      phone: (json['phone'] as String?) ?? '',
       address: json['address'] as String?,
       email: json['email'] as String?,
       taxId: json['tax_id'] as String?,

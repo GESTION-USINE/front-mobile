@@ -18,6 +18,12 @@ class ApiEndpoints {
   // ignore: constant_identifier_names
   static const String create_client = '/clients/';
 
+  // Materials
+  // ignore: constant_identifier_names
+  static const String all_materials = '/materials';
+  // ignore: constant_identifier_names
+  static const String create_material = '/materials/';
+
   // User
   static const String users = '/users';
   static const String userProfile = '/users/profile';

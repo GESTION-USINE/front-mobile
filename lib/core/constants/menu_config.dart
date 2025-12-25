@@ -34,6 +34,15 @@ class MenuConfig {
           allowedRoles: [],
         ),
 
+        // Gestion des matériaux - Super admin et associé seulement
+        const MenuItem(
+          id: 'materials',
+          title: 'Matériaux',
+          icon: Icons.inventory_2_outlined,
+          route: '/materials',
+          allowedRoles: ['super_admin', 'associe'],
+        ),
+
         // Gestion des utilisateurs - Admin seulement
         const MenuItem(
           id: 'users',
