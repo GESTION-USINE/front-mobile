@@ -24,6 +24,14 @@ class ApiEndpoints {
   // ignore: constant_identifier_names
   static const String create_material = '/materials/';
 
+  // Weighing Slips (Bons de pesée)
+  // ignore: constant_identifier_names
+  static const String all_weighing_slips = '/weighing-slips';
+  // ignore: constant_identifier_names
+  static const String create_weighing_slip = '/weighing-slips/';
+  static String weighingSlipById(int id) => '/weighing-slips/$id';
+  static String weighingSlipPrintById(int id) => '/weighing-slips/$id/print';
+
   // User
   static const String users = '/users';
   static const String userProfile = '/users/profile';

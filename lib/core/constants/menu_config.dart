@@ -34,6 +34,15 @@ class MenuConfig {
           allowedRoles: [],
         ),
 
+        // Bons de pesée
+        const MenuItem(
+          id: 'weighing_slips',
+          title: 'Bons de pesée',
+          icon: Icons.assignment_outlined,
+          route: '/weighing-slips',
+          allowedRoles: ['super_admin', 'associe', 'employe'],
+        ),
+
         // Gestion des matériaux - Super admin et associé seulement
         const MenuItem(
           id: 'materials',

@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/menu_config.dart';
 import '../../models/entities/menu_item.dart';
+import '../../routes/app_router.dart';
 
 class AppSidebar extends StatelessWidget {
   final String currentRoute;
@@ -18,7 +19,17 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final menuItems = MenuConfig.getMenuForRole(userRole);
+    final baseMenu = MenuConfig.getMenuForRole(userRole);
+    // Inject "Bons de pesée" if missing
+    final slipsItem = const MenuItem(
+      id: 'weighing_slips',
+      title: 'Bons de pesée',
+      icon: Icons.assignment_outlined,
+      route: AppRouter.slips,
+      allowedRoles: ['super_admin', 'associe', 'employe'],
+    );
+    final hasSlips = baseMenu.any((m) => m.id == 'weighing_slips');
+    final menuItems = [...baseMenu, if (!hasSlips) slipsItem];
 
     return Container(
       width: 200,

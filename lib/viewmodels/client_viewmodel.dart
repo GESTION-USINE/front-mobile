@@ -13,6 +13,7 @@ class ClientViewModel extends BaseViewModel {
 
   List<Client> _clients = [];
   List<Client> get clients => _clients;
+  
 
   int _currentPage = 1;
   int _pageSize = 10;
@@ -40,11 +41,19 @@ class ClientViewModel extends BaseViewModel {
   bool get hasClients => _clients.isNotEmpty;
 
   /// Charge la liste des clients
-  Future<void> loadClients({bool refresh = false}) async {
+  Future<void> loadClients({bool refresh = false, int? pageSize, int? isActive}) async {
     if (refresh) {
       _currentPage = 1;
     }
-   
+    
+    // Mettre à jour le pageSize si fourni
+    if (pageSize != null) {
+      _pageSize = pageSize;
+    }
+    if (isActive != null) {
+      _isActiveFilter = isActive == 1 ? true : false;
+    }
+    print(  _pageSize);
     final result = await runAsync(() async {
       return await _clientService.getClients(
         search: _searchQuery,
@@ -57,7 +66,6 @@ class ClientViewModel extends BaseViewModel {
         pageSize: _pageSize,
       );
     });
-
     if (result != null) {
       _clients = result.items;
       _currentPage = result.page;
@@ -66,7 +74,7 @@ class ClientViewModel extends BaseViewModel {
       notifyListeners();
     }
   }
-
+    
   /// Recherche des clients
   void searchClients(String query) {
     _searchQuery = query.isEmpty ? null : query;
@@ -170,5 +178,21 @@ class ClientViewModel extends BaseViewModel {
   /// Rafraîchir la liste
   Future<void> refresh() async {
     await loadClients(refresh: true);
+  }
+
+  /// Charge tous les clients actifs sans pagination pour les dropdowns
+  Future<List<Client>> getAllActiveClients() async {
+    final result = await runAsync(() async {
+      return await _clientService.getClients(
+        isActive: true,
+        page: 1,
+        pageSize: 10000,
+      );
+    });
+
+    if (result != null) {
+      return result.items;
+    }
+    return [];
   }
 }

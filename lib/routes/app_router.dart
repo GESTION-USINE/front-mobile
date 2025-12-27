@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/user_provider.dart';
 import '../models/entities/client.dart';
 import '../models/entities/material.dart' as material_entity;
+import '../models/entities/weighing_slip.dart';
 import '../views/auth/login_view.dart';
 import '../views/layouts/app_shell.dart';
 import '../views/home/dashboard_content.dart';
@@ -20,6 +21,8 @@ import '../views/clients/edit_client_view.dart';
 import '../views/materials/materials_content.dart';
 import '../views/materials/create_material_view.dart';
 import '../views/materials/edit_material_view.dart';
+import '../views/weighing_slips/weighing_slips_content.dart';
+import '../views/weighing_slips/edit_weighing_slip_view.dart';
 
 class AppRouter {
   AppRouter._();
@@ -46,6 +49,9 @@ class AppRouter {
   static const String reports = '/reports';
   static const String traceability = '/traceability';
   static const String settings = '/settings';
+  static const String slips = '/weighing-slips';
+  static const String slipsCreate = '/weighing-slips/create';
+  static const String slipsEdit = '/weighing-slips/:id/edit';
 
   /// Crée le router avec redirection basée sur l'authentification
   static GoRouter createRouter(UserProvider userProvider) {
@@ -140,6 +146,20 @@ class AppRouter {
           },
         ),
 
+        // Route de modification de bon de pesée (hors du shell - fullscreen)
+        GoRoute(
+          path: slipsEdit,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            final slip = state.extra as WeighingSlip;
+            return EditWeighingSlipView(
+              slipId: int.parse(id),
+              initialSlip: slip,
+            );
+          },
+        ),
+
         // Shell avec sidebar et navbar fixes
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
@@ -179,6 +199,14 @@ class AppRouter {
               path: materials,
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: MaterialsContent(),
+              ),
+            ),
+
+            // Bons de pesée
+            GoRoute(
+              path: slips,
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: WeighingSlipsContent(),
               ),
             ),
 
