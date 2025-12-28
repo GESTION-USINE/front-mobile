@@ -212,6 +212,8 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       totalPages: vm.totalPages,
       onPreviousPage: vm.hasPreviousPage ? vm.previousPage : null,
       onNextPage: vm.hasNextPage ? vm.nextPage : null,
+      enableCustomWindow: false,
+      showCustomActionButton: false,
     );
   }
 }

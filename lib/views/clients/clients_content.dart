@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_template/models/entities/material_price.dart';
+import 'package:flutter_mvvm_template/viewmodels/material_viewmodel.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -9,6 +13,7 @@ import '../../di/injection_container.dart';
 import '../../viewmodels/client_viewmodel.dart';
 import '../../providers/user_provider.dart';
 import '../widgets/generic_data_table.dart';
+import '../widgets/client_material_prices_drawer.dart';
 
 /// Contenu de la liste des clients (sans wrapper)
 class ClientsContent extends StatefulWidget {
@@ -20,31 +25,133 @@ class ClientsContent extends StatefulWidget {
 
 class _ClientsContentState extends State<ClientsContent> {
   late final ClientViewModel _viewModel;
+  late final MaterialViewModel _materialViewModel;
   final _searchController = TextEditingController();
+
+  // Drawer state
+  bool _isDrawerOpen = false;
+  dynamic _selectedClient;
+
+  // Controllers pour les prix par matériau
+  final Map<int, TextEditingController> _priceControllers = {};
+  bool _saving = false;
 
   @override
   void initState() {
     super.initState();
     _viewModel = getIt<ClientViewModel>();
+    _materialViewModel = getIt<MaterialViewModel>();
     _viewModel.loadClients();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    for (final c in _priceControllers.values) {
+      c.dispose();
+    }
     _viewModel.dispose();
+    _materialViewModel.dispose();
     super.dispose();
+  }
+
+  void _openPricesForClient(dynamic client) {
+    setState(() {
+      _selectedClient = client;
+      _isDrawerOpen = true;
+      // Clear existing controllers
+      for (final c in _priceControllers.values) {
+        c.dispose();
+      }
+      _priceControllers.clear();
+    });
+print("--------------------------------") ;    
+print("--------------------------------") ;    
+print("--------------------------------") ;    
+    print('----->'+client.id.toString())  ;
+     _materialViewModel.loadClientMaterialPrices(clientId: client.id, refresh: true);
+    // sleep(Duration(seconds:5));
+    print("finally loaded")  ;
+    print(_materialViewModel.materialPrices.length.toString());
+
+     print("--------------------------------") ;    
+print("--------------------------------") ;    
+print("--------------------------------") ;    
+
+  }
+
+  void _closeDrawer() {
+    setState(() {
+      _isDrawerOpen = false;
+      _selectedClient = null;
+    });
+  }
+
+  void _ensureControllers(List<MaterialPriceItem> items) {
+    for (final item in items) {
+      if (!_priceControllers.containsKey(item.materialId)) {
+        final text = item.customPricePerTon != null ? item.customPricePerTon!.toString() : '';
+        _priceControllers[item.materialId] = TextEditingController(text: text);
+      }
+    }
+  }
+
+  Future<void> _savePrices() async {
+    if (_selectedClient == null) return;
+    final clientId = _selectedClient.id;
+    final List<Map<String, dynamic>> payload = [];
+    for (final entry in _priceControllers.entries) {
+      final materialId = entry.key;
+      final txt = entry.value.text.trim();
+      double? price;
+      if (txt.isNotEmpty) {
+        price = double.tryParse(txt.replaceAll(',', '.'));
+      } else {
+        price = null;
+      }
+      payload.add({
+        'material_id': materialId,
+        'custom_price_per_ton': price,
+      });
+    }
+
+    setState(() => _saving = true);
+    try {
+      final ok = await _materialViewModel.saveClientMaterialPrices(clientId: clientId, prices: payload);
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prix enregistrés')));
+        // recharger
+        _materialViewModel.loadClientMaterialPrices(clientId: clientId, refresh: true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors de la sauvegarde')));
+      }
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors de la sauvegarde')));
+    } finally {
+      setState(() => _saving = false);
+    }
+  }
+
+  Widget _buildPricesDrawer(BuildContext ctx, dynamic client, VoidCallback close) {
+    return ClientMaterialPricesDrawer(
+      client: client,
+      onClose: close,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _viewModel,
-      child: Consumer<ClientViewModel>(
-        builder: (context, viewModel, child) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _viewModel),
+        ChangeNotifierProvider.value(value: _materialViewModel),
+      ],
+      child: Consumer2<ClientViewModel, MaterialViewModel>(
+        builder: (context, viewModel, materialVm, child) {
           final String? role = context.select<UserProvider, String?>(
             (p) => p.currentUser?.role,
           );
+
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +167,7 @@ class _ClientsContentState extends State<ClientsContent> {
                   style: AppTheme.subtitleMedium,
                 ),
                 const SizedBox(height: 10),
-                
+
                 // Bouton Nouveau client - aligné à gauche, pas dans un Row
                 ElevatedButton.icon(
                   onPressed: () => context.go(AppRouter.clientsCreate),
@@ -75,6 +182,8 @@ class _ClientsContentState extends State<ClientsContent> {
                 const SizedBox(height: 12),
                 // Liste des clients
                 _buildClientsList(viewModel, role),
+
+                // Drawer custom is handled by GenericDataTable via customDrawerBuilder and controlled open state
               ],
             ),
           );
@@ -284,6 +393,17 @@ class _ClientsContentState extends State<ClientsContent> {
       showActions: !isEmployee,
       showEditAction: true,
       showDeleteAction: false,
+      // Active la fenêtre glissante personnalisée
+      enableCustomWindow: true,
+      customDrawerBuilder: (ctx, client, close) => _buildPricesDrawer(ctx, client, close),
+      onOpenCustomWindow: (client) => _openPricesForClient(client),
+      // Mode contrôlé depuis cette page
+      isCustomWindowOpen: _isDrawerOpen,
+      onToggleCustomWindow: (v) => setState(() => _isDrawerOpen = v),
+      // Afficher un bouton supplémentaire dans la colonne Actions
+      showCustomActionButton: true,
+      customActionIcon: Icons.price_change,
+      customActionTooltip: 'Prix matériaux',
       onEdit: (client) {
         context.go('/clients/${client.id}/edit', extra: client);
       },
@@ -327,6 +447,4 @@ class _ClientsContentState extends State<ClientsContent> {
       ),
     );
   }
-
 }
-

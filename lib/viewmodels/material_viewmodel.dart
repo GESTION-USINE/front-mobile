@@ -1,9 +1,14 @@
 import 'package:flutter_mvvm_template/core/base/base_viewmodel.dart';
+import 'package:flutter_mvvm_template/models/entities/material_price.dart';
+import 'package:flutter_mvvm_template/core/constants/api_endpoints.dart';
+import 'package:flutter_mvvm_template/models/response/delete_response.dart';
 
+import '../core/network/api_client.dart';
 import '../models/entities/material.dart';
 import '../models/request/create_material_request.dart';
 import '../models/request/update_material_request.dart';
 import '../services/material_service.dart';
+import '../di/injection_container.dart';
 
 /// ViewModel pour gérer les matériaux
 class MaterialViewModel extends BaseViewModel {
@@ -12,6 +17,10 @@ class MaterialViewModel extends BaseViewModel {
   MaterialViewModel(this._materialService);
 
   List<Material> _materials = [];
+  List<MaterialPriceItem> _materialPrices = [];
+
+  List<MaterialPriceItem> get materialPrices => _materialPrices;
+
   List<Material> get materials => _materials;
 
   int _currentPage = 1;
@@ -36,6 +45,84 @@ class MaterialViewModel extends BaseViewModel {
   bool? get isActiveFilter => _isActiveFilter;
 
   bool get hasMaterials => _materials.isNotEmpty;
+
+
+
+  Future<void> loadClientMaterialPrices({
+    required int clientId,
+    bool refresh = false,
+    }) async {
+      if (refresh) {
+        _currentPage = 1;
+      }
+
+      final result = await runAsync(() async {
+        return await _materialService.getClientMaterialPrices(
+          clientId: clientId,
+          page: _currentPage,
+          pageSize: _pageSize,
+        );
+      });
+
+      if (result != null) {
+       // print("loading client material prices..."+result.items.length.toString());  
+        _materialPrices = result.items.map((item) {
+           if (item is MaterialPriceItem) return item;
+          return MaterialPriceItem.fromJson(item as Map<String, dynamic>);
+        }).toList();
+        _currentPage = result.page;
+        _pageSize = result.pageSize;
+        _total = result.total;
+
+        notifyListeners();
+      }
+    }
+
+   Future<bool> createClientMaterialPrice({
+      required int clientId,
+      required int materialId,
+      required double customPricePerTon,
+    }) async {
+      final result = await runAsync(() async {
+       return await _materialService.createClientMaterialPrice(
+          clientId: clientId,
+          materialId: materialId,
+          customPricePerTon: customPricePerTon,
+        );
+      });
+     print("creating client material price...");
+     print(result);
+      if (result != null) {
+        // Recharger les prix du client après création
+        await loadClientMaterialPrices(
+          clientId: clientId,
+          refresh: true,
+        );
+        return true;
+      }
+      return false;
+    }
+  
+   Future<bool> deleteClientMaterialPrice({
+      required int priceId,
+      required int clientId,
+    }) async {
+      DeleteResponse? result = await runAsync(() async {
+       return await _materialService.deleteClientMaterialPrice(
+          priceId: priceId,
+        );
+      });
+
+      if (result!.deleted) {
+        // Recharger la liste après suppression
+        await loadClientMaterialPrices(
+          clientId: clientId,
+          refresh: true,
+        );
+        return true ; 
+      }
+      return false ; 
+    }
 
   /// Charge la liste des matériaux
   Future<void> loadMaterials({bool refresh = false}) async {
@@ -161,5 +248,31 @@ class MaterialViewModel extends BaseViewModel {
   /// Rafraîchir la liste
   Future<void> refresh() async {
     await loadMaterials(refresh: true);
+  }
+
+  /// Sauvegarde les prix spéciaux d'un client (batch)
+  /// Format: [ { 'material_id': int, 'custom_price_per_ton': double|null }, ... ]
+  Future<bool> saveClientMaterialPrices({
+    required int clientId,
+    required List<Map<String, dynamic>> prices,
+  }) async {
+    final result = await runAsync(() async {
+      final response = await getIt<ApiClient>().post(
+        ApiEndpoints.clientMaterialPrices,
+        data: {
+          'client_id': clientId,
+          'prices': prices,
+        },
+      );
+      final status = response.statusCode ?? 200;
+      return status >= 200 && status < 300;
+    });
+
+    if (result == true) {
+      await loadClientMaterialPrices(clientId: clientId, refresh: true);
+      return true;
+    }
+
+    return false;
   }
 }

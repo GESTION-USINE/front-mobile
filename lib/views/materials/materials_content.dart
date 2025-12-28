@@ -271,6 +271,8 @@ class _MaterialsContentState extends State<MaterialsContent> {
           : null,
       onNextPage:
           viewModel.hasNextPage ? () => viewModel.nextPage() : null,
+       enableCustomWindow: false,
+         showCustomActionButton: false,
     );
   }
 }
