@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../models/entities/material_price.dart';
 import '../../viewmodels/material_viewmodel.dart';
 import './generic_data_table.dart';
@@ -54,59 +52,6 @@ class _ClientMaterialPricesDrawerState
     }
   }
 
-  Future<void> _savePrices(BuildContext context) async {
-    final mvm = context.read<MaterialViewModel>();
-    final clientId = widget.client.id;
-
-    final payload = <Map<String, dynamic>>[];
-    for (final entry in _priceControllers.entries) {
-      final materialId = entry.key;
-      final text = entry.value.text.trim();
-
-      double? customPrice;
-      if (text.isNotEmpty) {
-        customPrice = double.tryParse(text.replaceAll(',', '.'));
-      }
-
-      payload.add({
-        'material_id': materialId,
-        'custom_price_per_ton': customPrice,
-      });
-    }
-
-    setState(() => _isSaving = true);
-    try {
-      final success = await mvm.saveClientMaterialPrices(
-        clientId: clientId,
-        prices: payload,
-      );
-
-      if (success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Prix enregistrés avec succès')),
-          );
-          widget.onSaved?.call();
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erreur lors de la sauvegarde')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

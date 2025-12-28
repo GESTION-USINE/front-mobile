@@ -94,144 +94,10 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
     super.dispose();
   }
 
-  // Calcul du montant total basé sur le client et le matériel
-  double? _calculateTotalAmount() {
-    if (_selectedMaterialId == null || _weightController.text.isEmpty) {
-      return null;
-    }
-
-    final weight = double.tryParse(_weightController.text);
-    if (weight == null || weight <= 0) {
-      return null;
-    }
-
-    final material = _materials.firstWhere(
-      (m) => m.id == _selectedMaterialId,
-      orElse: () => _materials.first,
-    );
-
-    // Use the material's default price per ton
-    // In future, you can check for custom client pricing here
-    final pricePerTon = material.defaultPricePerTon;
-    return weight * pricePerTon;
-  }
-
-  /// Affiche un popup de confirmation avant de créer le bon
-  void _showCreateSlipConfirmationDialog() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final selectedClient = _clients.firstWhere(
-      (c) => c.id == _selectedClientId,
-      orElse: () => _clients.first,
-    );
-    final selectedMaterial = _materials.firstWhere(
-      (m) => m.id == _selectedMaterialId,
-      orElse: () => _materials.first,
-    );
-    final weight = double.parse(_weightController.text);
-    final totalAmount = weight * selectedMaterial.defaultPricePerTon;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmer la création du bon'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Informations du bon:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.person, size: 18, color: AppColors.industrialText),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Client:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text(selectedClient.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Icon(Icons.category, size: 18, color: AppColors.industrialText),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Matériau:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text(selectedMaterial.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Icon(Icons.scale, size: 18, color: AppColors.industrialText),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Poids:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      Text('$weight tonnes', style: const TextStyle(fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Montant Total:', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(
-                  '${totalAmount.toStringAsFixed(2)} DZD',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.industrialPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _createSlip();
-            },
-            style: AppTheme.industrialPrimaryButton,
-            child: const Text('OK - Générer le bon'),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// Crée le bon de pesée SANS paiement
   Future<void> _createSlip() async {
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() => _isCreatingSlip = true);
 
     try {
@@ -457,7 +323,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
                     const SizedBox(width: 12),
                     Flexible(
                       child: ElevatedButton.icon(
-                        onPressed: _isCreatingSlip ? null : _showCreateSlipConfirmationDialog,
+                        onPressed: _isCreatingSlip ? null : _createSlip,
                         style: AppTheme.industrialPrimaryButton,
                         icon: _isCreatingSlip
                             ? const SizedBox(
@@ -469,7 +335,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
                             : const Icon(Icons.add),
                         label: Text(_isCreatingSlip
                             ? 'Création...'
-                            : 'Générer le bon'),
+                            : 'Créer le bon'),
                       ),
                     ),
                   ],
@@ -893,37 +759,6 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
     );
   }
 
-  Widget _buildTotalAmountDisplay() {
-    final totalAmount = _calculateTotalAmount();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.industrialPrimary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.industrialPrimary.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.calculate, color: AppColors.industrialPrimary),
-              SizedBox(width: 8),
-              Text(
-                'Montant Total',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.industrialText,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildPaymentSection() {
     return Column(

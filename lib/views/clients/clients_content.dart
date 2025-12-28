@@ -65,74 +65,12 @@ class _ClientsContentState extends State<ClientsContent> {
       }
       _priceControllers.clear();
     });
-print("--------------------------------") ;    
-print("--------------------------------") ;    
-print("--------------------------------") ;    
-    print('----->'+client.id.toString())  ;
      _materialViewModel.loadClientMaterialPrices(clientId: client.id, refresh: true);
     // sleep(Duration(seconds:5));
-    print("finally loaded")  ;
-    print(_materialViewModel.materialPrices.length.toString());
-
-     print("--------------------------------") ;    
-print("--------------------------------") ;    
-print("--------------------------------") ;    
 
   }
 
-  void _closeDrawer() {
-    setState(() {
-      _isDrawerOpen = false;
-      _selectedClient = null;
-    });
-  }
-
-  void _ensureControllers(List<MaterialPriceItem> items) {
-    for (final item in items) {
-      if (!_priceControllers.containsKey(item.materialId)) {
-        final text = item.customPricePerTon != null ? item.customPricePerTon!.toString() : '';
-        _priceControllers[item.materialId] = TextEditingController(text: text);
-      }
-    }
-  }
-
-  Future<void> _savePrices() async {
-    if (_selectedClient == null) return;
-    final clientId = _selectedClient.id;
-    final List<Map<String, dynamic>> payload = [];
-    for (final entry in _priceControllers.entries) {
-      final materialId = entry.key;
-      final txt = entry.value.text.trim();
-      double? price;
-      if (txt.isNotEmpty) {
-        price = double.tryParse(txt.replaceAll(',', '.'));
-      } else {
-        price = null;
-      }
-      payload.add({
-        'material_id': materialId,
-        'custom_price_per_ton': price,
-      });
-    }
-
-    setState(() => _saving = true);
-    try {
-      final ok = await _materialViewModel.saveClientMaterialPrices(clientId: clientId, prices: payload);
-      if (ok) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prix enregistrés')));
-        // recharger
-        _materialViewModel.loadClientMaterialPrices(clientId: clientId, refresh: true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors de la sauvegarde')));
-      }
-    } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur lors de la sauvegarde')));
-    } finally {
-      setState(() => _saving = false);
-    }
-  }
-
-  Widget _buildPricesDrawer(BuildContext ctx, dynamic client, VoidCallback close) {
+   Widget _buildPricesDrawer(BuildContext ctx, dynamic client, VoidCallback close) {
     return ClientMaterialPricesDrawer(
       client: client,
       onClose: close,

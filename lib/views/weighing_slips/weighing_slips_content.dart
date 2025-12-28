@@ -8,6 +8,7 @@ import '../../di/injection_container.dart';
 import '../../viewmodels/weighing_slip_viewmodel.dart';
 import '../widgets/generic_data_table.dart';
 import '../../providers/user_provider.dart';
+import '../../routes/app_router.dart';
 
 class WeighingSlipsContent extends StatefulWidget {
   const WeighingSlipsContent({super.key});
@@ -50,6 +51,15 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
                 const Text('Gestion des bons de pesée', style: AppTheme.headingLarge),
                 const SizedBox(height: 8),
                 const Text('Suivi des opérations de pesée', style: AppTheme.subtitleMedium),
+                const SizedBox(height: 10),
+
+                // Bouton Nouveau bon (comme pour les clients)
+                ElevatedButton.icon(
+                  onPressed: () => context.go(AppRouter.slipsCreate),
+                  style: AppTheme.industrialPrimaryButton,
+                  icon: const Icon(Icons.add, size: 20),
+                  label: const Text('Nouveau bon'),
+                ),
                 const SizedBox(height: 12),
 
                 _buildStats(vm),

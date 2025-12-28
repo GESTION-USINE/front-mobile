@@ -65,8 +65,7 @@ class MaterialViewModel extends BaseViewModel {
       });
 
       if (result != null) {
-       // print("loading client material prices..."+result.items.length.toString());  
-        _materialPrices = result.items.map((item) {
+              _materialPrices = result.items.map((item) {
            if (item is MaterialPriceItem) return item;
           return MaterialPriceItem.fromJson(item as Map<String, dynamic>);
         }).toList();
@@ -90,8 +89,7 @@ class MaterialViewModel extends BaseViewModel {
           customPricePerTon: customPricePerTon,
         );
       });
-     print("creating client material price...");
-     print(result);
+
       if (result != null) {
         // Recharger les prix du client après création
         await loadClientMaterialPrices(

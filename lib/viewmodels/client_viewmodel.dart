@@ -53,7 +53,6 @@ class ClientViewModel extends BaseViewModel {
     if (isActive != null) {
       _isActiveFilter = isActive == 1 ? true : false;
     }
-    print(  _pageSize);
     final result = await runAsync(() async {
       return await _clientService.getClients(
         search: _searchQuery,

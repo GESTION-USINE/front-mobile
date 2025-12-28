@@ -32,20 +32,4 @@ class MaterialPriceItem {
   
 
    
-    /// Affiche tous les attributs de l'objet (debug)
-  void display() {
-    print('========== MaterialPriceItem ==========');
-    print('clientId             : $clientId');
-    print('materialId           : $materialId');
-    print('materialName         : $materialName');
-    print('defaultPricePerTon   : $defaultPricePerTon');
-    print('customPricePerTon    : ${customPricePerTon ?? 'NULL (prix par défaut)'}');
-    print('=======================================');
-  }
-
-
-
-
-
-
 }

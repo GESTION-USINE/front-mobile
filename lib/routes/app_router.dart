@@ -23,6 +23,7 @@ import '../views/materials/create_material_view.dart';
 import '../views/materials/edit_material_view.dart';
 import '../views/weighing_slips/weighing_slips_content.dart';
 import '../views/weighing_slips/edit_weighing_slip_view.dart';
+import '../views/weighing_slips/create_weighing_slip_view.dart';
 
 class AppRouter {
   AppRouter._();
@@ -95,6 +96,12 @@ class AppRouter {
           path: clientsCreate,
           parentNavigatorKey: _rootNavigatorKey,
           builder: (context, state) => const CreateClientView(),
+        ),
+
+        GoRoute(
+          path: slipsCreate,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => const CreateWeighingSlipView(),
         ),
 
         // Route de modification client (hors du shell - fullscreen)
