@@ -10,6 +10,10 @@ class ApiEndpoints {
   static const String refreshToken = '/auth/refresh';
 
 
+  // Client Material Prices
+  static const String clientMaterialPrices = '/materials/client-material-prices';
+
+
 
   // client 
 

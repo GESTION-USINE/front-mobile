@@ -27,7 +27,7 @@ class DataTableColumn<T> {
 }
 
 /// Widget tableau générique réutilisable
-class GenericDataTable<T> extends StatelessWidget {
+class GenericDataTable<T> extends StatefulWidget {
   /// Données à afficher
   final List<T> items;
 
@@ -97,6 +97,25 @@ class GenericDataTable<T> extends StatelessWidget {
   /// Icône pour le bouton supprimer
   final IconData deleteIcon;
 
+  /// Active la fonctionnalité de fenêtre glissante personnalisée
+  final bool enableCustomWindow;
+
+  /// Constructeur pour fournir un widget de fenêtre glissante personnalisé
+  /// Signature: (BuildContext, item, VoidCallback close)
+  final Widget Function(BuildContext, T, VoidCallback)? customDrawerBuilder;
+
+  /// Callback appelé quand la fenêtre glissante s'ouvre (utile pour charger les données)
+  final Function(T)? onOpenCustomWindow;
+
+  /// Mode contrôlé: si non-null, le parent contrôle l'ouverture
+  final bool? isCustomWindowOpen;
+  final Function(bool)? onToggleCustomWindow;
+
+  /// Montrer un bouton dédié dans la colonne Actions pour ouvrir la fenêtre
+  final bool showCustomActionButton;
+  final IconData customActionIcon;
+  final String customActionTooltip;
+
   const GenericDataTable({
     super.key,
     required this.items,
@@ -122,42 +141,74 @@ class GenericDataTable<T> extends StatelessWidget {
     this.actionTextColor = AppColors.industrialPrimary,
     this.editIcon = Icons.edit,
     this.deleteIcon = Icons.delete,
+    this.enableCustomWindow = false,
+    this.customDrawerBuilder,
+    this.onOpenCustomWindow,
+    this.isCustomWindowOpen,
+    this.onToggleCustomWindow,
+    this.showCustomActionButton = true,
+    this.customActionIcon = Icons.local_offer,
+    this.customActionTooltip = 'Prix matériaux',
   });
+
+  @override
+  State<GenericDataTable<T>> createState() => _GenericDataTableState<T>();
+}
+
+class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTickerProviderStateMixin {
+  T? _selectedItem;
+  bool _internalOpen = false;
+
+  bool get _isControlled => widget.isCustomWindowOpen != null && widget.onToggleCustomWindow != null;
+  bool get _isOpen => _isControlled ? (widget.isCustomWindowOpen ?? false) : _internalOpen;
+
+  void _openWindow(T item) {
+    setState(() {
+      _selectedItem = item;
+      if (!_isControlled) _internalOpen = true;
+    });
+    if (widget.onOpenCustomWindow != null) widget.onOpenCustomWindow!(item);
+    if (_isControlled) widget.onToggleCustomWindow!(true);
+  }
+
+  void _closeWindow() {
+    setState(() {
+      _selectedItem = null;
+      if (!_isControlled) _internalOpen = false;
+    });
+    if (_isControlled) widget.onToggleCustomWindow!(false);
+  }
 
   @override
   Widget build(BuildContext context) {
     // Déterminer si c'est un petit écran
     final isMobile = MediaQuery.of(context).size.width < 768;
 
-    // Affichage du chargement
-    if (isLoading) {
-      return SizedBox(
-        height: emptyHeight,
+    // Contenu principal (tableau / cartes)
+    Widget mainContent;
+
+    if (widget.isLoading) {
+      mainContent = SizedBox(
+        height: widget.emptyHeight,
         child: const Center(child: CircularProgressIndicator()),
       );
-    }
-
-    // Affichage de l'erreur
-    if (hasError) {
-      return SizedBox(
-        height: emptyHeight,
+    } else if (widget.hasError) {
+      mainContent = SizedBox(
+        height: widget.emptyHeight,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text(errorMessage ?? 'Une erreur est survenue'),
+              Text(widget.errorMessage ?? 'Une erreur est survenue'),
             ],
           ),
         ),
       );
-    }
-
-    // Affichage quand aucune donnée
-    if (items.isEmpty) {
-      return SizedBox(
-        height: emptyHeight,
+    } else if (widget.items.isEmpty) {
+      mainContent = SizedBox(
+        height: widget.emptyHeight,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -169,7 +220,7 @@ class GenericDataTable<T> extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                emptyMessage,
+                widget.emptyMessage,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -180,151 +231,177 @@ class GenericDataTable<T> extends StatelessWidget {
           ),
         ),
       );
-    }
-
-    // Sur mobile : afficher une liste de cartes
-    if (isMobile) {
-      return Column(
+    } else if (isMobile) {
+      mainContent = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ...items.map((item) => _buildMobileCard(item, context)),
+          ...widget.items.map((item) => _buildMobileCard(item, context)),
           const SizedBox(height: 16),
-          if (showPagination) _buildPagination(),
+          if (widget.showPagination) _buildPagination(),
         ],
       );
+    } else {
+      mainContent = _buildDesktopTable();
     }
 
-    // Sur desktop : afficher le tableau
-    return _buildDesktopTable();
+    // Si la fonctionnalité de fenêtre est désactivée, retourner juste le contenu
+    if (!widget.enableCustomWindow) return mainContent;
+
+    // Sinon, envelopper dans un Stack pour afficher la fenêtre glissante
+    final screenWidth = MediaQuery.of(context).size.width;
+    final panelWidth = (screenWidth * 0.6).clamp(320.0, 800.0);
+
+    return Stack(
+      children: [
+        mainContent,
+        // Sliding panel
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          right: _isOpen ? 0 : -panelWidth,
+          top: 0,
+          bottom: 0,
+          width: panelWidth,
+          child: _buildSlidingPanel(context, panelWidth),
+        ),
+      ],
+    );
   }
 
-  /// Construire la vue mobile (cartes)
   Widget _buildMobileCard(dynamic item, BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // En-tête avec infos principales
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: columns
-                  .where((col) => !col.hideOnMobile)
-                  .take(2)
-                  .map((col) {
-                final value = col.value(item);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        col.label,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.grey600,
-                        ),
-                      ),
-                      Flexible(
-                        child: col.isWidget
-                            ? (value is Widget ? value : const Text('-'))
-                            : Text(
-                                value?.toString() ?? '-',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.industrialText,
-                                ),
-                                textAlign: TextAlign.right,
-                              ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+    return InkWell(
+      onTap: widget.enableCustomWindow ? () => _openWindow(item) : null,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 4,
+              offset: Offset(0, 2),
             ),
-          ),
-          // Détails additionnels
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: columns
-                  .where((col) => !col.hideOnMobile)
-                  .skip(2)
-                  .map((col) {
-                final value = col.value(item);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        col.label,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.grey600,
-                        ),
-                      ),
-                      Flexible(
-                        child: col.isWidget
-                            ? (value is Widget ? value : const Text('-'))
-                            : Text(
-                                value?.toString() ?? '-',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.industrialText,
-                                ),
-                                textAlign: TextAlign.right,
-                              ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          // Actions
-          if (showActions)
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // En-tête avec infos principales
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                children: [
-                  if (showEditAction)
-                    IconButton(
-                      onPressed: () => onEdit(item),
-                      icon: Icon(editIcon, color: actionTextColor),
-                      tooltip: editLabel,
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: widget.columns
+                    .where((col) => !col.hideOnMobile)
+                    .take(2)
+                    .map((col) {
+                  final value = col.value(item);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          col.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.grey600,
+                          ),
+                        ),
+                        Flexible(
+                          child: col.isWidget
+                              ? (value is Widget ? value : const Text('-'))
+                              : Text(
+                                  value?.toString() ?? '-',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.industrialText,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                        ),
+                      ],
                     ),
-                  if (showDeleteAction)
-                    IconButton(
-                      onPressed: () => onDelete(item),
-                      icon: Icon(deleteIcon, color: AppColors.errorText),
-                      tooltip: deleteLabel,
-                    ),
-                ],
+                  );
+                }).toList(),
               ),
             ),
-        ],
+            // Détails additionnels
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: widget.columns
+                    .where((col) => !col.hideOnMobile)
+                    .skip(2)
+                    .map((col) {
+                  final value = col.value(item);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          col.label,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.grey600,
+                          ),
+                        ),
+                        Flexible(
+                          child: col.isWidget
+                              ? (value is Widget ? value : const Text('-'))
+                              : Text(
+                                  value?.toString() ?? '-',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.industrialText,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            // Actions
+            if (widget.showActions)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  children: [
+                    if (widget.showEditAction)
+                      IconButton(
+                        onPressed: () => widget.onEdit(item),
+                        icon: Icon(widget.editIcon, color: widget.actionTextColor),
+                        tooltip: widget.editLabel,
+                      ),
+                    if (widget.showDeleteAction)
+                      IconButton(
+                        onPressed: () => widget.onDelete(item),
+                        icon: Icon(widget.deleteIcon, color: AppColors.errorText),
+                        tooltip: widget.deleteLabel,
+                      ),
+                    if (widget.enableCustomWindow && widget.showCustomActionButton)
+                      IconButton(
+                        onPressed: () => _openWindow(item),
+                        icon: Icon(widget.customActionIcon, color: widget.actionTextColor),
+                        tooltip: widget.customActionTooltip,
+                      ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  /// Construire la vue desktop (tableau)
   Widget _buildDesktopTable() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,8 +410,7 @@ class GenericDataTable<T> extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius:
-                BorderRadius.circular(AppTheme.borderRadiusMedium),
+            borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
             boxShadow: const [
               BoxShadow(
                 color: AppColors.shadowColor,
@@ -347,9 +423,9 @@ class GenericDataTable<T> extends StatelessWidget {
             builder: (context, constraints) {
               // Calculer la largeur de chaque colonne
               const horizontalPadding = 0.0;
-              
+
               final availableWidth = constraints.maxWidth - horizontalPadding;
-              final numColumns = columns.length + (showActions ? 1 : 0);
+              final numColumns = widget.columns.length + (widget.showActions ? 1 : 0);
               final columnWidth = availableWidth / numColumns;
 
               return SingleChildScrollView(
@@ -361,7 +437,7 @@ class GenericDataTable<T> extends StatelessWidget {
                       color: AppColors.industrialBackground,
                       child: Row(
                         children: [
-                          ...columns.map((col) {
+                          ...widget.columns.map((col) {
                             return SizedBox(
                               width: columnWidth,
                               child: Padding(
@@ -382,7 +458,7 @@ class GenericDataTable<T> extends StatelessWidget {
                               ),
                             );
                           }),
-                          if (showActions)
+                          if (widget.showActions)
                             SizedBox(
                               width: columnWidth,
                               child: const Padding(
@@ -404,85 +480,101 @@ class GenericDataTable<T> extends StatelessWidget {
                       ),
                     ),
                     // Rows
-                    ...items.map((item) {
-                      return Container(
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: AppColors.grey200,
-                              width: 1,
+                    ...widget.items.map((item) {
+                      return InkWell(
+                        onTap: widget.enableCustomWindow ? () => _openWindow(item) : null,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: AppColors.grey200,
+                                width: 1,
+                              ),
                             ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            ...columns.map((col) {
-                              final value = col.value(item);
-                              return SizedBox(
-                                width: columnWidth,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 12,
-                                  ),
-                                  child: col.isWidget
-                                      ? (value is Widget
-                                          ? value
-                                          : const Text('-'))
-                                      : Text(
-                                          value?.toString() ?? '-',
-                                          style: const TextStyle(
-                                            color: AppColors.industrialText,
-                                            fontSize: 12,
+                          child: Row(
+                            children: [
+                              ...widget.columns.map((col) {
+                                final value = col.value(item);
+                                return SizedBox(
+                                  width: columnWidth,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 12,
+                                    ),
+                                    child: col.isWidget
+                                        ? (value is Widget
+                                            ? value
+                                            : const Text('-'))
+                                        : Text(
+                                            value?.toString() ?? '-',
+                                            style: const TextStyle(
+                                              color: AppColors.industrialText,
+                                              fontSize: 12,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                  ),
+                                );
+                              }),
+                              if (widget.showActions)
+                                SizedBox(
+                                  width: columnWidth,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (widget.showEditAction)
+                                          IconButton(
+                                            onPressed: () => widget.onEdit(item),
+                                            icon: Icon(
+                                              widget.editIcon,
+                                              color: widget.actionTextColor,
+                                            ),
+                                            tooltip: widget.editLabel,
+                                            constraints: const BoxConstraints(
+                                              minWidth: 36,
+                                              minHeight: 36,
+                                            ),
+                                          ),
+                                        if (widget.showDeleteAction)
+                                          IconButton(
+                                            onPressed: () => widget.onDelete(item),
+                                            icon: Icon(
+                                              widget.deleteIcon,
+                                              color: AppColors.errorText,
+                                            ),
+                                            tooltip: widget.deleteLabel,
+                                            constraints: const BoxConstraints(
+                                              minWidth: 36,
+                                              minHeight: 36,
+                                            ),
+                                          ),
+                                        if (widget.showCustomActionButton)
+                                          IconButton(
+                                            onPressed: () => _openWindow(item),
+                                            icon: Icon(
+                                              widget.customActionIcon,
+                                              color: widget.actionTextColor,
+                                            ),
+                                            tooltip: widget.customActionTooltip,
+                                            constraints: const BoxConstraints(
+                                              minWidth: 36,
+                                              minHeight: 36,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              );
-                            }),
-                            if (showActions)
-                              SizedBox(
-                                width: columnWidth,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 8,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (showEditAction)
-                                        IconButton(
-                                          onPressed: () => onEdit(item),
-                                          icon: Icon(
-                                            editIcon,
-                                            color: actionTextColor,
-                                          ),
-                                          tooltip: editLabel,
-                                          constraints: const BoxConstraints(
-                                            minWidth: 36,
-                                            minHeight: 36,
-                                          ),
-                                        ),
-                                      if (showDeleteAction)
-                                        IconButton(
-                                          onPressed: () => onDelete(item),
-                                          icon: Icon(
-                                            deleteIcon,
-                                            color: AppColors.errorText,
-                                          ),
-                                          tooltip: deleteLabel,
-                                          constraints: const BoxConstraints(
-                                            minWidth: 36,
-                                            minHeight: 36,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     }),
@@ -493,7 +585,7 @@ class GenericDataTable<T> extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        if (showPagination) _buildPagination(),
+        if (widget.showPagination) _buildPagination(),
       ],
     );
   }
@@ -516,27 +608,77 @@ class GenericDataTable<T> extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: $total éléments',
+            'Total: ${widget.total} éléments',
             style: const TextStyle(fontWeight: FontWeight.w500),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                onPressed: onPreviousPage,
+                onPressed: widget.onPreviousPage,
                 icon: const Icon(Icons.chevron_left),
               ),
               Text(
-                'Page $currentPage / $totalPages',
+                'Page ${widget.currentPage} / ${widget.totalPages}',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               IconButton(
-                onPressed: onNextPage,
+                onPressed: widget.onNextPage,
                 icon: const Icon(Icons.chevron_right),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSlidingPanel(BuildContext context, double width) {
+    // Panel content is provided by the parent via customDrawerBuilder when possible
+    final content = (_selectedItem != null && widget.customDrawerBuilder != null)
+        ? widget.customDrawerBuilder!(context, _selectedItem as T, _closeWindow)
+        : (_selectedItem != null
+            ? _defaultDrawerContent(context)
+            : const SizedBox.shrink());
+
+    return Material(
+      elevation: 8,
+      color: AppColors.white,
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.grey200)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _selectedItem != null ? 'Détails - ' : '',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+                IconButton(
+                  onPressed: _closeWindow,
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+          ),
+          // Content
+          Expanded(child: content),
+        ],
+      ),
+    );
+  }
+
+  Widget _defaultDrawerContent(BuildContext context) {
+    return Center(
+      child: Text(
+        'Aucun composant de fenêtre fourni. Passez `customDrawerBuilder` pour afficher le contenu.',
+        style: const TextStyle(color: AppColors.grey600),
       ),
     );
   }
