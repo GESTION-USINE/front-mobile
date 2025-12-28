@@ -120,7 +120,7 @@ class _ClientsContentState extends State<ClientsContent> {
         SizedBox(
           width: 180,
           child: DropdownButtonFormField<String?>(
-            initialValue: viewModel.typeFilter,
+            value: viewModel.typeFilter,
             isExpanded: true,
             style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
             dropdownColor: AppColors.white,
@@ -155,7 +155,7 @@ class _ClientsContentState extends State<ClientsContent> {
         SizedBox(
           width: 125,
           child: DropdownButtonFormField<bool?>(
-            initialValue: viewModel.canPayByCheckFilter,
+            value: viewModel.canPayByCheckFilter,
             isExpanded: true,
             style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
             dropdownColor: AppColors.white,
@@ -191,7 +191,7 @@ class _ClientsContentState extends State<ClientsContent> {
           SizedBox(
           width: 125,
           child: DropdownButtonFormField<bool?>(
-            initialValue: viewModel.isActiveFilter,
+            value: viewModel.isActiveFilter,
             isExpanded: true,
             style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
             dropdownColor: AppColors.white,

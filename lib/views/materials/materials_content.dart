@@ -120,7 +120,7 @@ class _MaterialsContentState extends State<MaterialsContent> {
           width: 220,
           child: DropdownButtonFormField<String?>(
             key: ValueKey(_selectedCategory),
-            initialValue: _selectedCategory ?? '',
+            value: _selectedCategory ?? '',
             isExpanded: true,
             style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
             dropdownColor: AppColors.white,
@@ -165,7 +165,7 @@ class _MaterialsContentState extends State<MaterialsContent> {
           width: 125,
           child: DropdownButtonFormField<bool?>(
             key: ValueKey(_selectedIsActive),
-            initialValue: _selectedIsActive,
+            value: _selectedIsActive,
             isExpanded: true,
             style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
             dropdownColor: AppColors.white,
