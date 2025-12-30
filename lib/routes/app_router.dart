@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_template/views/maintenance/maintenance_content.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/user_provider.dart';
 import '../models/entities/client.dart';
 import '../models/entities/material.dart' as material_entity;
 import '../models/entities/weighing_slip.dart';
+import '../models/entities/maintenance_expense.dart';
+import '../models/entities/worker.dart';
 import '../views/auth/login_view.dart';
 import '../views/layouts/app_shell.dart';
 import '../views/home/dashboard_content.dart';
@@ -24,6 +27,11 @@ import '../views/materials/edit_material_view.dart';
 import '../views/weighing_slips/weighing_slips_content.dart';
 import '../views/weighing_slips/edit_weighing_slip_view.dart';
 import '../views/weighing_slips/create_weighing_slip_view.dart';
+import '../views/maintenance/edit_maintenance_view.dart';
+import '../views/maintenance/create_maintenance_view.dart';
+import '../views/workers/workers_content.dart';
+import '../views/workers/create_worker_view.dart';
+import '../views/workers/edit_worker_view.dart';
 
 class AppRouter {
   AppRouter._();
@@ -48,6 +56,12 @@ class AppRouter {
   static const String productDetail = '/products/:id';
   static const String invoices = '/invoices';
   static const String reports = '/reports';
+  static const String maintenance = '/maintenance';
+  static const String maintenanceCreate = '/maintenance/create';
+  static const String maintenanceEdit = '/maintenance/:id/edit';
+  static const String workers = '/workers';
+  static const String workersCreate = '/workers/create';
+  static const String workersEdit = '/workers/:id/edit';
   static const String traceability = '/traceability';
   static const String settings = '/settings';
   static const String slips = '/weighing-slips';
@@ -132,6 +146,13 @@ class AppRouter {
           builder: (context, state) => const CreateMaterialView(),
         ),
 
+        // Route de création de frais de maintenance (hors du shell - fullscreen)
+        GoRoute(
+          path: maintenanceCreate,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => const CreateMaintenanceView(),
+        ),
+
         // Route de modification matériau (hors du shell - fullscreen, seulement pour non-employés)
         GoRoute(
           path: materialsEdit,
@@ -150,6 +171,37 @@ class AppRouter {
               materialId: int.parse(id),
               initialMaterial: material,
             );
+          },
+        ),
+
+        // Route de modification de frais de maintenance (hors du shell - fullscreen)
+        GoRoute(
+          path: maintenanceEdit,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            final expense = state.extra as MaintenanceExpense;
+            return EditMaintenanceView(
+              expenseId: int.parse(id),
+              initialExpense: expense,
+            );
+          },
+        ),
+
+        // Route de création de travailleur (hors du shell - fullscreen)
+        GoRoute(
+          path: workersCreate,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => const CreateWorkerView(),
+        ),
+
+        // Route de modification de travailleur (hors du shell - fullscreen)
+        GoRoute(
+          path: workersEdit,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final worker = state.extra as Worker;
+            return EditWorkerView(initialWorker: worker);
           },
         ),
 
@@ -214,6 +266,21 @@ class AppRouter {
               path: slips,
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: WeighingSlipsContent(),
+              ),
+            ),
+           
+           GoRoute(
+            path: maintenance,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: MaintenanceContent(),
+            ),)
+            ,
+
+            // Travailleurs
+            GoRoute(
+              path: workers,
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: WorkersContent(),
               ),
             ),
 

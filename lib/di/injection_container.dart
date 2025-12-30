@@ -11,11 +11,15 @@ import '../services/product_service.dart';
 import '../services/client_service.dart';
 import '../services/material_service.dart';
 import '../services/weighing_slip_service.dart';
+import '../services/maintenance_service.dart';
+import '../services/worker_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/product_viewmodel.dart';
 import '../viewmodels/client_viewmodel.dart';
 import '../viewmodels/material_viewmodel.dart';
 import '../viewmodels/weighing_slip_viewmodel.dart';
+import '../viewmodels/maintenance_viewmodel.dart';
+import '../viewmodels/worker_viewmodel.dart';
 
 final getIt = GetIt.instance;
 
@@ -52,6 +56,14 @@ Future<void> initDependencies() async {
     () => WeighingSlipService(getIt<ApiClient>()),
   );
 
+  getIt.registerLazySingleton<MaintenanceService>(
+    () => MaintenanceService(getIt<ApiClient>()),
+  );
+
+  getIt.registerLazySingleton<WorkerService>(
+    () => WorkerService(getIt<ApiClient>()),
+  );
+
   // ==================== ViewModels ====================
   // Factory car nouvelle instance par écran
   getIt.registerFactory<AuthViewModel>(
@@ -77,6 +89,14 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory<WeighingSlipViewModel>(
     () => WeighingSlipViewModel(getIt<WeighingSlipService>()),
+  );
+
+  getIt.registerFactory<MaintenanceViewModel>(
+    () => MaintenanceViewModel(getIt<MaintenanceService>()),
+  );
+
+  getIt.registerFactory<WorkerViewModel>(
+    () => WorkerViewModel(getIt<WorkerService>()),
   );
 
   // ==================== Initialisation ====================

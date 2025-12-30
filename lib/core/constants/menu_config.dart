@@ -60,6 +60,21 @@ class MenuConfig {
           route: '/users',
           allowedRoles: ['super_admin', 'admin'],
         ),
+        const MenuItem(
+          id: 'maintenance',
+          title: 'Frais',
+          icon: Icons.build_outlined,
+          route: '/maintenance',
+          allowedRoles: ['super_admin', 'associe'],
+        ),
+
+         const MenuItem(
+          id: 'travailleurs',
+          title: 'Travailleurs',
+          icon: Icons.work_outline,
+          route: '/workers',
+          allowedRoles: ['super_admin', 'associe'],
+        ),
 
         // Gestion des factures
         const MenuItem(
