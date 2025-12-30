@@ -52,12 +52,8 @@ class WorkerViewModel extends BaseViewModel {
         pageSize: _pageSize,
       );
     });
-
     if (result != null) {
-      _workers = result.items.map((item) {
-        if (item is Worker) return item;
-        return Worker.fromJson(item as Map<String, dynamic>);
-      }).toList();
+      _workers = result.items.cast<Worker>().toList();
       _total = result.meta.total;
       notifyListeners();
     }

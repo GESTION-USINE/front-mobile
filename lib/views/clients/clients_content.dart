@@ -1,7 +1,4 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_mvvm_template/models/entities/material_price.dart';
 import 'package:flutter_mvvm_template/viewmodels/material_viewmodel.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -30,11 +27,8 @@ class _ClientsContentState extends State<ClientsContent> {
 
   // Drawer state
   bool _isDrawerOpen = false;
-  dynamic _selectedClient;
-
   // Controllers pour les prix par matériau
   final Map<int, TextEditingController> _priceControllers = {};
-  bool _saving = false;
 
   @override
   void initState() {
@@ -57,7 +51,6 @@ class _ClientsContentState extends State<ClientsContent> {
 
   void _openPricesForClient(dynamic client) {
     setState(() {
-      _selectedClient = client;
       _isDrawerOpen = true;
       // Clear existing controllers
       for (final c in _priceControllers.values) {

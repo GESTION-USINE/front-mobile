@@ -9,6 +9,7 @@ import '../../viewmodels/weighing_slip_viewmodel.dart';
 import '../widgets/generic_data_table.dart';
 import '../../providers/user_provider.dart';
 import '../../routes/app_router.dart';
+import '../../models/entities/weighing_slip.dart';
 
 class WeighingSlipsContent extends StatefulWidget {
   const WeighingSlipsContent({super.key});
@@ -40,6 +41,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
     final user = Provider.of<UserProvider>(context, listen: false).currentUser;
     final userRole = user == null ? null : user.role.toLowerCase();
     final bool isEmployee = userRole == 'employe';
+    
     return ChangeNotifierProvider.value(
       value: _viewModel,
       child: Consumer<WeighingSlipViewModel>(
@@ -53,7 +55,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
                 const Text('Suivi des opérations de pesée', style: AppTheme.subtitleMedium),
                 const SizedBox(height: 10),
 
-                // Bouton Nouveau bon (comme pour les clients)
+                // Bouton Nouveau bon
                 ElevatedButton.icon(
                   onPressed: () => context.go(AppRouter.slipsCreate),
                   style: AppTheme.industrialPrimaryButton,
@@ -185,22 +187,22 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
   }
 
   Widget _buildTable(WeighingSlipViewModel vm, bool isEmployee) {
-    final columns = <DataTableColumn<dynamic>>[
-      DataTableColumn<dynamic>(label: 'N° Bon', value: (e) => e?.slipNumber ?? '-'),
-      DataTableColumn<dynamic>(label: 'Client', value: (e) => e?.clientName ?? e?.clientId.toString()),
-      DataTableColumn<dynamic>(label: 'Matériau', value: (e) => e?.materialName ?? e?.materialId.toString()),
-      DataTableColumn<dynamic>(label: 'Tonnes', value: (e) => (e?.weightTons ?? 0).toStringAsFixed(1)),
-      DataTableColumn<dynamic>(label: 'Montant', value: (e) => (e?.totalAmount ?? 0).toStringAsFixed(2)),
-      DataTableColumn<dynamic>(label: 'Payé', value: (e) => (e?.totalPaid ?? 0).toStringAsFixed(2)),
-      DataTableColumn<dynamic>(label: 'Reste', value: (e) => (e?.remainingCredit ?? 0).toStringAsFixed(2)),
-      DataTableColumn<dynamic>(label: 'Crédit', value: (e) => (e?.isFullyPaid ?? false) ? 'Non' : 'Oui'),
-      DataTableColumn<dynamic>(label: 'Date', value: (e) => e?.createdAt.toIso8601String().substring(0,10)),
+    final columns = <DataTableColumn<WeighingSlip>>[
+      DataTableColumn<WeighingSlip>(label: 'N° Bon', value: (e) => e.slipNumber ?? '-'),
+      DataTableColumn<WeighingSlip>(label: 'Client', value: (e) => e.clientName ?? e.clientId.toString()),
+      DataTableColumn<WeighingSlip>(label: 'Matériau', value: (e) => e.materialName ?? e.materialId.toString()),
+      DataTableColumn<WeighingSlip>(label: 'Tonnes', value: (e) => e.weightTons.toStringAsFixed(1)),
+      DataTableColumn<WeighingSlip>(label: 'Montant', value: (e) => e.totalAmount.toStringAsFixed(2)),
+      DataTableColumn<WeighingSlip>(label: 'Payé', value: (e) => (e.totalPaid ?? 0).toStringAsFixed(2), hideOnMobile: true),
+      DataTableColumn<WeighingSlip>(label: 'Reste', value: (e) => (e.remainingCredit ?? 0).toStringAsFixed(2), hideOnMobile: true),
+      DataTableColumn<WeighingSlip>(label: 'Statut', value: (e) => e.isFullyPaid ? 'Payé' : 'Crédit'),
+      DataTableColumn<WeighingSlip>(label: 'Date', value: (e) => e.createdAt.toIso8601String().substring(0,10)),
     ];
 
-    return GenericDataTable<dynamic>(
+    return GenericDataTable<WeighingSlip>(
       items: vm.items,
       columns: columns,
-      showActions: !isEmployee,
+      showActions: true,
       showEditAction: !isEmployee,
       showDeleteAction: !isEmployee,
       onEdit: (e) {
@@ -223,7 +225,12 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       onPreviousPage: vm.hasPreviousPage ? vm.previousPage : null,
       onNextPage: vm.hasNextPage ? vm.nextPage : null,
       enableCustomWindow: false,
-      showCustomActionButton: false,
+      showCustomActionButton: true,
+      customActionIcon: Icons.info_outline,
+      customActionTooltip: 'Voir les détails',
+      onCustomAction: (e) {
+        context.go('/weighing-slips/${e.id}', extra: e);
+      },
     );
   }
 }

@@ -116,6 +116,9 @@ class GenericDataTable<T> extends StatefulWidget {
   final IconData customActionIcon;
   final String customActionTooltip;
 
+  /// Callback pour le bouton d'action personnalisée
+  final Function(T)? onCustomAction;
+
   const GenericDataTable({
     super.key,
     required this.items,
@@ -149,6 +152,7 @@ class GenericDataTable<T> extends StatefulWidget {
     this.showCustomActionButton = true,
     this.customActionIcon = Icons.local_offer,
     this.customActionTooltip = 'Prix matériaux',
+    this.onCustomAction,
   });
 
   @override
@@ -247,23 +251,28 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
     // Si la fonctionnalité de fenêtre est désactivée, retourner juste le contenu
     if (!widget.enableCustomWindow) return mainContent;
 
-    // Sinon, envelopper dans un Stack pour afficher la fenêtre glissante
-    final screenWidth = MediaQuery.of(context).size.width;
-    final panelWidth = (screenWidth * 0.6).clamp(320.0, 800.0);
-
+    // Sinon, envelopper dans un Stack pour afficher la fenêtre plein écran
+    final screenSize = MediaQuery.of(context).size;
+    
     return Stack(
       children: [
         mainContent,
-        // Sliding panel
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          right: _isOpen ? 0 : -panelWidth,
-          top: 0,
-          bottom: 0,
-          width: panelWidth,
-          child: _buildSlidingPanel(context, panelWidth),
-        ),
+        // Full screen overlay panel
+        if (_isOpen)
+          Positioned.fill(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 300),
+              opacity: _isOpen ? 1.0 : 0.0,
+              child: Material(
+                color: AppColors.white,
+                child: SizedBox(
+                  width: screenSize.width,
+                  height: screenSize.height,
+                  child: _buildSlidingPanel(context),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -372,27 +381,49 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
             // Actions
             if (widget.showActions)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (widget.showEditAction)
-                      IconButton(
-                        onPressed: () => widget.onEdit(item),
-                        icon: Icon(widget.editIcon, color: widget.actionTextColor),
-                        tooltip: widget.editLabel,
-                      ),
-                    if (widget.showDeleteAction)
-                      IconButton(
-                        onPressed: () => widget.onDelete(item),
-                        icon: Icon(widget.deleteIcon, color: AppColors.errorText),
-                        tooltip: widget.deleteLabel,
-                      ),
-                    if (widget.enableCustomWindow && widget.showCustomActionButton)
-                      IconButton(
-                        onPressed: () => _openWindow(item),
-                        icon: Icon(widget.customActionIcon, color: widget.actionTextColor),
-                        tooltip: widget.customActionTooltip,
-                      ),
+                    Row(
+                      children: [
+                        if (widget.showEditAction)
+                          IconButton(
+                            onPressed: () => widget.onEdit(item),
+                            icon: Icon(widget.editIcon, color: widget.actionTextColor),
+                            tooltip: widget.editLabel,
+                          ),
+                        if (widget.showDeleteAction)
+                          IconButton(
+                            onPressed: () => widget.onDelete(item),
+                            icon: Icon(widget.deleteIcon, color: AppColors.errorText),
+                            tooltip: widget.deleteLabel,
+                          ),
+                      ],
+                    ),
+                    if (widget.showCustomActionButton)
+                      if (widget.enableCustomWindow)
+                        ElevatedButton.icon(
+                          onPressed: () => _openWindow(item),
+                          icon: Icon(widget.customActionIcon, size: 18),
+                          label: const Text('Détails'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.industrialPrimary,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        )
+                      else if (widget.onCustomAction != null)
+                        ElevatedButton.icon(
+                          onPressed: () => widget.onCustomAction!(item),
+                          icon: Icon(widget.customActionIcon, size: 18),
+                          label: const Text('Détails'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.industrialPrimary,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
                   ],
                 ),
               ),
@@ -423,10 +454,19 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
             builder: (context, constraints) {
               // Calculer la largeur de chaque colonne
               const horizontalPadding = 0.0;
+              
+              // Compter le nombre de boutons d'action visibles
+              int actionButtonCount = 0;
+              if (widget.showEditAction) actionButtonCount++;
+              if (widget.showDeleteAction) actionButtonCount++;
+              if (widget.enableCustomWindow && widget.showCustomActionButton) actionButtonCount++;
+              
+              // Largeur fixe pour la colonne actions basée sur le nombre de boutons
+              final actionColumnWidth = widget.showActions ? (actionButtonCount * 48.0) : 0.0;
 
-              final availableWidth = constraints.maxWidth - horizontalPadding;
-              final numColumns = widget.columns.length + (widget.showActions ? 1 : 0);
-              final columnWidth = availableWidth / numColumns;
+              final availableWidth = constraints.maxWidth - horizontalPadding - actionColumnWidth;
+              final numDataColumns = widget.columns.where((col) => !col.hideOnMobile).length;
+              final columnWidth = availableWidth / numDataColumns;
 
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -437,7 +477,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                       color: AppColors.industrialBackground,
                       child: Row(
                         children: [
-                          ...widget.columns.map((col) {
+                          ...widget.columns.where((col) => !col.hideOnMobile).map((col) {
                             return SizedBox(
                               width: columnWidth,
                               child: Padding(
@@ -460,7 +500,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                           }),
                           if (widget.showActions)
                             SizedBox(
-                              width: columnWidth,
+                              width: actionColumnWidth,
                               child: const Padding(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -494,7 +534,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                           ),
                           child: Row(
                             children: [
-                              ...widget.columns.map((col) {
+                              ...widget.columns.where((col) => !col.hideOnMobile).map((col) {
                                 final value = col.value(item);
                                 return SizedBox(
                                   width: columnWidth,
@@ -521,26 +561,31 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                               }),
                               if (widget.showActions)
                                 SizedBox(
-                                  width: columnWidth,
+                                  width: actionColumnWidth,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
+                                      horizontal: 4,
                                       vertical: 8,
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
                                         if (widget.showEditAction)
                                           IconButton(
                                             onPressed: () => widget.onEdit(item),
                                             icon: Icon(
                                               widget.editIcon,
                                               color: widget.actionTextColor,
+                                              size: 20,
                                             ),
                                             tooltip: widget.editLabel,
+                                            padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(
-                                              minWidth: 36,
-                                              minHeight: 36,
+                                              minWidth: 20,
+                                              minHeight: 40,
                                             ),
                                           ),
                                         if (widget.showDeleteAction)
@@ -549,27 +594,48 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                             icon: Icon(
                                               widget.deleteIcon,
                                               color: AppColors.errorText,
+                                              size: 20,
                                             ),
                                             tooltip: widget.deleteLabel,
+                                            padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(
-                                              minWidth: 36,
-                                              minHeight: 36,
+                                              minWidth: 20,
+                                              minHeight: 40,
                                             ),
                                           ),
                                         if (widget.showCustomActionButton)
-                                          IconButton(
-                                            onPressed: () => _openWindow(item),
-                                            icon: Icon(
-                                              widget.customActionIcon,
-                                              color: widget.actionTextColor,
+                                          if (widget.enableCustomWindow)
+                                            IconButton(
+                                              onPressed: () => _openWindow(item),
+                                              icon: Icon(
+                                                widget.customActionIcon,
+                                                color: widget.actionTextColor,
+                                                size: 20,
+                                              ),
+                                              tooltip: widget.customActionTooltip,
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 20,
+                                                minHeight: 40,
+                                              ),
+                                            )
+                                          else if (widget.onCustomAction != null)
+                                            IconButton(
+                                              onPressed: () => widget.onCustomAction!(item),
+                                              icon: Icon(
+                                                widget.customActionIcon,
+                                                color: widget.actionTextColor,
+                                                size: 20,
+                                              ),
+                                              tooltip: widget.customActionTooltip,
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 20,
+                                                minHeight: 40,
+                                              ),
                                             ),
-                                            tooltip: widget.customActionTooltip,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 36,
-                                              minHeight: 36,
-                                            ),
-                                          ),
                                       ],
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -633,7 +699,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
     );
   }
 
-  Widget _buildSlidingPanel(BuildContext context, double width) {
+  Widget _buildSlidingPanel(BuildContext context) {
     // Panel content is provided by the parent via customDrawerBuilder when possible
     final content = (_selectedItem != null && widget.customDrawerBuilder != null)
         ? widget.customDrawerBuilder!(context, _selectedItem as T, _closeWindow)
@@ -641,37 +707,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
             ? _defaultDrawerContent(context)
             : const SizedBox.shrink());
 
-    return Material(
-      elevation: 8,
-      color: AppColors.white,
-      child: Column(
-        children: [
-          // Header
-          // Container(
-          //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          //   decoration: const BoxDecoration(
-          //     border: Border(bottom: BorderSide(color: AppColors.grey200)),
-          //   ),
-          //   child: Row(
-          //     children: [
-          //       Expanded(
-          //         child: Text(
-          //           _selectedItem != null ? 'Détails - ' : '',
-          //           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          //         ),
-          //       ),
-          //       IconButton(
-          //         onPressed: _closeWindow,
-          //         icon: const Icon(Icons.close),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-          // Content
-          Expanded(child: content),
-        ],
-      ),
-    );
+    return content;
   }
 
   Widget _defaultDrawerContent(BuildContext context) {

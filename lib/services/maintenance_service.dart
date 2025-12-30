@@ -49,7 +49,7 @@ class MaintenanceService {
        
         
         return result;
-      } catch (e, stackTrace) {
+      } catch (e) {
         rethrow;
       }
     } on DioException {

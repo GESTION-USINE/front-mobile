@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../routes/app_router.dart';
 import '../../di/injection_container.dart';
 import '../../viewmodels/maintenance_viewmodel.dart';
 import '../widgets/generic_data_table.dart';

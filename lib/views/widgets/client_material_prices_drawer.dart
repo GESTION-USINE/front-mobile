@@ -178,27 +178,21 @@ class _ClientMaterialPricesDrawerState
                         emptyMessage: 'Aucun matériau disponible',
                         isLoading: mvm.isLoading,
                         hasError: false,
-                        onEdit: (MaterialPriceItem item) async {
+                        onEdit: (MaterialPriceItem item) {
                         
                           final currentValue = _priceControllers[item.materialId]?.text.trim();
                             final customPrice = currentValue?.isNotEmpty == true 
                                 ? double.tryParse(currentValue!.replaceAll(',', '.'))
                                 : null;
                             if(customPrice != null) {
-                             bool success = await mvm.createClientMaterialPrice(
+                             mvm.createClientMaterialPrice(
                                                         clientId: item.clientId,
                                                         materialId: item.materialId,
-                                                        customPricePerTon: customPrice!,
+                                                        customPricePerTon: customPrice,
                               );  
-                              if(success){
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Prix spécial enregistré')),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Erreur lors de l'enregistrement du prix spécial")),
-                                );
-                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Prix spécial enregistré')),
+                              );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Veuillez entrer un prix valide')),
@@ -206,20 +200,14 @@ class _ClientMaterialPricesDrawerState
                             }
                                                     
                         },
-                        onDelete: (MaterialPriceItem item) async  {
+                        onDelete: (MaterialPriceItem item) {
                           if(item.materialPriceId != null){
-                      bool  success =  await  mvm.deleteClientMaterialPrice(priceId: item.materialPriceId!, clientId: item.clientId);
-                          if(success){
+                      mvm.deleteClientMaterialPrice(priceId: item.materialPriceId!, clientId: item.clientId);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                    SnackBar(content: const Text('Prix spécial supprimé'),backgroundColor: AppColors.success,),
                                 );
                                  _priceControllers[item.materialId]?.clear();
                                   setState(() {});
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Erreur lors de la suppression du prix spécial"),backgroundColor: AppColors.lightError,),
-                                );
-                              }
                           }
                         },
                           showCustomActionButton: false,

@@ -25,6 +25,7 @@ import '../views/materials/materials_content.dart';
 import '../views/materials/create_material_view.dart';
 import '../views/materials/edit_material_view.dart';
 import '../views/weighing_slips/weighing_slips_content.dart';
+import '../views/weighing_slips/weighing_slip_detail_view.dart';
 import '../views/weighing_slips/edit_weighing_slip_view.dart';
 import '../views/weighing_slips/create_weighing_slip_view.dart';
 import '../views/maintenance/edit_maintenance_view.dart';
@@ -66,6 +67,7 @@ class AppRouter {
   static const String settings = '/settings';
   static const String slips = '/weighing-slips';
   static const String slipsCreate = '/weighing-slips/create';
+  static const String slipsDetail = '/weighing-slips/:id';
   static const String slipsEdit = '/weighing-slips/:id/edit';
 
   /// Crée le router avec redirection basée sur l'authentification
@@ -116,6 +118,16 @@ class AppRouter {
           path: slipsCreate,
           parentNavigatorKey: _rootNavigatorKey,
           builder: (context, state) => const CreateWeighingSlipView(),
+        ),
+
+        // Route de détails de bon de pesée (hors du shell - fullscreen)
+        GoRoute(
+          path: slipsDetail,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final slip = state.extra as WeighingSlip;
+            return WeighingSlipDetailView(slip: slip);
+          },
         ),
 
         // Route de modification client (hors du shell - fullscreen)

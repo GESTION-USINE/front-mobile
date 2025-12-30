@@ -61,10 +61,7 @@ class MaintenanceViewModel extends BaseViewModel {
 
 
       if (result != null) {
-      _maintenanceExpenses = result.items.map((item) {
-        if (item is MaintenanceExpense) return item;
-        return MaintenanceExpense.fromJson(item as Map<String, dynamic>);
-      }).toList();
+      _maintenanceExpenses = result.items.cast<MaintenanceExpense>().toList();
 
     
         _total = result.meta.total;

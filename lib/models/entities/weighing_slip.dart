@@ -54,6 +54,7 @@ class WeighingSlip {
   }
 
   Map<String, dynamic> toJson() {
+    print(  'WeighingSlip.fromJson: $toJson');
     return {
       'id': id,
       'slip_number': slipNumber,
