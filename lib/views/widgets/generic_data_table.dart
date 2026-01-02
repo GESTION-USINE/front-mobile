@@ -457,12 +457,12 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
               
               // Compter le nombre de boutons d'action visibles
               int actionButtonCount = 0;
+              if (widget.showCustomActionButton) actionButtonCount++;
               if (widget.showEditAction) actionButtonCount++;
               if (widget.showDeleteAction) actionButtonCount++;
-              if (widget.enableCustomWindow && widget.showCustomActionButton) actionButtonCount++;
               
               // Largeur fixe pour la colonne actions basée sur le nombre de boutons
-              final actionColumnWidth = widget.showActions ? (actionButtonCount * 48.0) : 0.0;
+              final actionColumnWidth = widget.showActions ? (actionButtonCount * 72.0) : 0.0;
 
               final availableWidth = constraints.maxWidth - horizontalPadding - actionColumnWidth;
               final numDataColumns = widget.columns.where((col) => !col.hideOnMobile).length;
@@ -564,7 +564,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                   width: actionColumnWidth,
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
+                                      horizontal: 0,
                                       vertical: 8,
                                     ),
                                     child: SingleChildScrollView(
@@ -573,36 +573,6 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                         mainAxisSize: MainAxisSize.min,
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
-                                        if (widget.showEditAction)
-                                          IconButton(
-                                            onPressed: () => widget.onEdit(item),
-                                            icon: Icon(
-                                              widget.editIcon,
-                                              color: widget.actionTextColor,
-                                              size: 20,
-                                            ),
-                                            tooltip: widget.editLabel,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 20,
-                                              minHeight: 40,
-                                            ),
-                                          ),
-                                        if (widget.showDeleteAction)
-                                          IconButton(
-                                            onPressed: () => widget.onDelete(item),
-                                            icon: Icon(
-                                              widget.deleteIcon,
-                                              color: AppColors.errorText,
-                                              size: 20,
-                                            ),
-                                            tooltip: widget.deleteLabel,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 20,
-                                              minHeight: 40,
-                                            ),
-                                          ),
                                         if (widget.showCustomActionButton)
                                           if (widget.enableCustomWindow)
                                             IconButton(
@@ -634,7 +604,38 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                                 minHeight: 40,
                                               ),
                                             ),
-                                      ],
+
+                                        if (widget.showEditAction)
+                                          IconButton(
+                                            onPressed: () => widget.onEdit(item),
+                                            icon: Icon(
+                                              widget.editIcon,
+                                              color: widget.actionTextColor,
+                                              size: 20,
+                                            ),
+                                            tooltip: widget.editLabel,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(
+                                              minWidth: 20,
+                                              minHeight: 40,
+                                            ),
+                                          ),
+                                        if (widget.showDeleteAction)
+                                          IconButton(
+                                            onPressed: () => widget.onDelete(item),
+                                            icon: Icon(
+                                              widget.deleteIcon,
+                                              color: AppColors.errorText,
+                                              size: 20,
+                                            ),
+                                            tooltip: widget.deleteLabel,
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(
+                                              minWidth: 20,
+                                              minHeight: 40,
+                                            ),
+                                          ),
+                                                                              ],
                                       ),
                                     ),
                                   ),

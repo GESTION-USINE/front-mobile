@@ -93,12 +93,13 @@ class WeighingSlipService {
     }
   }
 
-  Future<Response<dynamic>> printSlipPdf(int id) async {
+  Future<Response> printSlipPdf(int slipId) async {
     try {
-      return await _apiClient.get(
-        ApiEndpoints.weighingSlipPrintById(id),
+      final response = await _apiClient.downloadFile(
+        '/weighing-slips/$slipId/print',
       );
-    } on DioException {
+      return response;
+    } catch (e) {
       rethrow;
     }
   }

@@ -86,4 +86,18 @@ class ApiClient {
   }) async {
     return await _dio.delete(path, data: data, queryParameters: queryParameters);
   }
+
+  // Dans api_client.dart
+  Future<Response> downloadFile(String path, {Map<String, dynamic>? queryParameters}) async {
+    return await _dio.get(
+      path,
+      queryParameters: queryParameters,
+      options: Options(
+        responseType: ResponseType.bytes,
+        headers: {
+          'Accept': 'application/pdf',
+        },
+      ),
+    );
+  }
 }

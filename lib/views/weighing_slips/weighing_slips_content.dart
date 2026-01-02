@@ -194,9 +194,9 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       DataTableColumn<WeighingSlip>(label: 'Tonnes', value: (e) => e.weightTons.toStringAsFixed(1)),
       DataTableColumn<WeighingSlip>(label: 'Montant', value: (e) => e.totalAmount.toStringAsFixed(2)),
       DataTableColumn<WeighingSlip>(label: 'Payé', value: (e) => (e.totalPaid ?? 0).toStringAsFixed(2), hideOnMobile: true),
-      DataTableColumn<WeighingSlip>(label: 'Reste', value: (e) => (e.remainingCredit ?? 0).toStringAsFixed(2), hideOnMobile: true),
+      DataTableColumn<WeighingSlip>(label: 'Reste', value: (e) => (e.remainingCredit ?? 0).toStringAsFixed(2)),
       DataTableColumn<WeighingSlip>(label: 'Statut', value: (e) => e.isFullyPaid ? 'Payé' : 'Crédit'),
-      DataTableColumn<WeighingSlip>(label: 'Date', value: (e) => e.createdAt.toIso8601String().substring(0,10)),
+      DataTableColumn<WeighingSlip>(label: 'Date', value: (e) => e.createdAt.toIso8601String().substring(0,10),hideOnMobile: true),
     ];
 
     return GenericDataTable<WeighingSlip>(

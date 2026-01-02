@@ -125,8 +125,15 @@ class AppRouter {
           path: slipsDetail,
           parentNavigatorKey: _rootNavigatorKey,
           builder: (context, state) {
-            final slip = state.extra as WeighingSlip;
-            return WeighingSlipDetailView(slip: slip);
+            final id = state.pathParameters['id']!;
+            final slip = state.extra as WeighingSlip?;
+            final userRole = userProvider.currentUser?.role.toLowerCase() ?? '';
+            final isEmployee = userRole == 'employe';
+            return WeighingSlipDetailView(
+              slipId: int.parse(id),
+              initialSlip: slip,
+              isEmployee: isEmployee,
+            );
           },
         ),
 
