@@ -33,6 +33,7 @@ import '../views/maintenance/create_maintenance_view.dart';
 import '../views/workers/workers_content.dart';
 import '../views/workers/create_worker_view.dart';
 import '../views/workers/edit_worker_view.dart';
+import '../views/credits/credits_content.dart';
 
 class AppRouter {
   AppRouter._();
@@ -69,6 +70,7 @@ class AppRouter {
   static const String slipsCreate = '/weighing-slips/create';
   static const String slipsDetail = '/weighing-slips/:id';
   static const String slipsEdit = '/weighing-slips/:id/edit';
+  static const String credits = '/credits';
 
   /// Crée le router avec redirection basée sur l'authentification
   static GoRouter createRouter(UserProvider userProvider) {
@@ -285,6 +287,14 @@ class AppRouter {
               path: slips,
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: WeighingSlipsContent(),
+              ),
+            ),
+
+            // Crédits
+            GoRoute(
+              path: credits,
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: CreditsContent(),
               ),
             ),
            

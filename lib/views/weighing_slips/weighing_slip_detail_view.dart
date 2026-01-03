@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
-import 'dart:convert' show base64Encode, base64Decode;
+import 'dart:convert' show base64Decode;
 import 'package:open_file/open_file.dart';
 
 // Conditional imports - only one will be used at compile time

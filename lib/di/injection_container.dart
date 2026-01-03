@@ -13,6 +13,7 @@ import '../services/material_service.dart';
 import '../services/weighing_slip_service.dart';
 import '../services/maintenance_service.dart';
 import '../services/worker_service.dart';
+import '../services/payment_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/product_viewmodel.dart';
 import '../viewmodels/client_viewmodel.dart';
@@ -20,6 +21,7 @@ import '../viewmodels/material_viewmodel.dart';
 import '../viewmodels/weighing_slip_viewmodel.dart';
 import '../viewmodels/maintenance_viewmodel.dart';
 import '../viewmodels/worker_viewmodel.dart';
+import '../viewmodels/credit_payment_viewmodel.dart';
 
 final getIt = GetIt.instance;
 
@@ -64,6 +66,10 @@ Future<void> initDependencies() async {
     () => WorkerService(getIt<ApiClient>()),
   );
 
+  getIt.registerLazySingleton<PaymentService>(
+    () => PaymentService(getIt<ApiClient>()),
+  );
+
   // ==================== ViewModels ====================
   // Factory car nouvelle instance par écran
   getIt.registerFactory<AuthViewModel>(
@@ -97,6 +103,10 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory<WorkerViewModel>(
     () => WorkerViewModel(getIt<WorkerService>()),
+  );
+
+  getIt.registerFactory<CreditPaymentViewModel>(
+    () => CreditPaymentViewModel(getIt<PaymentService>()),
   );
 
   // ==================== Initialisation ====================

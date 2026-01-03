@@ -28,6 +28,10 @@ class ApiEndpoints {
   // ignore: constant_identifier_names
   static const String create_material = '/materials/';
 
+  // Payments
+  // ignore: constant_identifier_names
+  static const String payments = '/payments';
+
   // Weighing Slips (Bons de pesée)
   // ignore: constant_identifier_names
   static const String all_weighing_slips = '/weighing-slips';

@@ -5,19 +5,11 @@ import '../../core/theme/app_theme.dart';
 
 /// Colonne générique pour le tableau de données
 class DataTableColumn<T> {
-  /// Label de la colonne
   final String label;
-
-  /// Fonction pour extraire la valeur de l'objet (Widget ou valeur simple)
   final dynamic Function(T item) value;
-
-  /// Si true, la valeur est un Widget ; sinon c'est un texte
   final bool isWidget;
-
-  /// Si true, cacher cette colonne sur les petits écrans
   final bool hideOnMobile;
 
-  /// Constructeur
   DataTableColumn({
     required this.label,
     required this.value,
@@ -28,95 +20,37 @@ class DataTableColumn<T> {
 
 /// Widget tableau générique réutilisable
 class GenericDataTable<T> extends StatefulWidget {
-  /// Données à afficher
   final List<T> items;
-
-  /// Colonnes du tableau
   final List<DataTableColumn<T>> columns;
-
-  /// Fonction appelée au clic sur le bouton éditer
   final Function(T item) onEdit;
-
-  /// Fonction appelée au clic sur le bouton supprimer
   final Function(T item) onDelete;
-
-  /// Afficher la colonne d'actions
   final bool showActions;
-
-  /// Afficher le bouton éditer
   final bool showEditAction;
-
-  /// Afficher le bouton supprimer
   final bool showDeleteAction;
-
-  /// Label du bouton éditer
   final String editLabel;
-
-  /// Label du bouton supprimer
   final String deleteLabel;
-
-  /// Total d'éléments (pour pagination)
   final int total;
-
-  /// Page actuelle (0-based)
   final int currentPage;
-
-  /// Nombre de pages
   final int totalPages;
-
-  /// Fonction appelée pour aller à la page précédente
   final VoidCallback? onPreviousPage;
-
-  /// Fonction appelée pour aller à la page suivante
   final VoidCallback? onNextPage;
-
-  /// Afficher la pagination
   final bool showPagination;
-
-  /// Hauteur du message vide
   final double emptyHeight;
-
-  /// Message quand aucune donnée
   final String emptyMessage;
-
-  /// Message quand erreur
   final String? errorMessage;
-
-  /// Si en cours de chargement
   final bool isLoading;
-
-  /// Si erreur
   final bool hasError;
-
-  /// Couleur du texte des actions
   final Color actionTextColor;
-
-  /// Icône pour le bouton éditer
   final IconData editIcon;
-
-  /// Icône pour le bouton supprimer
   final IconData deleteIcon;
-
-  /// Active la fonctionnalité de fenêtre glissante personnalisée
   final bool enableCustomWindow;
-
-  /// Constructeur pour fournir un widget de fenêtre glissante personnalisé
-  /// Signature: (BuildContext, item, VoidCallback close)
   final Widget Function(BuildContext, T, VoidCallback)? customDrawerBuilder;
-
-  /// Callback appelé quand la fenêtre glissante s'ouvre (utile pour charger les données)
   final Function(T)? onOpenCustomWindow;
-
-  /// Mode contrôlé: si non-null, le parent contrôle l'ouverture
   final bool? isCustomWindowOpen;
   final Function(bool)? onToggleCustomWindow;
-
-  /// Montrer un bouton dédié dans la colonne Actions pour ouvrir la fenêtre
   final bool showCustomActionButton;
   final IconData customActionIcon;
   final String customActionTooltip;
-
-  /// Callback pour le bouton d'action personnalisée
   final Function(T)? onCustomAction;
 
   const GenericDataTable({
@@ -185,10 +119,8 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
 
   @override
   Widget build(BuildContext context) {
-    // Déterminer si c'est un petit écran
     final isMobile = MediaQuery.of(context).size.width < 768;
 
-    // Contenu principal (tableau / cartes)
     Widget mainContent;
 
     if (widget.isLoading) {
@@ -205,7 +137,13 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text(widget.errorMessage ?? 'Une erreur est survenue'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  widget.errorMessage ?? 'Une erreur est survenue',
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ],
           ),
         ),
@@ -248,16 +186,13 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
       mainContent = _buildDesktopTable();
     }
 
-    // Si la fonctionnalité de fenêtre est désactivée, retourner juste le contenu
     if (!widget.enableCustomWindow) return mainContent;
 
-    // Sinon, envelopper dans un Stack pour afficher la fenêtre plein écran
     final screenSize = MediaQuery.of(context).size;
     
     return Stack(
       children: [
         mainContent,
-        // Full screen overlay panel
         if (_isOpen)
           Positioned.fill(
             child: AnimatedOpacity(
@@ -310,16 +245,22 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          col.label,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.grey600,
+                        Flexible(
+                          flex: 1,
+                          child: Text(
+                            col.label,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.grey600,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Flexible(
+                          flex: 2,
                           child: col.isWidget
                               ? (value is Widget ? value : const Text('-'))
                               : Text(
@@ -330,6 +271,8 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                     color: AppColors.industrialText,
                                   ),
                                   textAlign: TextAlign.right,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                         ),
                       ],
@@ -339,68 +282,81 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
               ),
             ),
             // Détails additionnels
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: widget.columns
-                    .where((col) => !col.hideOnMobile)
-                    .skip(2)
-                    .map((col) {
-                  final value = col.value(item);
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          col.label,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.grey600,
-                          ),
-                        ),
-                        Flexible(
-                          child: col.isWidget
-                              ? (value is Widget ? value : const Text('-'))
-                              : Text(
-                                  value?.toString() ?? '-',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.industrialText,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            // Actions
-            if (widget.showActions)
+            if (widget.columns.where((col) => !col.hideOnMobile).length > 2)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: widget.columns
+                      .where((col) => !col.hideOnMobile)
+                      .skip(2)
+                      .map((col) {
+                    final value = col.value(item);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            flex: 1,
+                            child: Text(
+                              col.label,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.grey600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            flex: 2,
+                            child: col.isWidget
+                                ? (value is Widget ? value : const Text('-'))
+                                : Text(
+                                    value?.toString() ?? '-',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.industrialText,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            // Actions
+            if (widget.showActions || widget.showCustomActionButton)
+              Padding(
+                padding: const EdgeInsets.all(8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        if (widget.showEditAction)
-                          IconButton(
-                            onPressed: () => widget.onEdit(item),
-                            icon: Icon(widget.editIcon, color: widget.actionTextColor),
-                            tooltip: widget.editLabel,
-                          ),
-                        if (widget.showDeleteAction)
-                          IconButton(
-                            onPressed: () => widget.onDelete(item),
-                            icon: Icon(widget.deleteIcon, color: AppColors.errorText),
-                            tooltip: widget.deleteLabel,
-                          ),
-                      ],
-                    ),
+                    if (widget.showActions)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.showEditAction)
+                            IconButton(
+                              onPressed: () => widget.onEdit(item),
+                              icon: Icon(widget.editIcon, color: widget.actionTextColor),
+                              tooltip: widget.editLabel,
+                            ),
+                          if (widget.showDeleteAction)
+                            IconButton(
+                              onPressed: () => widget.onDelete(item),
+                              icon: Icon(widget.deleteIcon, color: AppColors.errorText),
+                              tooltip: widget.deleteLabel,
+                            ),
+                        ],
+                      )
+                    else
+                      const SizedBox.shrink(),
                     if (widget.showCustomActionButton)
                       if (widget.enableCustomWindow)
                         ElevatedButton.icon(
@@ -438,223 +394,235 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.shadowColor,
-                blurRadius: 4,
-                offset: Offset(0, 2),
-              ),
-            ],
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Calculer la largeur de chaque colonne
-              const horizontalPadding = 0.0;
-              
-              // Compter le nombre de boutons d'action visibles
-              int actionButtonCount = 0;
-              if (widget.showCustomActionButton) actionButtonCount++;
-              if (widget.showEditAction) actionButtonCount++;
-              if (widget.showDeleteAction) actionButtonCount++;
-              
-              // Largeur fixe pour la colonne actions basée sur le nombre de boutons
-              final actionColumnWidth = widget.showActions ? (actionButtonCount * 72.0) : 0.0;
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadowColor,
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final maxHeight = constraints.maxHeight.isFinite
+                      ? constraints.maxHeight
+                      : MediaQuery.of(context).size.height * 0.6;
 
-              final availableWidth = constraints.maxWidth - horizontalPadding - actionColumnWidth;
-              final numDataColumns = widget.columns.where((col) => !col.hideOnMobile).length;
-              final columnWidth = availableWidth / numDataColumns;
-
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Column(
-                  children: [
-                    // Header
-                    Container(
-                      color: AppColors.industrialBackground,
-                      child: Row(
-                        children: [
-                          ...widget.columns.where((col) => !col.hideOnMobile).map((col) {
-                            return SizedBox(
-                              width: columnWidth,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 16,
-                                ),
-                                child: Text(
-                                  col.label,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.industrialText,
-                                    fontSize: 13,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            );
-                          }),
-                          if (widget.showActions)
-                            SizedBox(
-                              width: actionColumnWidth,
-                              child: const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 16,
-                                ),
-                                child: Text(
-                                  'Actions',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.industrialText,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: constraints.maxWidth,
+                        maxWidth: constraints.maxWidth,
                       ),
-                    ),
-                    // Rows
-                    ...widget.items.map((item) {
-                      return InkWell(
-                        onTap: widget.enableCustomWindow ? () => _openWindow(item) : null,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: AppColors.grey200,
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              ...widget.columns.where((col) => !col.hideOnMobile).map((col) {
-                                final value = col.value(item);
-                                return SizedBox(
-                                  width: columnWidth,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Header
+                          Container(
+                            color: AppColors.industrialBackground,
+                            child: Row(
+                              children: [
+                                ...widget.columns.where((col) => !col.hideOnMobile).map((col) {
+                                  return Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 16,
+                                      ),
+                                      child: Text(
+                                        col.label,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.industrialText,
+                                          fontSize: 13,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                    child: col.isWidget
-                                        ? (value is Widget
-                                            ? value
-                                            : const Text('-'))
-                                        : Text(
-                                            value?.toString() ?? '-',
-                                            style: const TextStyle(
-                                              color: AppColors.industrialText,
-                                              fontSize: 12,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                  ),
-                                );
-                              }),
-                              if (widget.showActions)
-                                SizedBox(
-                                  width: actionColumnWidth,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 0,
-                                      vertical: 8,
-                                    ),
-                                    child: SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        children: [
-                                        if (widget.showCustomActionButton)
-                                          if (widget.enableCustomWindow)
-                                            IconButton(
-                                              onPressed: () => _openWindow(item),
-                                              icon: Icon(
-                                                widget.customActionIcon,
-                                                color: widget.actionTextColor,
-                                                size: 20,
-                                              ),
-                                              tooltip: widget.customActionTooltip,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(
-                                                minWidth: 20,
-                                                minHeight: 40,
-                                              ),
-                                            )
-                                          else if (widget.onCustomAction != null)
-                                            IconButton(
-                                              onPressed: () => widget.onCustomAction!(item),
-                                              icon: Icon(
-                                                widget.customActionIcon,
-                                                color: widget.actionTextColor,
-                                                size: 20,
-                                              ),
-                                              tooltip: widget.customActionTooltip,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(
-                                                minWidth: 20,
-                                                minHeight: 40,
-                                              ),
-                                            ),
-
-                                        if (widget.showEditAction)
-                                          IconButton(
-                                            onPressed: () => widget.onEdit(item),
-                                            icon: Icon(
-                                              widget.editIcon,
-                                              color: widget.actionTextColor,
-                                              size: 20,
-                                            ),
-                                            tooltip: widget.editLabel,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 20,
-                                              minHeight: 40,
-                                            ),
-                                          ),
-                                        if (widget.showDeleteAction)
-                                          IconButton(
-                                            onPressed: () => widget.onDelete(item),
-                                            icon: Icon(
-                                              widget.deleteIcon,
-                                              color: AppColors.errorText,
-                                              size: 20,
-                                            ),
-                                            tooltip: widget.deleteLabel,
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(
-                                              minWidth: 20,
-                                              minHeight: 40,
-                                            ),
-                                          ),
-                                                                              ],
+                                  );
+                                }),
+                                if (widget.showActions)
+                                  SizedBox(
+                                    width: _getActionColumnWidth(),
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 16,
+                                      ),
+                                      child: Text(
+                                        'Actions',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.industrialText,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              );
-            },
+                          // Rows (scrollable vertically with bounded height)
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: maxHeight),
+                            child: SingleChildScrollView(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  ...widget.items.map((item) {
+                                    return InkWell(
+                                      onTap: widget.enableCustomWindow ? () => _openWindow(item) : null,
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          border: Border(
+                                            bottom: BorderSide(
+                                              color: AppColors.grey200,
+                                              width: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            ...widget.columns.where((col) => !col.hideOnMobile).map((col) {
+                                              final value = col.value(item);
+                                              return Expanded(
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 12,
+                                                  ),
+                                                  child: col.isWidget
+                                                      ? (value is Widget
+                                                          ? value
+                                                          : const Text('-'))
+                                                      : Text(
+                                                          value?.toString() ?? '-',
+                                                          style: const TextStyle(
+                                                            color: AppColors.industrialText,
+                                                            fontSize: 12,
+                                                          ),
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                ),
+                                              );
+                                            }),
+                                            if (widget.showActions)
+                                              SizedBox(
+                                                width: _getActionColumnWidth(),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 8,
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    mainAxisAlignment: MainAxisAlignment.start,
+                                                    children: [
+                                                      if (widget.showCustomActionButton)
+                                                        if (widget.enableCustomWindow)
+                                                          IconButton(
+                                                            onPressed: () => _openWindow(item),
+                                                            icon: Icon(
+                                                              widget.customActionIcon,
+                                                              color: widget.actionTextColor,
+                                                              size: 20,
+                                                            ),
+                                                            tooltip: widget.customActionTooltip,
+                                                            padding: EdgeInsets.zero,
+                                                            constraints: const BoxConstraints(
+                                                              minWidth: 36,
+                                                              minHeight: 36,
+                                                            ),
+                                                          )
+                                                        else if (widget.onCustomAction != null)
+                                                          IconButton(
+                                                            onPressed: () => widget.onCustomAction!(item),
+                                                            icon: Icon(
+                                                              widget.customActionIcon,
+                                                              color: widget.actionTextColor,
+                                                              size: 20,
+                                                            ),
+                                                            tooltip: widget.customActionTooltip,
+                                                            padding: EdgeInsets.zero,
+                                                            constraints: const BoxConstraints(
+                                                              minWidth: 36,
+                                                              minHeight: 36,
+                                                            ),
+                                                          ),
+                                                      if (widget.showEditAction)
+                                                        IconButton(
+                                                          onPressed: () => widget.onEdit(item),
+                                                          icon: Icon(
+                                                            widget.editIcon,
+                                                            color: widget.actionTextColor,
+                                                            size: 20,
+                                                          ),
+                                                          tooltip: widget.editLabel,
+                                                          padding: EdgeInsets.zero,
+                                                          constraints: const BoxConstraints(
+                                                            minWidth: 36,
+                                                            minHeight: 36,
+                                                          ),
+                                                        ),
+                                                      if (widget.showDeleteAction)
+                                                        IconButton(
+                                                          onPressed: () => widget.onDelete(item),
+                                                          icon: Icon(
+                                                            widget.deleteIcon,
+                                                            color: AppColors.errorText,
+                                                            size: 20,
+                                                          ),
+                                                          tooltip: widget.deleteLabel,
+                                                          padding: EdgeInsets.zero,
+                                                          constraints: const BoxConstraints(
+                                                            minWidth: 36,
+                                                            minHeight: 36,
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
-        ),
         const SizedBox(height: 16),
         if (widget.showPagination) _buildPagination(),
       ],
     );
+  }
+
+  double _getActionColumnWidth() {
+    // Allow room for icon button min size (36) plus padding; prevent horizontal overflow.
+    const double perButtonWidth = 72.0;
+    int actionButtonCount = 0;
+    if (widget.showCustomActionButton) actionButtonCount++;
+    if (widget.showEditAction) actionButtonCount++;
+    if (widget.showDeleteAction) actionButtonCount++;
+    return actionButtonCount * perButtonWidth;
   }
 
   Widget _buildPagination() {
@@ -671,37 +639,73 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Total: ${widget.total} éléments',
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 600;
+          
+          if (isMobile) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Total: ${widget.total} éléments',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: widget.onPreviousPage,
+                      icon: const Icon(Icons.chevron_left),
+                    ),
+                    Text(
+                      'Page ${widget.currentPage} / ${widget.totalPages}',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    IconButton(
+                      onPressed: widget.onNextPage,
+                      icon: const Icon(Icons.chevron_right),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
+          
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                onPressed: widget.onPreviousPage,
-                icon: const Icon(Icons.chevron_left),
-              ),
               Text(
-                'Page ${widget.currentPage} / ${widget.totalPages}',
+                'Total: ${widget.total} éléments',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
-              IconButton(
-                onPressed: widget.onNextPage,
-                icon: const Icon(Icons.chevron_right),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    onPressed: widget.onPreviousPage,
+                    icon: const Icon(Icons.chevron_left),
+                  ),
+                  Text(
+                    'Page ${widget.currentPage} / ${widget.totalPages}',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  IconButton(
+                    onPressed: widget.onNextPage,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildSlidingPanel(BuildContext context) {
-    // Panel content is provided by the parent via customDrawerBuilder when possible
     final content = (_selectedItem != null && widget.customDrawerBuilder != null)
         ? widget.customDrawerBuilder!(context, _selectedItem as T, _closeWindow)
         : (_selectedItem != null
@@ -712,10 +716,14 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
   }
 
   Widget _defaultDrawerContent(BuildContext context) {
-    return Center(
-      child: Text(
-        'Aucun composant de fenêtre fourni. Passez `customDrawerBuilder` pour afficher le contenu.',
-        style: const TextStyle(color: AppColors.grey600),
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Aucun composant de fenêtre fourni. Passez `customDrawerBuilder` pour afficher le contenu.',
+          style: TextStyle(color: AppColors.grey600),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }

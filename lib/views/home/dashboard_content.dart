@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -34,6 +35,7 @@ class DashboardContent extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildStatCard(
+                  context,
                   title: 'Produits',
                   value: '156',
                   icon: Icons.inventory_2_outlined,
@@ -43,6 +45,7 @@ class DashboardContent extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: _buildStatCard(
+                  context,
                   title: 'Utilisateurs',
                   value: '24',
                   icon: Icons.people_outline,
@@ -52,15 +55,18 @@ class DashboardContent extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: _buildStatCard(
-                  title: 'Factures',
-                  value: '89',
-                  icon: Icons.receipt_long_outlined,
+                  context,
+                  title: 'Crédits',
+                  value: '0',
+                  icon: Icons.credit_card_outlined,
                   color: AppColors.warning,
+                  onTap: () => context.go('/credits'),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildStatCard(
+                  context,
                   title: 'Rapports',
                   value: '12',
                   icon: Icons.analytics_outlined,
@@ -120,13 +126,15 @@ class DashboardContent extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard({
+  Widget _buildStatCard(
+    BuildContext context, {
     required String title,
     required String value,
     required IconData icon,
     required Color color,
+    VoidCallback? onTap,
   }) {
-    return Container(
+    final card = Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -175,6 +183,15 @@ class DashboardContent extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+        child: card,
+      );
+    }
+    return card;
   }
 
   Widget _buildActivityItem(String title, String time, IconData icon) {
