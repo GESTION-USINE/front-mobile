@@ -406,7 +406,7 @@ class AppRouter {
             GoRoute(
               path: '$statisticsPath/sales',
               pageBuilder: (context, state) => const NoTransitionPage(
-                child: StatisticsSalesContent(),
+                child: SalesStatsContent(),
               ),
             ),
 

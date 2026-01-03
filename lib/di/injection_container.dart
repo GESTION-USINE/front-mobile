@@ -139,9 +139,7 @@ Future<void> initDependencies() async {
     () => StatsViewModel(getIt<StatsService>()),
   );
 
-  getIt.registerFactory<StatsViewModel>(
-    () => StatsViewModel(getIt<StatsService>()),
-  );
+ 
 
   // ==================== Initialisation ====================
   await _initializeProviders();

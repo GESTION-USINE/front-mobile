@@ -5,6 +5,7 @@ import '../models/entities/payments_stats.dart';
 import '../models/entities/expenses_stats.dart';
 import '../models/entities/top_stats.dart';
 import '../models/entities/overview_stats.dart';
+import '../models/entities/sales_trend_stats.dart';
 import 'package:intl/intl.dart';
 
 /// Service pour gérer les statistiques
@@ -171,6 +172,38 @@ class StatsService {
 
       final data = response.data['data'] as Map<String, dynamic>;
       return OverviewStats.fromJson(data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  /// Récupère les statistiques de tendance des ventes sur une période avec groupage
+  ///
+  /// [dateFrom] - Date de début au format yyyy-MM-dd
+  /// [dateTo] - Date de fin au format yyyy-MM-dd
+  /// [groupBy] - Grouper par: 'day', 'week', 'month' (par défaut 'day')
+  ///
+  /// Retourne SalesTrendStats contenant la série de données groupées et les totaux
+  Future<SalesTrendStats> getSalesTrend(
+    DateTime dateFrom,
+    DateTime dateTo, {
+    String groupBy = 'day',
+  }) async {
+    try {
+      final formattedDateFrom = DateFormat('yyyy-MM-dd').format(dateFrom);
+      final formattedDateTo = DateFormat('yyyy-MM-dd').format(dateTo);
+
+      final response = await _apiClient.get(
+        '/stats/sales-trend',
+        queryParameters: {
+          'date_from': formattedDateFrom,
+          'date_to': formattedDateTo,
+          'group_by': groupBy,
+        },
+      );
+
+      final data = response.data['data'] as Map<String, dynamic>;
+      return SalesTrendStats.fromJson(data);
     } on DioException {
       rethrow;
     }

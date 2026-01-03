@@ -31,7 +31,8 @@ class StatisticsDashboardContent extends StatefulWidget {
 
 class _StatisticsDashboardContentState extends State<StatisticsDashboardContent> {
   late final StatsViewModel _viewModel;
-
+  bool _isRangeMode = false; // false = Jour (par defaut)
+  DateTime _selectedDay = DateTime.now();
   DateTime? _dateFrom;
   DateTime? _dateTo;
 
@@ -43,9 +44,12 @@ class _StatisticsDashboardContentState extends State<StatisticsDashboardContent>
     _viewModel = getIt<StatsViewModel>();
 
     // Par defaut, on aligne le dashboard sur l'overview (periode globale)
-    _dateFrom = _viewModel.overviewDateFrom;
-    _dateTo = _viewModel.overviewDateTo;
+   
+_dateFrom = DateTime.now();
+_dateTo = DateTime.now();
+_selectedDay = DateTime.now();
 
+_viewModel.refreshAll();
     // Charge initial
     _viewModel.refreshAll();
   }
@@ -142,101 +146,213 @@ class _StatisticsDashboardContentState extends State<StatisticsDashboardContent>
       ),
     );
   }
+Widget _buildHeaderFilters(StatsViewModel viewModel) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildModeToggle(),
+            if (!_isRangeMode) _buildDayPicker(viewModel) else ...[
+              _buildFromPicker(),
+              _buildToPicker(),
+            ],
+          ],
+        ),
+      ),
+      const SizedBox(width: 12),
 
-  // -------------------------
-  // Header filters
-  // -------------------------
-  Widget _buildHeaderFilters(StatsViewModel viewModel) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        SizedBox(
-          width: 180,
-          child: InkWell(
-            onTap: () => _selectDateFrom(context, viewModel),
-            child: InputDecorator(
-              decoration: AppTheme.industrialInputDecoration(
-                hint: 'Date debut',
-                prefixIcon: Icons.calendar_today,
-              ).copyWith(
-                suffixIcon: _dateFrom != null
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          setState(() => _dateFrom = null);
-                        },
-                      )
-                    : null,
+      // ✅ bouton a droite, largeur finie (PAS infinity)
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 42, maxWidth: 160),
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final from = _dateFrom ?? DateTime.now();
+                final to = _dateTo ?? DateTime.now();
+                await _applyDateRange(viewModel, from, to);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.industrialPrimary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: Text(
-                _dateFrom != null ? _dateFormat.format(_dateFrom!) : 'Date debut',
-                style: TextStyle(
-                  color: _dateFrom != null ? AppColors.industrialText : AppColors.industrialTextLight,
-                  fontSize: 14,
-                ),
+              icon: const Icon(Icons.refresh, size: 18),
+              label: const Text(
+                'Actualiser',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ),
-        ),
-        SizedBox(
-          width: 180,
-          child: InkWell(
-            onTap: () => _selectDateTo(context, viewModel),
-            child: InputDecorator(
-              decoration: AppTheme.industrialInputDecoration(
-                hint: 'Date fin',
-                prefixIcon: Icons.calendar_today,
-              ).copyWith(
-                suffixIcon: _dateTo != null
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          setState(() => _dateTo = null);
-                        },
-                      )
-                    : null,
-              ),
-              child: Text(
-                _dateTo != null ? _dateFormat.format(_dateTo!) : 'Date fin',
-                style: TextStyle(
-                  color: _dateTo != null ? AppColors.industrialText : AppColors.industrialTextLight,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-        ),
 
-        ElevatedButton.icon(
-          onPressed: () async {
-            final from = _dateFrom ?? viewModel.overviewDateFrom;
-            final to = _dateTo ?? viewModel.overviewDateTo;
-            setState(() {
-              _dateFrom = from;
-              _dateTo = to;
-            });
-            await _applyDateRange(viewModel, from, to);
-          },
-          style: AppTheme.industrialPrimaryButton,
-          icon: const Icon(Icons.refresh, size: 18),
-          label: const Text('Actualiser'),
-        ),
-
-        // Optionnel: un petit indicateur de chargement global
-        if (viewModel.isLoading)
-          const Padding(
-            padding: EdgeInsets.only(left: 8),
-            child: SizedBox(
+          if (viewModel.isLoading) ...[
+            const SizedBox(height: 8),
+            const SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
+          ],
+        ],
+      ),
+    ],
+  );
+}
+
+Widget _buildModeToggle() {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: AppColors.industrialPrimary.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: AppColors.industrialPrimary.withOpacity(0.25)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          _isRangeMode ? 'Intervalle' : 'Jour',
+          style: const TextStyle(
+            color: AppColors.industrialText,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
           ),
+        ),
+        const SizedBox(width: 6),
+        Switch(
+          value: _isRangeMode,
+          activeColor: AppColors.industrialPrimary,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onChanged: (v) {
+            setState(() {
+              _isRangeMode = v;
+
+              // Quand on repasse en mode Jour, on synchronise from/to sur le jour courant selectionne
+              if (!_isRangeMode) {
+                _dateFrom = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
+                _dateTo = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
+              }
+            });
+          },
+        ),
       ],
-    );
-  }
+    ),
+  );
+}
+
+Widget _buildDayPicker(StatsViewModel vm) {
+  return SizedBox(
+    width: 180,
+    child: InkWell(
+      onTap: () async {
+        final picked = await _pickDate(context, _selectedDay);
+        if (picked != null) {
+          setState(() {
+            _selectedDay = picked;
+            _dateFrom = DateTime(picked.year, picked.month, picked.day);
+            _dateTo = DateTime(picked.year, picked.month, picked.day);
+          });
+
+          // Mode Jour => recharge directement
+          await _applyDateRange(vm, _dateFrom!, _dateTo!);
+        }
+      },
+      child: InputDecorator(
+        decoration: AppTheme.industrialInputDecoration(
+          hint: 'Date',
+          prefixIcon: Icons.calendar_today,
+        ),
+        child: Text(
+          _dateFormat.format(_selectedDay),
+          style: const TextStyle(
+            color: AppColors.industrialText,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildFromPicker() {
+  return SizedBox(
+    width: 180,
+    child: InkWell(
+      onTap: () async {
+        final picked = await _pickDate(context, _dateFrom ?? DateTime.now());
+        if (picked != null) {
+          setState(() => _dateFrom = picked);
+        }
+      },
+      child: InputDecorator(
+        decoration: AppTheme.industrialInputDecoration(
+          hint: 'Date debut',
+          prefixIcon: Icons.calendar_today,
+        ),
+        child: Text(
+          _dateFrom != null ? _dateFormat.format(_dateFrom!) : 'Date debut',
+          style: TextStyle(
+            color: _dateFrom != null ? AppColors.industrialText : AppColors.industrialTextLight,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildToPicker() {
+  return SizedBox(
+    width: 180,
+    child: InkWell(
+      onTap: () async {
+        final picked = await _pickDate(context, _dateTo ?? DateTime.now());
+        if (picked != null) {
+          setState(() => _dateTo = picked);
+        }
+      },
+      child: InputDecorator(
+        decoration: AppTheme.industrialInputDecoration(
+          hint: 'Date fin',
+          prefixIcon: Icons.calendar_today,
+        ),
+        child: Text(
+          _dateTo != null ? _dateFormat.format(_dateTo!) : 'Date fin',
+          style: TextStyle(
+            color: _dateTo != null ? AppColors.industrialText : AppColors.industrialTextLight,
+            fontSize: 14,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
+  return showDatePicker(
+    context: context,
+    initialDate: initial,
+    firstDate: DateTime(2000),
+    lastDate: DateTime(2100),
+    builder: (context, child) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: AppColors.industrialPrimary),
+        ),
+        child: child!,
+      );
+    },
+  );
+}
 
   // -------------------------
   // KPI Row

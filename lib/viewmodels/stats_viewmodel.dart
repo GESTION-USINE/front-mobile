@@ -4,6 +4,7 @@ import 'package:flutter_mvvm_template/models/entities/payments_stats.dart';
 import 'package:flutter_mvvm_template/models/entities/expenses_stats.dart';
 import 'package:flutter_mvvm_template/models/entities/top_stats.dart';
 import 'package:flutter_mvvm_template/models/entities/overview_stats.dart';
+import 'package:flutter_mvvm_template/models/entities/sales_trend_stats.dart';
 import 'package:flutter_mvvm_template/services/stats_service.dart';
 
 /// ViewModel pour gérer les statistiques
@@ -56,6 +57,17 @@ class StatsViewModel extends BaseViewModel {
   OverviewStats? get overviewStats => _overviewStats;
   DateTime get overviewDateFrom => _overviewDateFrom;
   DateTime get overviewDateTo => _overviewDateTo;
+
+  // Sales Trend Stats
+  SalesTrendStats? _salesTrendStats;
+  DateTime _salesTrendDateFrom = DateTime.now().subtract(Duration(days: 90));
+  DateTime _salesTrendDateTo = DateTime.now();
+  String _salesTrendGroupBy = 'day';
+
+  SalesTrendStats? get salesTrendStats => _salesTrendStats;
+  DateTime get salesTrendDateFrom => _salesTrendDateFrom;
+  DateTime get salesTrendDateTo => _salesTrendDateTo;
+  String get salesTrendGroupBy => _salesTrendGroupBy;
 
   /// Charge les statistiques quotidiennes pour une date donnée
   Future<void> loadDailyStats(DateTime date) async {
@@ -181,6 +193,46 @@ class StatsViewModel extends BaseViewModel {
     await loadOverviewStats(_overviewDateFrom, _overviewDateTo);
   }
 
+  /// Charge les statistiques de tendance des ventes
+  Future<void> loadSalesTrend(
+    DateTime dateFrom,
+    DateTime dateTo, {
+    String groupBy = 'day',
+  }) async {
+    _salesTrendDateFrom = dateFrom;
+    _salesTrendDateTo = dateTo;
+    _salesTrendGroupBy = groupBy;
+
+    final result = await runAsync(() async {
+      return await _statsService.getSalesTrend(
+        dateFrom,
+        dateTo,
+        groupBy: groupBy,
+      );
+    });
+
+    if (result != null) {
+      _salesTrendStats = result;
+      notifyListeners();
+    }
+  }
+
+  /// Change la période des statistiques de tendance des ventes
+  void setSalesTrendDateRange(DateTime dateFrom, DateTime dateTo) {
+    loadSalesTrend(dateFrom, dateTo, groupBy: _salesTrendGroupBy);
+  }
+
+  /// Change le groupage des statistiques de tendance des ventes
+  void setSalesTrendGroupBy(String groupBy) {
+    loadSalesTrend(_salesTrendDateFrom, _salesTrendDateTo, groupBy: groupBy);
+  }
+
+  /// Rafraîchit les statistiques de tendance des ventes
+  Future<void> refreshSalesTrend() async {
+    await loadSalesTrend(_salesTrendDateFrom, _salesTrendDateTo,
+        groupBy: _salesTrendGroupBy);
+  }
+
   /// Rafraîchit toutes les statistiques
   Future<void> refreshAll() async {
     await Future.wait([
@@ -189,6 +241,8 @@ class StatsViewModel extends BaseViewModel {
       loadExpensesStats(_expensesDateFrom, _expensesDateTo, groupBy: _groupBy),
       loadTopStats(_topStatsDateFrom, _topStatsDateTo),
       loadOverviewStats(_overviewDateFrom, _overviewDateTo),
+      loadSalesTrend(_salesTrendDateFrom, _salesTrendDateTo,
+          groupBy: _salesTrendGroupBy),
     ]);
   }
 

@@ -126,26 +126,37 @@ class _ClientCreditDetailsPageState extends State<ClientCreditDetailsPage> {
               : _buildContent(),
     );
   }
+Widget _buildContent() {
+  if (_details == null) return const SizedBox();
 
-  Widget _buildContent() {
-    if (_details == null) return const SizedBox();
-
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildClientCard(),
-            const SizedBox(height: 16),
-            _buildSummaryCard(),
-            const SizedBox(height: 24),
-            _buildSlipsList(),
-          ],
-        ),
+  return SingleChildScrollView(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Les deux cartes sur une seule ligne
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 1,
+                child: _buildClientCard(),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 1,
+                child: _buildSummaryCard(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildSlipsList(),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildClientCard() {
     final client = _details!.client;
@@ -210,140 +221,288 @@ class _ClientCreditDetailsPageState extends State<ClientCreditDetailsPage> {
     );
   }
 
-  Widget _buildSummaryCard() {
-    final summary = _details!.creditSummary;
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: AppColors.warning.withOpacity(0.3), width: 1),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.warning.withOpacity(0.15),
-              AppColors.warning.withOpacity(0.05),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.analytics_outlined, color: AppColors.warning, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Résumé Crédit',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.warning,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(child: _buildStatCard('Total Bons', '${summary.totalSlips}', AppColors.info)),
-                  const SizedBox(width: 10),
-                  Expanded(child: _buildStatCard('Avec Crédit', '${summary.slipsWithActiveCredit}', AppColors.warning)),
-                  const SizedBox(width: 10),
-                  Expanded(child: _buildStatCard('Payés', '${summary.fullyPaidSlips}', AppColors.success)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.grey300.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    _buildInfoRow('Montant Total', _currencyFormat.format(summary.totalAmount), icon: Icons.attach_money),
-                    _buildInfoRow('Total Payé', _currencyFormat.format(summary.totalPaid), valueColor: AppColors.success, icon: Icons.check_circle_outline),
-                    _buildInfoRow('Crédit Restant', _currencyFormat.format(summary.totalRemainingCredit), valueColor: AppColors.warning, icon: Icons.account_balance_wallet_outlined),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildSummaryCard() {
+  //   final summary = _details!.creditSummary;
+  //   return Card(
+  //     elevation: 0,
+  //     shape: RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.circular(16),
+  //       side: BorderSide(color: AppColors.warning.withOpacity(0.3), width: 1),
+  //     ),
+  //     child: Container(
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(16),
+  //         gradient: LinearGradient(
+  //           begin: Alignment.topLeft,
+  //           end: Alignment.bottomRight,
+  //           colors: [
+  //             AppColors.warning.withOpacity(0.15),
+  //             AppColors.warning.withOpacity(0.05),
+  //           ],
+  //         ),
+  //       ),
+  //       child: Padding(
+  //         padding: const EdgeInsets.all(20),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Row(
+  //               children: [
+  //                 Container(
+  //                   padding: const EdgeInsets.all(10),
+  //                   decoration: BoxDecoration(
+  //                     color: AppColors.warning.withOpacity(0.2),
+  //                     borderRadius: BorderRadius.circular(12),
+  //                   ),
+  //                   child: const Icon(Icons.analytics_outlined, color: AppColors.warning, size: 24),
+  //                 ),
+  //                 const SizedBox(width: 12),
+  //                 const Text(
+  //                   'Résumé Crédit',
+  //                   style: TextStyle(
+  //                     fontSize: 20,
+  //                     fontWeight: FontWeight.bold,
+  //                     color: AppColors.warning,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //             const SizedBox(height: 20),
+  //             Row(
+  //               children: [
+  //                 Expanded(child: _buildStatCard('Total Bons', '${summary.totalSlips}', AppColors.info)),
+  //                 const SizedBox(width: 10),
+  //                 Expanded(child: _buildStatCard('Avec Crédit', '${summary.slipsWithActiveCredit}', AppColors.warning)),
+  //                 const SizedBox(width: 10),
+  //                 Expanded(child: _buildStatCard('Payés', '${summary.fullyPaidSlips}', AppColors.success)),
+  //               ],
+  //             ),
+  //             const SizedBox(height: 16),
+  //             Container(
+  //               padding: const EdgeInsets.all(14),
+  //               decoration: BoxDecoration(
+  //                 color: AppColors.white,
+  //                 borderRadius: BorderRadius.circular(12),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: AppColors.grey300.withOpacity(0.3),
+  //                     blurRadius: 8,
+  //                     offset: const Offset(0, 2),
+  //                   ),
+  //                 ],
+  //               ),
+  //               child: Column(
+  //                 children: [
+  //                   _buildInfoRow('Montant Total', _currencyFormat.format(summary.totalAmount), icon: Icons.attach_money),
+  //                   _buildInfoRow('Total Payé', _currencyFormat.format(summary.totalPaid), valueColor: AppColors.success, icon: Icons.check_circle_outline),
+  //                   _buildInfoRow('Crédit Restant', _currencyFormat.format(summary.totalRemainingCredit), valueColor: AppColors.warning, icon: Icons.account_balance_wallet_outlined),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Widget _buildStatCard(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(14),
+  // Widget _buildStatCard(String label, String value, Color color) {
+  //   return Container(
+  //     padding: const EdgeInsets.all(14),
+  //     decoration: BoxDecoration(
+  //       gradient: LinearGradient(
+  //         begin: Alignment.topLeft,
+  //         end: Alignment.bottomRight,
+  //         colors: [
+  //           color.withOpacity(0.1),
+  //           color.withOpacity(0.05),
+  //         ],
+  //       ),
+  //       borderRadius: BorderRadius.circular(12),
+  //       border: Border.all(color: color.withOpacity(0.4), width: 1.5),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: color.withOpacity(0.15),
+  //           blurRadius: 8,
+  //           offset: const Offset(0, 3),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         Text(
+  //           label,
+  //           style: TextStyle(
+  //             fontSize: 11,
+  //             color: color,
+  //             fontWeight: FontWeight.w700,
+  //             letterSpacing: 0.5,
+  //           ),
+  //           textAlign: TextAlign.center,
+  //           maxLines: 2,
+  //         ),
+  //         const SizedBox(height: 6),
+  //         Text(
+  //           value,
+  //           style: TextStyle(
+  //             fontSize: 22,
+  //             fontWeight: FontWeight.bold,
+  //             color: color,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+Widget _buildSummaryCard() {
+  final summary = _details!.creditSummary;
+  return Card(
+    elevation: 2,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+      side: BorderSide(color: AppColors.grey200, width: 1),
+    ),
+    child: Container(
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            color.withOpacity(0.1),
-            color.withOpacity(0.05),
+            AppColors.primary.withOpacity(0.03),
+            AppColors.white,
           ],
         ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.4), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.analytics_outlined, color: AppColors.primary, size: 24),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Résumé Crédit',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: color,
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(child: _buildStatCard('Total Bons', '${summary.totalSlips}', AppColors.info)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildStatCard('Avec Crédit', '${summary.slipsWithActiveCredit}', AppColors.warning)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildStatCard('Payés', '${summary.fullyPaidSlips}', AppColors.success)),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.grey100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.grey200, width: 1),
+              ),
+              child: Column(
+                children: [
+                  _buildInfoRow(
+                    'Montant Total', 
+                    _currencyFormat.format(summary.totalAmount), 
+                    icon: Icons.receipt_long_outlined,
+                    valueColor: AppColors.grey600,
+                  ),
+                  const SizedBox(height: 4),
+                  const Divider(height: 20),
+                  const SizedBox(height: 4),
+                  _buildInfoRow(
+                    'Total Payé', 
+                    _currencyFormat.format(summary.totalPaid), 
+                    valueColor: AppColors.success, 
+                    icon: Icons.check_circle,
+                  ),
+                  const SizedBox(height: 4),
+                  const Divider(height: 20),
+                  const SizedBox(height: 4),
+                  _buildInfoRow(
+                    'Crédit Restant', 
+                    _currencyFormat.format(summary.totalRemainingCredit), 
+                    valueColor: summary.totalRemainingCredit > 0 ? AppColors.warning : AppColors.success, 
+                    icon: Icons.account_balance_wallet,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
+Widget _buildStatCard(String label, String value, Color color) {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          color.withOpacity(0.15),
+          color.withOpacity(0.08),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(
+        color: color.withOpacity(0.4), // Bordure plus visible (0.4 au lieu de 0.3)
+        width: 1.5,
+      ),
+    ),
+    child: Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            // Couleur plus foncée pour le texte jaune
+            color: color == AppColors.warning 
+                ? AppColors.warning.withOpacity(0.95)
+                : color.withOpacity(0.8),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
+            height: 1,
+          ),
+        ),
+      ],
+    ),
+  );
+}
   Widget _buildSlipsList() {
     final slips = _details!.slips;
     return Column(
