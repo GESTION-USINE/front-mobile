@@ -84,7 +84,7 @@ class CreditPaymentViewModel extends ChangeNotifier {
 
     try {
       final response = await _paymentService.createPayment(request);
-      print(  'CreatePaymentResponse: ${response.success}');
+      print(  'CreatePaymentResponse: ${response}');
       if (response.success == true) {
         // Refresh the list of slips with credit
         await loadSlipsWithCredit();

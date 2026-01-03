@@ -21,15 +21,31 @@ class AppSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final baseMenu = MenuConfig.getMenuForRole(userRole);
     // Inject "Bons de pesée" if missing
-    final slipsItem = const MenuItem(
+    const slipsItem = MenuItem(
       id: 'weighing_slips',
       title: 'Bons de pesée',
       icon: Icons.assignment_outlined,
       route: AppRouter.slips,
       allowedRoles: ['super_admin', 'associe', 'employe'],
     );
+    const creditItem = MenuItem(
+      id: 'clients_credit',
+      title: 'Client Credit',
+      icon: Icons.account_balance_wallet_outlined,
+      route: AppRouter.clientsCredit,
+      allowedRoles: ['super_admin', 'associe'],
+    );
     final hasSlips = baseMenu.any((m) => m.id == 'weighing_slips');
-    final menuItems = [...baseMenu, if (!hasSlips) slipsItem];
+    final hasClientsCredit = baseMenu.any((m) => m.id == 'clients_credit');
+    final hasBonsClients = baseMenu.any((m) => m.id == 'clients_bons');
+    const bonsClientsItem = MenuItem(
+      id: 'clients_bons',
+      title: 'Bons Clients',
+      icon: Icons.people_outline,
+      route: AppRouter.clientsBons,
+      allowedRoles: ['super_admin', 'associe'],
+    );
+    final menuItems = [...baseMenu, if (!hasSlips) slipsItem, if (!hasClientsCredit) creditItem, if (!hasBonsClients) bonsClientsItem];
 
     return Container(
       width: 200,

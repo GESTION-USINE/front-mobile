@@ -1,10 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_mvvm_template/core/constants/api_endpoints.dart';
+import 'package:flutter_mvvm_template/models/response/clients_response.dart';
 
 import '../models/entities/client.dart';
 import '../models/request/create_client_request.dart';
 import '../models/request/update_client_request.dart';
-import '../models/response/clients_response.dart';
+import '../models/response/clients_credit_response.dart';
+import '../models/response/clients_with_slips_response.dart';
+import '../models/response/client_credit_details_response.dart';
 import '../core/network/api_client.dart';
 
 /// Service pour gérer les clients
@@ -93,6 +96,68 @@ class ClientService {
 
       final data = response.data['data'] as Map<String, dynamic>;
       return Client.fromJson(data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  /// Get clients with active credit
+  Future<ClientsCreditResponse> getClientsWithCredit({
+    String sortBy = 'remaining_credit',
+    String sortOrder = 'desc',
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'sortBy': sortBy,
+        'sortOrder': sortOrder,
+        'page': page,
+        'pageSize': pageSize,
+      };
+
+      final response = await _apiClient.get(
+        '/clients/credit/list',
+        queryParameters: queryParams,
+      );
+
+      return ClientsCreditResponse.fromJson(response.data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  /// Get complete credit details for a specific client
+  Future<ClientCreditDetailsResponse> getClientCreditDetails(int clientId) async {
+    try {
+      final response = await _apiClient.get('/clients/$clientId/credit-details');
+      return ClientCreditDetailsResponse.fromJson(response.data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  /// Get all clients with their slips and credit information
+  Future<ClientsWithSlipsResponse> getAllClientsWithCredit({
+    String sortBy = 'total_remaining_credit',
+    String sortOrder = 'desc',
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'sort_by': sortBy,
+        'sort_order': sortOrder,
+        'page': page,
+        'page_size': pageSize,
+      };
+
+      final response = await _apiClient.get(
+        '/clients/all-with-credit',
+        queryParameters: queryParams,
+      );
+
+      return ClientsWithSlipsResponse.fromJson(response.data);
     } on DioException {
       rethrow;
     }
