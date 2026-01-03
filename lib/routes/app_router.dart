@@ -8,6 +8,7 @@ import '../models/entities/material.dart' as material_entity;
 import '../models/entities/weighing_slip.dart';
 import '../models/entities/maintenance_expense.dart';
 import '../models/entities/worker.dart';
+import '../models/user.dart';
 import '../views/auth/login_view.dart';
 import '../views/layouts/app_shell.dart';
 import '../views/home/dashboard_content.dart';
@@ -33,6 +34,9 @@ import '../views/maintenance/create_maintenance_view.dart';
 import '../views/workers/workers_content.dart';
 import '../views/workers/create_worker_view.dart';
 import '../views/workers/edit_worker_view.dart';
+import '../views/users/users_content.dart';
+import '../views/users/create_user_view.dart';
+import '../views/users/edit_user_view.dart';
 import '../views/credits/credits_content.dart';
 import '../views/statistics/statistics_dashboard_content.dart';
 import '../views/statistics/statistics_sales_content.dart';
@@ -55,6 +59,8 @@ class AppRouter {
   static const String login = '/login';
   static const String dashboard = '/dashboard';
   static const String users = '/users';
+  static const String usersCreate = '/users/create';
+  static const String usersEdit = '/users/:id/edit';
   static const String clients = '/clients';
   static const String clientsCreate = '/clients/create';
   static const String clientsEdit = '/clients/:id/edit';
@@ -238,6 +244,27 @@ class AppRouter {
           builder: (context, state) {
             final worker = state.extra as Worker;
             return EditWorkerView(initialWorker: worker);
+          },
+        ),
+
+        // Route de création d'utilisateur (hors du shell - fullscreen)
+        GoRoute(
+          path: usersCreate,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => const CreateUserView(),
+        ),
+
+        // Route de modification d'utilisateur (hors du shell - fullscreen)
+        GoRoute(
+          path: usersEdit,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            final user = state.extra as User;
+            return EditUserView(
+              userId: int.parse(id),
+              initialUser: user,
+            );
           },
         ),
 

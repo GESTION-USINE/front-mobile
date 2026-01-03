@@ -1,82 +1,288 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-class UsersContent extends StatelessWidget {
+import '../../routes/app_router.dart';
+import '../../di/injection_container.dart';
+import '../../viewmodels/user_viewmodel.dart';
+import '../widgets/generic_data_table.dart';
+
+/// Contenu de la liste des utilisateurs (sans wrapper)
+class UsersContent extends StatefulWidget {
   const UsersContent({super.key});
 
   @override
+  State<UsersContent> createState() => _UsersContentState();
+}
+
+class _UsersContentState extends State<UsersContent> {
+  late final UserViewModel _viewModel;
+  final _searchController = TextEditingController();
+  String? _selectedRole;
+  bool? _selectedIsActive;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = getIt<UserViewModel>();
+    _viewModel.loadUsers();
+    _selectedRole = _viewModel.listRole ?? '';
+    _selectedIsActive = _viewModel.listIsActive;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ChangeNotifierProvider.value(
+      value: _viewModel,
+      child: Consumer<UserViewModel>(
+        builder: (context, viewModel, child) {
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Gestion des utilisateurs',
-                      style: AppTheme.headingLarge,
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Gérez les utilisateurs et leurs permissions',
-                      style: AppTheme.subtitleMedium,
-                    ),
-                  ],
+                // En-tête - Titre et bouton sur des lignes séparées
+                const Text(
+                  'Gestion des utilisateurs',
+                  style: AppTheme.headingLarge,
                 ),
-               
+                const SizedBox(height: 8),
+                const Text(
+                  'Gérez les comptes utilisateurs et leurs permissions',
+                  style: AppTheme.subtitleMedium,
+                ),
+                const SizedBox(height: 10),
+
+                // Bouton Nouvel utilisateur
+                ElevatedButton.icon(
+                  onPressed: () => context.go(AppRouter.usersCreate),
+                  style: AppTheme.industrialPrimaryButton,
+                  icon: const Icon(Icons.add, size: 20),
+                  label: const Text('Nouvel utilisateur'),
+                ),
+                const SizedBox(height: 12),
+
+                // Barre de recherche et filtres
+                _buildFilters(viewModel),
+                const SizedBox(height: 12),
+                // Liste des utilisateurs
+                _buildUsersList(viewModel),
               ],
             ),
-            SizedBox(height: 32),
-            // Maintenant Expanded aura une taille définie
-            // Expanded(
-            //   child: Container(
-            //     padding: const EdgeInsets.all(24),
-            //     decoration: BoxDecoration(
-            //       color: AppColors.white,
-            //       borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-            //       boxShadow: [
-            //         BoxShadow(
-            //           color: AppColors.shadowColor,
-            //           blurRadius: 4,
-            //           offset: const Offset(0, 2),
-            //         ),
-            //       ],
-            //     ),
-            //     child: Center(
-            //       child: Column(
-            //         mainAxisAlignment: MainAxisAlignment.center,
-            //         children: [
-            //           Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
-            //           const SizedBox(height: 16),
-            //           Text(
-            //             'Liste des utilisateurs',
-            //             style: TextStyle(
-            //               fontSize: 18,
-            //               fontWeight: FontWeight.w600,
-            //               color: AppColors.grey600,
-            //             ),
-            //           ),
-            //           const SizedBox(height: 8),
-            //           Text(
-            //             'Cette fonctionnalité sera implémentée prochainement',
-            //             style: TextStyle(
-            //               fontSize: 14,
-            //               color: AppColors.grey500,
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //     ),
-            //   ),
-            // ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
+
+  Widget _buildFilters(UserViewModel viewModel) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        // Recherche
+        SizedBox(
+          width: 320,
+          child: TextField(
+            controller: _searchController,
+            style: const TextStyle(color: AppColors.industrialText),
+            decoration: AppTheme.industrialInputDecoration(
+              hint: 'Rechercher par nom, email, téléphone...',
+              prefixIcon: Icons.search,
+            ).copyWith(
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        viewModel.setListSearch('');
+                        viewModel.loadUsers();
+                      },
+                    )
+                  : null,
+            ),
+            onChanged: (value) {
+              viewModel.setListSearch(value);
+            },
+            onSubmitted: (value) {
+              viewModel.loadUsers();
+            },
+          ),
+        ),
+
+        // Filtre Rôle
+        SizedBox(
+          width: 220,
+          child: DropdownButtonFormField<String?>(
+            key: ValueKey(_selectedRole),
+            value: _selectedRole ?? '',
+            isExpanded: true,
+            style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
+            dropdownColor: AppColors.white,
+            decoration: AppTheme.industrialInputDecoration(
+              hint: 'Rôle',
+              prefixIcon: Icons.admin_panel_settings,
+            ).copyWith(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 2,
+                vertical: 2,
+              ),
+            ),
+            items: const [
+              DropdownMenuItem(
+                  value: '',
+                  child: Text('Tous les rôles',
+                      style: TextStyle(color: AppColors.industrialText))),
+              DropdownMenuItem(
+                  value: 'super_admin',
+                  child: Text('Super Admin',
+                      style: TextStyle(color: AppColors.industrialText))),
+              DropdownMenuItem(
+                  value: 'associe',
+                  child: Text('Associé',
+                      style: TextStyle(color: AppColors.industrialText))),
+              DropdownMenuItem(
+                  value: 'employe',
+                  child: Text('Employé',
+                      style: TextStyle(color: AppColors.industrialText))),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedRole = value;
+              });
+              viewModel.setListRole(value == '' ? null : value);
+              viewModel.loadUsers();
+            },
+          ),
+        ),
+
+        // Filtre Statut
+        SizedBox(
+          width: 125,
+          child: DropdownButtonFormField<bool?>(
+            key: ValueKey(_selectedIsActive),
+            value: _selectedIsActive,
+            isExpanded: true,
+            style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
+            dropdownColor: AppColors.white,
+            decoration: AppTheme.industrialInputDecoration(
+              hint: 'Statut',
+              prefixIcon: Icons.toggle_on,
+            ).copyWith(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+            ),
+            items: const [
+              DropdownMenuItem(
+                  value: null,
+                  child: Text('Tous',
+                      style: TextStyle(color: AppColors.industrialText))),
+              DropdownMenuItem(
+                  value: true,
+                  child: Text('Actif',
+                      style: TextStyle(color: AppColors.industrialText))),
+              DropdownMenuItem(
+                  value: false,
+                  child: Text('Inactif',
+                      style: TextStyle(color: AppColors.industrialText))),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedIsActive = value;
+              });
+              viewModel.setListIsActive(value);
+              viewModel.loadUsers();
+            },
+          ),
+        ),
+
+        // Bouton reset filtres
+        IconButton(
+          onPressed: () {
+            setState(() {
+              _searchController.clear();
+              _selectedRole = '';
+              _selectedIsActive = null;
+            });
+            viewModel.clearFilters();
+          },
+          icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
+          tooltip: 'Réinitialiser les filtres',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUsersList(UserViewModel viewModel) {
+    // Colonnes à afficher
+    final columnsToDisplay = <DataTableColumn<dynamic>>[
+      DataTableColumn<dynamic>(
+        label: 'Nom d\'utilisateur',
+        value: (user) => user?.username ?? '-',
+      ),
+      DataTableColumn<dynamic>(
+        label: 'Email',
+        value: (user) => user?.email ?? '-',
+      ),
+      DataTableColumn<dynamic>(
+        label: 'Téléphone',
+        value: (user) => user?.phone ?? '-',
+      ),
+      DataTableColumn<dynamic>(
+        label: 'Rôle',
+        value: (user) {
+          final String role = user?.role ?? '-';
+          if (role == 'super_admin') return 'Super Admin';
+          if (role == 'associe') return 'Associé';
+          if (role == 'employe') return 'Employé';
+          return role;
+        },
+      ),
+      DataTableColumn<dynamic>(
+        label: 'Statut',
+        value: (user) => (user?.isActive ?? false) ? 'Actif' : 'Inactif',
+      ),
+    ];
+
+    return GenericDataTable<dynamic>(
+      items: viewModel.users,
+      columns: columnsToDisplay,
+      showActions: true,
+      showEditAction: true,
+      showDeleteAction: false,
+      onEdit: (user) {
+        context.go('/users/${user.id}/edit', extra: user);
+      },
+      onDelete: (user) {
+        // Delete action disabled
+      },
+      isLoading: viewModel.isLoading,
+      hasError: viewModel.hasError,
+      errorMessage: viewModel.errorMessage,
+      emptyMessage: 'Aucun utilisateur trouvé',
+      total: viewModel.usersPagination?.total ?? 0,
+      currentPage: viewModel.listPage,
+      totalPages: viewModel.usersPagination?.totalPages ?? 1,
+      onPreviousPage: (viewModel.usersPagination?.hasPreviousPage ?? false)
+          ? () => viewModel.previousPage()
+          : null,
+      onNextPage: (viewModel.usersPagination?.hasNextPage ?? false)
+          ? () => viewModel.nextPage()
+          : null,
+      enableCustomWindow: false,
+      showCustomActionButton: false,
+    );
+  }
 }
+

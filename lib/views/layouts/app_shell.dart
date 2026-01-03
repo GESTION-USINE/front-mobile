@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_template/views/widgets/app_navbar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -51,6 +52,7 @@ class AppShell extends StatelessWidget {
             child: Column(
               children: [
                 // Zone de contenu dynamique (OUTLET)
+                const AppNavBar(),
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.all(24),

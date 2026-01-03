@@ -68,6 +68,15 @@ class MenuConfig {
           allowedRoles: ['super_admin', 'associe'],
         ),
 
+        // Gestion des utilisateurs - Super admin seulement
+        const MenuItem(
+          id: 'users',
+          title: 'Utilisateurs',
+          icon: Icons.people_outline,
+          route: '/users',
+          allowedRoles: ['super_admin'],
+        ),
+
         // Statistiques avec sous-menus
         const MenuItem(
           id: 'statistiques',
