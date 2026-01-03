@@ -35,6 +35,7 @@ import '../views/workers/create_worker_view.dart';
 import '../views/workers/edit_worker_view.dart';
 import '../views/credits/credits_content.dart';
 import '../views/credits/clients_bons_content.dart';
+import '../views/credits/client_credit_content.dart';
 
 class AppRouter {
   AppRouter._();
@@ -312,7 +313,7 @@ class AppRouter {
            GoRoute(
               path: clientsCredit,
               pageBuilder: (context, state) => const NoTransitionPage(
-                child: CreditsContent(),
+                child: ClientCreditContent(),
               ),
             ),
 

@@ -37,13 +37,9 @@ class ClientsCreditResponse {
 class ClientCredit {
   final int id;
   final String name;
-  final String type;
   final String? email;
   final String? phone;
-  final String? taxId;
-  final bool canPayByCheck;
-  final bool isActive;
-  final DateTime createdAt;
+  final String? type;
   final double totalRemainingCredit;
   final int slipsCount;
   final List<CreditSlip> slips;
@@ -51,13 +47,9 @@ class ClientCredit {
   ClientCredit({
     required this.id,
     required this.name,
-    required this.type,
     this.email,
     this.phone,
-    this.taxId,
-    required this.canPayByCheck,
-    required this.isActive,
-    required this.createdAt,
+    this.type,
     required this.totalRemainingCredit,
     required this.slipsCount,
     required this.slips,
@@ -72,14 +64,11 @@ class ClientCredit {
     return ClientCredit(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
-      type: json['type'] as String? ?? 'particulier',
       email: json['email'] as String?,
       phone: json['phone'] as String?,
-      taxId: json['tax_id'] as String?,
-      canPayByCheck: (json['can_pay_by_check'] as bool?) ?? false,
-      isActive: (json['is_active'] as bool?) ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String? ?? DateTime.now().toIso8601String()),
-      totalRemainingCredit: (json['total_remaining_credit'] as num?)?.toDouble() ?? 0.0,
+      type: json['type'] as String?,
+      totalRemainingCredit:
+          (json['total_remaining_credit'] as num?)?.toDouble() ?? 0.0,
       slipsCount: json['slips_count'] as int? ?? 0,
       slips: slips,
     );
@@ -113,13 +102,16 @@ class CreditSlip {
     return CreditSlip(
       id: json['id'] as int? ?? 0,
       slipNumber: json['slip_number'] as String? ?? '',
-      material: CreditMaterial.fromJson(json['material'] as Map<String, dynamic>? ?? {}),
+      material: CreditMaterial.fromJson(
+          json['material'] as Map<String, dynamic>? ?? {}),
       weightTons: (json['weight_tons'] as num?)?.toDouble() ?? 0.0,
       totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0.0,
       totalPaid: (json['total_paid'] as num?)?.toDouble() ?? 0.0,
       remainingCredit: (json['remaining_credit'] as num?)?.toDouble() ?? 0.0,
       isFullyPaid: (json['is_fully_paid'] as bool?) ?? false,
-      createdAt: DateTime.parse(json['created_at'] as String? ?? DateTime.now().toIso8601String()),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
     );
   }
 }
@@ -136,6 +128,7 @@ class CreditMaterial {
   factory CreditMaterial.fromJson(Map<String, dynamic> json) {
     return CreditMaterial(
       id: json['id'] as int? ?? 0,
-      name: json['name'] as String? ?? '',    );
+      name: json['name'] as String? ?? '',
+    );
   }
 }
