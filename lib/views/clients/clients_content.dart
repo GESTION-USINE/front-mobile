@@ -29,6 +29,7 @@ class _ClientsContentState extends State<ClientsContent> {
   bool _isDrawerOpen = false;
   // Controllers pour les prix par matériau
   final Map<int, TextEditingController> _priceControllers = {};
+  dynamic _selectedClient;
 
   @override
   void initState() {
@@ -41,30 +42,27 @@ class _ClientsContentState extends State<ClientsContent> {
   @override
   void dispose() {
     _searchController.dispose();
-    for (final c in _priceControllers.values) {
-      c.dispose();
-    }
     _viewModel.dispose();
     _materialViewModel.dispose();
     super.dispose();
   }
 
-  void _openPricesForClient(dynamic client) {
-    setState(() {
-      _isDrawerOpen = true;
-      // Clear existing controllers
-      for (final c in _priceControllers.values) {
-        c.dispose();
-      }
-      _priceControllers.clear();
-    });
-     _materialViewModel.loadClientMaterialPrices(clientId: client.id, refresh: true);
-    // sleep(Duration(seconds:5));
-
+  Future<void> _openPricesForClient(dynamic client) async {
+    // D'abord charger les données
+    await _materialViewModel.loadClientMaterialPrices(clientId: client.id, refresh: true);
+    
+    // Ensuite ouvrir le drawer avec les données fraîches
+    if (mounted) {
+      setState(() {
+        _selectedClient = client;
+        _isDrawerOpen = true;
+      });
+    }
   }
 
    Widget _buildPricesDrawer(BuildContext ctx, dynamic client, VoidCallback close) {
     return ClientMaterialPricesDrawer(
+      key: ValueKey('prices_drawer_${client.id}'), // Force la recréation pour chaque client
       client: client,
       onClose: close,
     );

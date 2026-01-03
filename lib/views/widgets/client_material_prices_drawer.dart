@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/entities/material_price.dart';
+import '../../providers/user_provider.dart';
 import '../../viewmodels/material_viewmodel.dart';
 import './generic_data_table.dart';
 
@@ -31,24 +32,48 @@ class ClientMaterialPricesDrawer extends StatefulWidget {
 
 class _ClientMaterialPricesDrawerState
     extends State<ClientMaterialPricesDrawer> {
-  late final Map<int, TextEditingController> _priceControllers = {};
+  final Map<int, TextEditingController> _priceControllers = {};
   bool _isSaving = false;
+  int? _lastClientId;
+  bool _controllersInitialized = false;
 
   @override
   void dispose() {
-    for (final c in _priceControllers.values) {
-      c.dispose();
-    }
+    _clearControllers();
     super.dispose();
   }
 
+  void _clearControllers() {
+    for (final c in _priceControllers.values) {
+      c.dispose();
+    }
+    _priceControllers.clear();
+    _controllersInitialized = false;
+  }
+
   void _initControllers(List<MaterialPriceItem> items) {
+    final currentClientId = widget.client?.id;
+    
+    // Si le client a changé, on réinitialise tout
+    if (_lastClientId != currentClientId) {
+      _clearControllers();
+      _lastClientId = currentClientId;
+    }
+    
+    // Ne créer les contrôleurs qu'une seule fois pour ce client
+    if (_controllersInitialized) return;
+    
     for (final item in items) {
       if (!_priceControllers.containsKey(item.materialId)) {
-        final text =
-            item.customPricePerTon != null ? item.customPricePerTon!.toString() : '';
+        final text = item.customPricePerTon != null 
+            ? item.customPricePerTon!.toString() 
+            : '';
         _priceControllers[item.materialId] = TextEditingController(text: text);
       }
+    }
+    
+    if (items.isNotEmpty) {
+      _controllersInitialized = true;
     }
   }
 
@@ -57,6 +82,8 @@ class _ClientMaterialPricesDrawerState
   Widget build(BuildContext context) {
     return Consumer<MaterialViewModel>(
       builder: (context, mvm, child) {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final isSuperAdmin = userProvider.currentUser?.role == 'super_admin';
         final items = mvm.materialPrices;
         _initControllers(items);
 
@@ -210,6 +237,7 @@ class _ClientMaterialPricesDrawerState
                                   setState(() {});
                           }
                         },
+                          showActions: isSuperAdmin,
                           showCustomActionButton: false,
                       ),
                 ),

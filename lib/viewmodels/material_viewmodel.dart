@@ -54,6 +54,9 @@ class MaterialViewModel extends BaseViewModel {
     }) async {
       if (refresh) {
         _currentPage = 1;
+        // Vider les anciennes données immédiatement pour éviter les confusions
+        _materialPrices = [];
+        notifyListeners();
       }
 
       final result = await runAsync(() async {

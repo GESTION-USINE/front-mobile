@@ -9,6 +9,9 @@ import '../../di/injection_container.dart';
 import '../../models/entities/worker.dart';
 import '../../models/request/update_worker_request.dart';
 import '../../viewmodels/worker_viewmodel.dart';
+import '../../viewmodels/salary_payement_viewmodel.dart';
+import '../salary_payments/salary_payments_worker_content.dart';
+import '../salary_payments/create_salary_payment_form.dart';
 
 class EditWorkerView extends StatefulWidget {
   final Worker initialWorker;
@@ -36,11 +39,13 @@ class _EditWorkerViewState extends State<EditWorkerView> {
   final _dateFormat = DateFormat('dd/MM/yyyy');
 
   late final WorkerViewModel _viewModel;
+  late final SalaryPaymentViewModel _salaryPaymentViewModel;
 
   @override
   void initState() {
     super.initState();
     _viewModel = getIt<WorkerViewModel>();
+    _salaryPaymentViewModel = getIt<SalaryPaymentViewModel>();
     _initializeFields();
   }
 
@@ -63,6 +68,7 @@ class _EditWorkerViewState extends State<EditWorkerView> {
     _jobPositionController.dispose();
     _salaryController.dispose();
     _notesController.dispose();
+    _salaryPaymentViewModel.dispose();
     super.dispose();
   }
 
@@ -147,255 +153,296 @@ class _EditWorkerViewState extends State<EditWorkerView> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: _viewModel,
-      child: Scaffold(
-        backgroundColor: AppColors.lightBackground,
-        appBar: AppBar(
-          title: const Text('Modifier travailleur'),
-          backgroundColor: AppColors.industrialPrimary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/workers'),
+      child: DefaultTabController(
+        length: 3,
+        child: Scaffold(
+          backgroundColor: AppColors.lightBackground,
+          appBar: AppBar(
+            title: Text('${widget.initialWorker.fullName}'),
+            backgroundColor: AppColors.industrialPrimary,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/workers'),
+            ),
+            bottom: const TabBar(
+              indicatorColor: Colors.white,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              tabs: [
+                Tab(icon: Icon(Icons.info), text: 'Informations'),
+                Tab(icon: Icon(Icons.payments), text: 'Paiements'),
+                Tab(icon: Icon(Icons.add_card), text: 'Ajouter'),
+              ],
+            ),
           ),
-        ),
-        body: Consumer<WorkerViewModel>(
-          builder: (context, viewModel, child) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                      const Text(
-                        'Informations du travailleur',
-                        style: AppTheme.headingLarge,
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Nom complet
-                      TextFormField(
-                        controller: _fullNameController,
-                        decoration: AppTheme.industrialInputDecoration(
-                          hint: 'Nom complet *',
-                          prefixIcon: Icons.person,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Le nom complet est requis';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Téléphone
-                      TextFormField(
-                        controller: _phoneController,
-                        decoration: AppTheme.industrialInputDecoration(
-                          hint: 'Téléphone *',
-                          prefixIcon: Icons.phone,
-                        ),
-                        keyboardType: TextInputType.phone,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Le téléphone est requis';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Adresse
-                      TextFormField(
-                        controller: _addressController,
-                        decoration: AppTheme.industrialInputDecoration(
-                          hint: 'Adresse *',
-                          prefixIcon: Icons.location_on,
-                        ),
-                        maxLines: 2,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'L\'adresse est requise';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Date d'embauche
-                      TextFormField(
-                        readOnly: true,
-                        decoration: AppTheme.industrialInputDecoration(
-                          hint: 'Date d\'embauche *',
-                          prefixIcon: Icons.calendar_today,
-                        ).copyWith(
-                          hintText: _selectedHireDate != null
-                              ? _dateFormat.format(_selectedHireDate!)
-                              : 'Sélectionner une date',
-                        ),
-                        onTap: _selectHireDate,
-                        validator: (value) {
-                          if (_selectedHireDate == null) {
-                            return 'La date d\'embauche est requise';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Poste
-                      TextFormField(
-                        controller: _jobPositionController,
-                        decoration: AppTheme.industrialInputDecoration(
-                          hint: 'Poste *',
-                          prefixIcon: Icons.work,
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Le poste est requis';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Salaire mensuel
-                      TextFormField(
-                        controller: _salaryController,
-                        decoration: AppTheme.industrialInputDecoration(
-                          hint: 'Salaire mensuel (DZD) *',
-                          prefixIcon: Icons.attach_money,
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Le salaire mensuel est requis';
-                          }
-                          final double? salary = double.tryParse(value.trim());
-                          if (salary == null) {
-                            return 'Veuillez entrer un montant valide';
-                          }
-                          if (salary <= 0) {
-                            return 'Le salaire doit être supérieur à 0';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Statut actif
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: _isActive,
-                            onChanged: (value) {
-                              setState(() {
-                                _isActive = value ?? true;
-                              });
-                            },
-                            activeColor: AppColors.industrialPrimary,
-                          ),
-                          const Text(
-                            'Travailleur actif',
-                            style: TextStyle(color: AppColors.industrialText),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Notes
-                      TextFormField(
-                        controller: _notesController,
-                        decoration: AppTheme.industrialInputDecoration(
-                          hint: 'Notes',
-                          prefixIcon: Icons.note,
-                        ),
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 32),
-
-                      // Boutons
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isSmall = constraints.maxWidth < 520;
-
-                          return Align(
-                            alignment: Alignment.centerRight,
-                            child: Wrap(
-                              alignment: WrapAlignment.end,
-                              spacing: 16,
-                              runSpacing: 12,
-                              children: [
-                                SizedBox(
-                                  width: isSmall ? constraints.maxWidth : null,
-                                  child: OutlinedButton(
-                                    onPressed: viewModel.isLoading
-                                        ? null
-                                        : () => context.go('/workers'),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 18,
-                                        vertical: 14,
-                                      ),
-                                    ),
-                                    child: const Text('Annuler'),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: isSmall ? constraints.maxWidth : null,
-                                  child: ElevatedButton.icon(
-                                    onPressed: viewModel.isLoading
-                                        ? null
-                                        : _handleSubmit,
-                                    style: AppTheme.industrialPrimaryButton,
-                                    icon: viewModel.isLoading
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: AppColors.white,
-                                            ),
-                                          )
-                                        : const Icon(Icons.edit),
-                                    label: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 2),
-                                      child: Text(
-                                        viewModel.isLoading
-                                            ? 'Mise à jour...'
-                                            : 'Mettre à jour',
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+          body: TabBarView(
+            children: [
+              // Onglet 1 : Informations du travailleur
+              Consumer<WorkerViewModel>(
+                builder: (context, viewModel, child) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 800),
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
                             ),
-                          );
-                        },
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Informations du travailleur',
+                                style: AppTheme.headingLarge,
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Nom complet
+                              TextFormField(
+                                controller: _fullNameController,
+                                decoration: AppTheme.industrialInputDecoration(
+                                  hint: 'Nom complet *',
+                                  prefixIcon: Icons.person,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Le nom complet est requis';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Téléphone
+                              TextFormField(
+                                controller: _phoneController,
+                                decoration: AppTheme.industrialInputDecoration(
+                                  hint: 'Téléphone *',
+                                  prefixIcon: Icons.phone,
+                                ),
+                                keyboardType: TextInputType.phone,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Le téléphone est requis';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Adresse
+                              TextFormField(
+                                controller: _addressController,
+                                decoration: AppTheme.industrialInputDecoration(
+                                  hint: 'Adresse *',
+                                  prefixIcon: Icons.location_on,
+                                ),
+                                maxLines: 2,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'L\'adresse est requise';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Date d'embauche
+                              TextFormField(
+                                readOnly: true,
+                                decoration: AppTheme.industrialInputDecoration(
+                                  hint: 'Date d\'embauche *',
+                                  prefixIcon: Icons.calendar_today,
+                                ).copyWith(
+                                  hintText: _selectedHireDate != null
+                                      ? _dateFormat.format(_selectedHireDate!)
+                                      : 'Sélectionner une date',
+                                ),
+                                onTap: _selectHireDate,
+                                validator: (value) {
+                                  if (_selectedHireDate == null) {
+                                    return 'La date d\'embauche est requise';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Poste
+                              TextFormField(
+                                controller: _jobPositionController,
+                                decoration: AppTheme.industrialInputDecoration(
+                                  hint: 'Poste *',
+                                  prefixIcon: Icons.work,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Le poste est requis';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Salaire mensuel
+                              TextFormField(
+                                controller: _salaryController,
+                                decoration: AppTheme.industrialInputDecoration(
+                                  hint: 'Salaire mensuel (DZD) *',
+                                  prefixIcon: Icons.attach_money,
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Le salaire mensuel est requis';
+                                  }
+                                  final double? salary = double.tryParse(value.trim());
+                                  if (salary == null) {
+                                    return 'Veuillez entrer un montant valide';
+                                  }
+                                  if (salary <= 0) {
+                                    return 'Le salaire doit être supérieur à 0';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Statut actif
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: _isActive,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _isActive = value ?? true;
+                                      });
+                                    },
+                                    activeColor: AppColors.industrialPrimary,
+                                  ),
+                                  const Text(
+                                    'Travailleur actif',
+                                    style: TextStyle(color: AppColors.industrialText),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Notes
+                              TextFormField(
+                                controller: _notesController,
+                                decoration: AppTheme.industrialInputDecoration(
+                                  hint: 'Notes',
+                                  prefixIcon: Icons.note,
+                                ),
+                                maxLines: 4,
+                              ),
+                              const SizedBox(height: 32),
+
+                              // Boutons
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isSmall = constraints.maxWidth < 520;
+
+                                  return Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 16,
+                                      runSpacing: 12,
+                                      children: [
+                                        SizedBox(
+                                          width: isSmall ? constraints.maxWidth : null,
+                                          child: OutlinedButton(
+                                            onPressed: viewModel.isLoading
+                                                ? null
+                                                : () => context.go('/workers'),
+                                            style: OutlinedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 18,
+                                                vertical: 14,
+                                              ),
+                                            ),
+                                            child: const Text('Annuler'),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: isSmall ? constraints.maxWidth : null,
+                                          child: ElevatedButton.icon(
+                                            onPressed: viewModel.isLoading
+                                                ? null
+                                                : _handleSubmit,
+                                            style: AppTheme.industrialPrimaryButton,
+                                            icon: viewModel.isLoading
+                                                ? const SizedBox(
+                                                    width: 18,
+                                                    height: 18,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: AppColors.white,
+                                                    ),
+                                                  )
+                                                : const Icon(Icons.edit),
+                                            label: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 2),
+                                              child: Text(
+                                                viewModel.isLoading
+                                                    ? 'Mise à jour...'
+                                                    : 'Mettre à jour',
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-           ] ),
-                  ),
+                    ),
+                  );
+                },
+              ),
+
+              // Onglet 2 : Paiements de salaire
+              ChangeNotifierProvider.value(
+                value: _salaryPaymentViewModel,
+                child: SalaryPaymentsWorkerContent(
+                  worker: widget.initialWorker,
+                  viewModel: _salaryPaymentViewModel,
                 ),
               ),
-            );
-          },
+
+              // Onglet 3 : Ajouter un paiement
+              ChangeNotifierProvider.value(
+                value: _salaryPaymentViewModel,
+                child: CreateSalaryPaymentForm(
+                  worker: widget.initialWorker,
+                  viewModel: _salaryPaymentViewModel,
+                  onSuccess: () {
+                    // Rafraîchir la liste des paiements
+                    DefaultTabController.of(context).animateTo(1);
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

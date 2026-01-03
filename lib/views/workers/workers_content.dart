@@ -210,10 +210,16 @@ class _WorkersContentState extends State<WorkersContent> {
       showActions: true,
       showEditAction: true,
       showDeleteAction: false,
+      showCustomActionButton: true,
+      customActionIcon: Icons.payments,
+      customActionTooltip: 'Paiements',
       onEdit: (worker) {
         context.go('/workers/${worker.id}/edit', extra: worker);
       },
       onDelete: (_) {},
+      onCustomAction: (worker) {
+        context.go('/workers/${worker.id}/salary-payments', extra: worker);
+      },
       isLoading: viewModel.isLoading,
       hasError: viewModel.hasError,
       errorMessage: viewModel.errorMessage,
@@ -226,7 +232,6 @@ class _WorkersContentState extends State<WorkersContent> {
           : null,
       onNextPage: viewModel.hasNextPage ? () => viewModel.nextPage() : null,
       enableCustomWindow: false,
-      showCustomActionButton: false,
     );
   }
 }
