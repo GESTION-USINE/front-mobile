@@ -51,9 +51,6 @@ class AppShell extends StatelessWidget {
           Expanded(
             child: Column(
               children: [
-                // Navbar fixe en haut
-                const AppNavBar(),
-
                 // Zone de contenu dynamique (OUTLET)
                 Expanded(
                   child: Container(

@@ -4,6 +4,7 @@ import '../core/network/api_client.dart';
 import '../models/entities/payment.dart';
 import '../models/request/create_payment_request.dart';
 import '../models/response/payment_response.dart';
+import '../models/response/payment_details_response.dart';
 import '../models/response/weighing_slips_response.dart';
 
 class PaymentService {
@@ -17,7 +18,6 @@ class PaymentService {
         ApiEndpoints.payments,
         data: request.toJson(),
       );
-      print(  'CreatePaymentResponse Data: ${response.data}');
       return PaymentResponse.fromJson(response.data);
     } on DioException {
       rethrow;
@@ -66,6 +66,18 @@ class PaymentService {
       );
       final List<dynamic> data = response.data['data'] ?? [];
       return data.map((json) => Payment.fromJson(json)).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  /// Get detailed payment information for a weighing slip
+  Future<PaymentDetailsResponse> getPaymentDetails(int weighingSlipId) async {
+    try {
+      final response = await _apiClient.get(
+        '${ApiEndpoints.payments}/weighing-slips/$weighingSlipId',
+      );
+      return PaymentDetailsResponse.fromJson(response.data);
     } on DioException {
       rethrow;
     }
