@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../di/injection_container.dart';
 import '../../models/response/payment_details_response.dart';
 import '../../services/payment_service.dart';

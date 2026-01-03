@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/user_provider.dart';
 import '../widgets/app_sidebar.dart';
-import '../widgets/app_navbar.dart';
 
 /// Shell principal de l'application avec sidebar et navbar fixes
 /// Le contenu (child) change selon la route - pattern similaire à <Outlet /> de React Router

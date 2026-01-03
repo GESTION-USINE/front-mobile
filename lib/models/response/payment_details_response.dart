@@ -1,6 +1,3 @@
-import '../entities/payment.dart';
-import '../entities/weighing_slip.dart';
-
 class PaymentDetailsResponse {
   final bool success;
   final PaymentDetailsData? data;

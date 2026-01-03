@@ -22,6 +22,8 @@ import '../viewmodels/weighing_slip_viewmodel.dart';
 import '../viewmodels/maintenance_viewmodel.dart';
 import '../viewmodels/worker_viewmodel.dart';
 import '../viewmodels/credit_payment_viewmodel.dart';
+import '../viewmodels/clients_credit_viewmodel.dart';
+import '../viewmodels/clients_with_slips_viewmodel.dart';
 
 final getIt = GetIt.instance;
 
@@ -107,6 +109,14 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory<CreditPaymentViewModel>(
     () => CreditPaymentViewModel(getIt<PaymentService>()),
+  );
+
+  getIt.registerFactory<ClientsCreditViewModel>(
+    () => ClientsCreditViewModel(getIt<ClientService>()),
+  );
+
+  getIt.registerFactory<ClientsWithSlipsViewModel>(
+    () => ClientsWithSlipsViewModel(getIt<ClientService>()),
   );
 
   // ==================== Initialisation ====================
