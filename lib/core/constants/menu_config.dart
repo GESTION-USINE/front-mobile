@@ -68,7 +68,51 @@ class MenuConfig {
           allowedRoles: ['super_admin', 'associe'],
         ),
 
-        
+        // Statistiques avec sous-menus
+        const MenuItem(
+          id: 'statistiques',
+          title: 'Statistiques',
+          icon: Icons.analytics_outlined,
+          route: '', // Pas de route directe, c'est un dropdown
+          allowedRoles: ['super_admin', 'associe'],
+          subItems: [
+            MenuItem(
+              id: 'stats_dashboard',
+              title: 'Tableau de bord',
+              icon: Icons.dashboard_outlined,
+              route: '/statistics/dashboard',
+              allowedRoles: ['super_admin', 'associe'],
+            ),
+            MenuItem(
+              id: 'stats_sales',
+              title: 'Ventes',
+              icon: Icons.trending_up_outlined,
+              route: '/statistics/sales',
+              allowedRoles: ['super_admin', 'associe'],
+            ),
+            MenuItem(
+              id: 'stats_purchases',
+              title: 'Achats',
+              icon: Icons.shopping_cart_outlined,
+              route: '/statistics/purchases',
+              allowedRoles: ['super_admin', 'associe'],
+            ),
+            MenuItem(
+              id: 'stats_inventory',
+              title: 'Inventaire',
+              icon: Icons.inventory_2_outlined,
+              route: '/statistics/inventory',
+              allowedRoles: ['super_admin', 'associe'],
+            ),
+            MenuItem(
+              id: 'stats_workers',
+              title: 'Travailleurs',
+              icon: Icons.people_outline,
+              route: '/statistics/workers',
+              allowedRoles: ['super_admin', 'associe'],
+            ),
+          ],
+        ),
       ];
 
   /// Filtre les menus selon le rôle de l'utilisateur

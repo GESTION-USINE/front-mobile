@@ -15,6 +15,7 @@ import '../services/maintenance_service.dart';
 import '../services/worker_service.dart';
 import '../services/payment_service.dart';
 import '../services/salary_payement.dart';
+import '../services/stats_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/product_viewmodel.dart';
 import '../viewmodels/client_viewmodel.dart';
@@ -26,6 +27,7 @@ import '../viewmodels/credit_payment_viewmodel.dart';
 import '../viewmodels/salary_payement_viewmodel.dart';
 import '../viewmodels/clients_credit_viewmodel.dart';
 import '../viewmodels/clients_with_slips_viewmodel.dart';
+import '../viewmodels/stats_viewmodel.dart';
 
 final getIt = GetIt.instance;
 
@@ -78,6 +80,10 @@ Future<void> initDependencies() async {
     () => SalaryPaymentService(getIt<ApiClient>()),
   );
 
+  getIt.registerLazySingleton<StatsService>(
+    () => StatsService(getIt<ApiClient>()),
+  );
+
  
   // ==================== ViewModels ====================
   // Factory car nouvelle instance par écran
@@ -120,7 +126,6 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory<SalaryPaymentViewModel>(
     () => SalaryPaymentViewModel(getIt<SalaryPaymentService>()),
-
   );
   getIt.registerFactory<ClientsCreditViewModel>(
     () => ClientsCreditViewModel(getIt<ClientService>()),
@@ -128,6 +133,14 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory<ClientsWithSlipsViewModel>(
     () => ClientsWithSlipsViewModel(getIt<ClientService>()),
+  );
+
+  getIt.registerFactory<StatsViewModel>(
+    () => StatsViewModel(getIt<StatsService>()),
+  );
+
+  getIt.registerFactory<StatsViewModel>(
+    () => StatsViewModel(getIt<StatsService>()),
   );
 
   // ==================== Initialisation ====================

@@ -34,6 +34,11 @@ import '../views/workers/workers_content.dart';
 import '../views/workers/create_worker_view.dart';
 import '../views/workers/edit_worker_view.dart';
 import '../views/credits/credits_content.dart';
+import '../views/statistics/statistics_dashboard_content.dart';
+import '../views/statistics/statistics_sales_content.dart';
+import '../views/statistics/statistics_purchases_content.dart';
+import '../views/statistics/statistics_inventory_content.dart';
+import '../views/statistics/statistics_workers_content.dart';
 import '../views/credits/clients_bons_content.dart';
 import '../views/credits/client_credit_content.dart';
 
@@ -75,6 +80,12 @@ class AppRouter {
   static const String credits = '/credits';
   static const String clientsBons = '/clients-bons';
   static const String clientsCredit = '/clients-credit';
+  static const String statisticsPath = '/statistics';
+  static const String statisticsDashboard = '/statistics/dashboard';
+  static const String statisticsSales = '/statistics/sales';
+  static const String statisticsPurchases = '/statistics/purchases';
+  static const String statisticsInventory = '/statistics/inventory';
+  static const String statisticsWorkers = '/statistics/workers';
 
   /// Crée le router avec redirection basée sur l'authentification
   static GoRouter createRouter(UserProvider userProvider) {
@@ -380,6 +391,46 @@ class AppRouter {
               path: settings,
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: SettingsContent(),
+              ),
+            ),
+
+            // Statistiques - Tableau de bord
+            GoRoute(
+              path: '$statisticsPath/dashboard',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: StatisticsDashboardContent(),
+              ),
+            ),
+
+            // Statistiques - Ventes
+            GoRoute(
+              path: '$statisticsPath/sales',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: StatisticsSalesContent(),
+              ),
+            ),
+
+            // Statistiques - Achats
+            GoRoute(
+              path: '$statisticsPath/purchases',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: StatisticsPurchasesContent(),
+              ),
+            ),
+
+            // Statistiques - Inventaire
+            GoRoute(
+              path: '$statisticsPath/inventory',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: StatisticsInventoryContent(),
+              ),
+            ),
+
+            // Statistiques - Travailleurs
+            GoRoute(
+              path: '$statisticsPath/workers',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: StatisticsWorkersContent(),
               ),
             ),
           ],

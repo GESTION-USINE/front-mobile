@@ -128,6 +128,12 @@ class AppSidebar extends StatelessWidget {
 
   Widget _buildMenuItem(MenuItem item) {
     final isSelected = currentRoute == item.route;
+    final hasSubItems = item.subItems != null && item.subItems!.isNotEmpty;
+
+    // Si l'item a des subItems, afficher un expandable, sinon naviguer directement
+    if (hasSubItems) {
+      return _buildExpandableMenuItem(item);
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
@@ -176,6 +182,96 @@ class AppSidebar extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildExpandableMenuItem(MenuItem item) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return ExpansionTile(
+          key: ValueKey(item.id),
+          leading: Icon(
+            item.icon,
+            color: AppColors.white,
+            size: 20,
+          ),
+          title: Text(
+            item.title,
+             maxLines: 1,
+  overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          textColor: AppColors.white,
+          collapsedTextColor: AppColors.white,
+          iconColor: AppColors.white,
+          collapsedIconColor: AppColors.white,
+          backgroundColor: AppColors.whiteTransparent10,
+          collapsedBackgroundColor: Colors.transparent,
+          children: item.subItems!
+              .map((subItem) => Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 4),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => onMenuItemTap(subItem.route),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 8,
+                              horizontal: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: currentRoute == subItem.route
+                                  ? AppColors.whiteTransparent20
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  subItem.icon,
+                                  color: AppColors.white,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    subItem.title,
+                                    style: TextStyle(
+                                      color: AppColors.white,
+                                      fontSize: 13,
+                                      fontWeight:
+                                          currentRoute == subItem.route
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                                if (currentRoute == subItem.route)
+                                  Container(
+                                    width: 3,
+                                    height: 3,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ))
+              .toList(),
+        );
+      },
     );
   }
 }
