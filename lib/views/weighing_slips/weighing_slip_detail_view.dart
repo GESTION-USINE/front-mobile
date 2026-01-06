@@ -62,12 +62,13 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: AppColors.warning),
+                  const Icon(Icons.error_outline,
+                      size: 48, color: AppColors.warning),
                   const SizedBox(height: 16),
                   Text('Erreur: ${snapshot.error}'),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => context.go('/weighing-slips'),
+                    onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Retour'),
                   ),
                 ],
@@ -91,7 +92,7 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/weighing-slips'),
+              onPressed: () => Navigator.of(context).pop(),
             ),
             title: const Text('Bon de pesée'),
             actions: [
@@ -175,7 +176,9 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                                   ),
                                 ),
                                 Text(
-                                  slip.createdAt.toIso8601String().substring(0, 10),
+                                  slip.createdAt
+                                      .toIso8601String()
+                                      .substring(0, 10),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -215,7 +218,8 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      slip.clientName ?? 'Client #${slip.clientId}',
+                                      slip.clientName ??
+                                          'Client #${slip.clientId}',
                                       style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -226,9 +230,12 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: slip.isFullyPaid ? AppColors.success : AppColors.warning,
+                                  color: slip.isFullyPaid
+                                      ? AppColors.success
+                                      : AppColors.warning,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -248,7 +255,8 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
 
                           // Table Header
                           Container(
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 16),
                             decoration: const BoxDecoration(
                               color: AppColors.grey100,
                               border: Border(
@@ -314,7 +322,8 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
 
                           // Table Row
                           Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 16),
                             decoration: const BoxDecoration(
                               border: Border(
                                 bottom: BorderSide(color: AppColors.grey300),
@@ -325,7 +334,8 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                                 Expanded(
                                   flex: 3,
                                   child: Text(
-                                    slip.materialName ?? 'Matériau #${slip.materialId}',
+                                    slip.materialName ??
+                                        'Matériau #${slip.materialId}',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       color: AppColors.industrialText,
@@ -429,11 +439,13 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                                   ),
                                   const SizedBox(height: 8),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12, horizontal: 16),
                                     decoration: const BoxDecoration(
                                       color: AppColors.grey100,
                                       border: Border(
-                                        top: BorderSide(color: AppColors.grey300, width: 2),
+                                        top: BorderSide(
+                                            color: AppColors.grey300, width: 2),
                                       ),
                                     ),
                                     child: Row(
@@ -455,7 +467,9 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                                             style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
-                                              color: slip.remainingCredit != null && slip.remainingCredit! > 0
+                                              color: slip.remainingCredit !=
+                                                          null &&
+                                                      slip.remainingCredit! > 0
                                                   ? AppColors.warning
                                                   : AppColors.success,
                                             ),
@@ -542,7 +556,8 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
       String filename = 'bon-pesee-$slipId.pdf';
       final contentDisposition = response.headers['content-disposition'];
       if (contentDisposition != null && contentDisposition.isNotEmpty) {
-        final match = RegExp(r'filename=([^;]+)').firstMatch(contentDisposition.toString());
+        final match = RegExp(r'filename=([^;]+)')
+            .firstMatch(contentDisposition.toString());
         if (match != null) {
           filename = match.group(1)!.replaceAll('"', '').trim();
         }
@@ -550,10 +565,10 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
 
       // Handle response data
       List<int> bytes;
-      
+
       // Debug: Check what type of data we received
       print('Response data type: ${response.data.runtimeType}');
-      
+
       if (response.data is List<int>) {
         bytes = response.data as List<int>;
       } else if (response.data is List) {
@@ -562,7 +577,8 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
           bytes = (response.data as List).cast<int>();
         } catch (e) {
           // If cast fails, try manual conversion
-          bytes = List<int>.from(response.data.map((e) => e is int ? e : int.parse(e.toString())));
+          bytes = List<int>.from(
+              response.data.map((e) => e is int ? e : int.parse(e.toString())));
         }
       } else if (response.data is String) {
         // If it's a string, it might be base64 encoded
@@ -570,12 +586,14 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
           bytes = base64Decode(response.data as String);
         } catch (e) {
           // Last resort: treat as UTF-8 encoded string (likely wrong for PDF)
-          throw Exception('Les données PDF ne sont pas dans le format attendu. Vérifiez la configuration du serveur.');
+          throw Exception(
+              'Les données PDF ne sont pas dans le format attendu. Vérifiez la configuration du serveur.');
         }
       } else {
-        throw Exception('Format de données PDF invalide: ${response.data.runtimeType}');
+        throw Exception(
+            'Format de données PDF invalide: ${response.data.runtimeType}');
       }
-      
+
       print('Bytes length: ${bytes.length}');
       print('First few bytes: ${bytes.take(10).toList()}');
 
@@ -600,7 +618,8 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Impossible d\'ouvrir le fichier: ${e.toString()}'),
+                                content: Text(
+                                    'Impossible d\'ouvrir le fichier: ${e.toString()}'),
                                 backgroundColor: AppColors.warning,
                               ),
                             );
