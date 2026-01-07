@@ -47,27 +47,6 @@ class _WorkersContentState extends State<WorkersContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // En-tête
-                const Text(
-                  'Gestion des travailleurs',
-                  style: AppTheme.headingLarge,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Gérez les informations des travailleurs',
-                  style: AppTheme.subtitleMedium,
-                ),
-                const SizedBox(height: 10),
-
-                // Bouton Nouveau travailleur
-                ElevatedButton.icon(
-                  onPressed: () => context.go('/workers/create'),
-                  style: AppTheme.industrialPrimaryButton,
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Nouveau travailleur'),
-                ),
-                const SizedBox(height: 12),
-
                 // Filtres
                 _buildFilters(viewModel),
                 const SizedBox(height: 12),
@@ -83,13 +62,24 @@ class _WorkersContentState extends State<WorkersContent> {
   }
 
   Widget _buildFilters(WorkerViewModel viewModel) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        // Recherche
-        SizedBox(
+    final Widget addButton = SizedBox(
+      height: 44,
+      child: ElevatedButton.icon(
+        onPressed: () => context.go('/workers/create'),
+        style: AppTheme.industrialPrimaryButton.copyWith(
+          minimumSize: MaterialStateProperty.all(const Size(190, 44)),
+          padding: MaterialStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          ),
+        ),
+        icon: const Icon(Icons.add, size: 20),
+        label: const Text('Nouveau travailleur'),
+      ),
+    );
+
+    final List<Widget> filters = [
+      // Recherche
+      SizedBox(
           width: 300,
           child: TextField(
             controller: _searchController,
@@ -147,19 +137,48 @@ class _WorkersContentState extends State<WorkersContent> {
           ),
         ),
 
-        // Bouton reset filtres
-        IconButton(
-          onPressed: () {
-            setState(() {
-              _searchController.clear();
-              _selectedIsActive = null;
-            });
-            viewModel.resetFilters();
-          },
-          icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
-          tooltip: 'Réinitialiser les filtres',
-        ),
-      ],
+      // Bouton reset filtres
+      IconButton(
+        onPressed: () {
+          setState(() {
+            _searchController.clear();
+            _selectedIsActive = null;
+          });
+          viewModel.resetFilters();
+        },
+        icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
+        tooltip: 'Réinitialiser les filtres',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isNarrow = constraints.maxWidth < 900;
+        if (isNarrow) {
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [...filters, addButton],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: filters,
+              ),
+            ),
+            const SizedBox(width: 12),
+            addButton,
+          ],
+        );
+      },
     );
   }
 

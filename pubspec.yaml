@@ -30,6 +30,7 @@ dependencies:
   open_file: ^3.1.0
   file_picker: ^6.0.0
   url_launcher: ^6.2.2
+ 
   # Internationalization
   intl: ^0.20.2
 
@@ -40,6 +41,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
+  msix: ^3.16.7  # Pour créer l'installateur Windows
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -47,3 +50,34 @@ flutter:
   # Assets pour les traductions
   # assets:
   #   - assets/lang/
+
+# Configuration MSIX pour Windows
+msix_config:
+  display_name: Flutter MVVM Template
+  publisher_display_name: YourName
+  identity_name: com.yourcompany.fluttermvvmtemplate
+  msix_version: 1.0.0.0
+  logo_path: assets/icon.png  # Créez ce fichier (256x256 px minimum)
+  
+  # Capacités de l'application (permissions Windows)
+  capabilities: internetClient
+  
+  # Optionnel : Personnalisation avancée
+  # publisher: CN=YourPublisher
+  # certificate_path: path/to/certificate.pfx
+  # certificate_password: your_password
+  
+  # Architecture
+  architecture: x64
+  
+  # Langue
+  languages: en-us, fr-fr
+
+# Configuration des icônes de l'application
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon.png"

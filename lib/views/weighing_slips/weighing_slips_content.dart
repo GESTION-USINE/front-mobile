@@ -50,21 +50,11 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Bouton Nouveau bon
-                ElevatedButton.icon(
-                  onPressed: () => context.go(AppRouter.slipsCreate),
-                  style: AppTheme.industrialPrimaryButton,
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Nouveau bon'),
-                ),
-                const SizedBox(height: 12),
-
-                _buildStats(vm),
-                const SizedBox(height: 12),
-
                 _buildFilters(vm),
                 const SizedBox(height: 12),
 
+                     _buildStats(vm),
+    const SizedBox(height: 12),
                 _buildTable(vm, isEmployee),
               ],
             ),
@@ -112,72 +102,112 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
   }
 
   Widget _buildFilters(WeighingSlipViewModel vm) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        // Recherche
-        SizedBox(
-          width: 320,
-          child: TextField(
-            controller: _searchController,
-            style: const TextStyle(color: AppColors.industrialText),
-            decoration: AppTheme.industrialInputDecoration(
-              hint: 'Rechercher par N° bon, client, matériau...',
-              prefixIcon: Icons.search,
-            ).copyWith(
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, color: AppColors.industrialText),
-                      onPressed: () {
-                        setState(() { _searchController.clear(); });
-                        vm.searchSlips('');
-                      },
-                    )
-                  : null,
-            ),
-            onChanged: (value) {
-              setState(() {});
-              vm.searchSlips(value);
-            },
+    final Widget addButton = SizedBox(
+      height: 44,
+      child: ElevatedButton.icon(
+        onPressed: () => context.go(AppRouter.slipsCreate),
+        style: AppTheme.industrialPrimaryButton.copyWith(
+          minimumSize: MaterialStateProperty.all(const Size(170, 44)),
+          padding: MaterialStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
         ),
-        SizedBox(
-          width: 180,
-          child: DropdownButtonFormField<bool?>(
-            isExpanded: true,
-            value: vm.isFullyPaidFilter,
-            items: const [
-              DropdownMenuItem(value: null, child: Text('Tous')),
-              DropdownMenuItem(value: true, child: Text('Payé')), 
-              DropdownMenuItem(value: false, child: Text('Crédit')), 
-            ],
-            onChanged: vm.filterByFullyPaid,
+        icon: const Icon(Icons.add, size: 20),
+        label: const Text('Nouveau bon'),
+      ),
+    );
+
+    final List<Widget> filters = [
+      // Recherche
+      SizedBox(
+        width: 320,
+        child: TextField(
+          controller: _searchController,
+          style: const TextStyle(color: AppColors.industrialText),
+          decoration: AppTheme.industrialInputDecoration(
+            hint: 'Rechercher par N° bon, client, matériau...',
+            prefixIcon: Icons.search,
+          ).copyWith(
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: AppColors.industrialText),
+                    onPressed: () {
+                      setState(() { _searchController.clear(); });
+                      vm.searchSlips('');
+                    },
+                  )
+                : null,
           ),
-        ),
-        SizedBox(
-          width: 180,
-          child: DropdownButtonFormField<bool?>(
-            isExpanded: true,
-            value: vm.isInvoicedFilter,
-            items: const [
-              DropdownMenuItem(value: null, child: Text('Tous')),
-              DropdownMenuItem(value: true, child: Text('Facturé')), 
-              DropdownMenuItem(value: false, child: Text('Non facturé')), 
-            ],
-            onChanged: vm.filterByInvoiced,
-          ),
-        ),
-        IconButton(
-          onPressed: () {
-            _searchController.clear();
-            vm.resetFilters();
+          onChanged: (value) {
+            setState(() {});
+            vm.searchSlips(value);
           },
-          icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
-          tooltip: 'Réinitialiser',
         ),
-      ],
+      ),
+      SizedBox(
+        width: 180,
+        child: DropdownButtonFormField<bool?>(
+          isExpanded: true,
+          value: vm.isFullyPaidFilter,
+          items: const [
+            DropdownMenuItem(value: null, child: Text('Tous')),
+            DropdownMenuItem(value: true, child: Text('Payé')),
+            DropdownMenuItem(value: false, child: Text('Crédit')),
+          ],
+          onChanged: vm.filterByFullyPaid,
+        ),
+      ),
+      SizedBox(
+        width: 180,
+        child: DropdownButtonFormField<bool?>(
+          isExpanded: true,
+          value: vm.isInvoicedFilter,
+          items: const [
+            DropdownMenuItem(value: null, child: Text('Tous')),
+            DropdownMenuItem(value: true, child: Text('Facturé')),
+            DropdownMenuItem(value: false, child: Text('Non facturé')),
+          ],
+          onChanged: vm.filterByInvoiced,
+        ),
+      ),
+      IconButton(
+        onPressed: () {
+          _searchController.clear();
+          vm.resetFilters();
+        },
+        icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
+        tooltip: 'Réinitialiser',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isNarrow = constraints.maxWidth < 900;
+        if (isNarrow) {
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [...filters, addButton],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: filters,
+              ),
+            ),
+            const SizedBox(width: 12),
+            addButton,
+          ],
+        );
+      },
     );
   }
 

@@ -85,15 +85,7 @@ class _ClientsContentState extends State<ClientsContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () => context.go(AppRouter.clientsCreate),
-                  style: AppTheme.industrialPrimaryButton,
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Nouveau client'),
-                ),
-                const SizedBox(height: 12),
-
-                // Barre de recherche et filtres
+                // Barre de recherche, filtres et bouton d'ajout sur la même ligne (wrap responsive)
                 _buildFilters(viewModel, role),
                 const SizedBox(height: 12),
                 // Liste des clients
@@ -255,6 +247,22 @@ class _ClientsContentState extends State<ClientsContent> {
           },
           icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
           tooltip: 'Réinitialiser les filtres',
+        ),
+
+        // Bouton Nouveau client (placé en dernier)
+        SizedBox(
+          height: 44,
+          child: ElevatedButton.icon(
+            onPressed: () => context.go(AppRouter.clientsCreate),
+            style: AppTheme.industrialPrimaryButton.copyWith(
+              minimumSize: MaterialStateProperty.all(const Size(150, 44)),
+              padding: MaterialStateProperty.all(
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+            ),
+            icon: const Icon(Icons.add, size: 20),
+            label: const Text('Nouveau client'),
+          ),
         ),
       ],
     );

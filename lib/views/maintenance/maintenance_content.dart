@@ -50,27 +50,6 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // En-tête - Titre et bouton sur des lignes séparées
-                const Text(
-                  'Gestion de la maintenance',
-                  style: AppTheme.headingLarge,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Gérez les dépenses de maintenance de vos machines',
-                  style: AppTheme.subtitleMedium,
-                ),
-                const SizedBox(height: 10),
-
-                // Bouton Nouvelle dépense
-                ElevatedButton.icon(
-                  onPressed: () => context.go('/maintenance/create'),
-                  style: AppTheme.industrialPrimaryButton,
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Nouvelle dépense'),
-                ),
-                const SizedBox(height: 12),
-
                 // Barre de recherche et filtres
                 _buildFilters(viewModel),
                 const SizedBox(height: 12),
@@ -90,13 +69,24 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
   }
 
   Widget _buildFilters(MaintenanceViewModel viewModel) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        // Filtre Date début
-        SizedBox(
+    final Widget addButton = SizedBox(
+      height: 44,
+      child: ElevatedButton.icon(
+        onPressed: () => context.go('/maintenance/create'),
+        style: AppTheme.industrialPrimaryButton.copyWith(
+          minimumSize: MaterialStateProperty.all(const Size(170, 44)),
+          padding: MaterialStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          ),
+        ),
+        icon: const Icon(Icons.add, size: 20),
+        label: const Text('Nouvelle dépense'),
+      ),
+    );
+
+    final List<Widget> filters = [
+      // Filtre Date début
+      SizedBox(
           width: 180,
           child: InkWell(
             onTap: () => _selectDateFrom(context, viewModel),
@@ -195,20 +185,49 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
           ),
         ),
 
-        // Bouton reset filtres
-        IconButton(
-          onPressed: () {
-            setState(() {
-              _machineTypeController.clear();
-              _selectedDateFrom = null;
-              _selectedDateTo = null;
-            });
-            viewModel.resetFilters();
-          },
-          icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
-          tooltip: 'Réinitialiser les filtres',
-        ),
-      ],
+      // Bouton reset filtres
+      IconButton(
+        onPressed: () {
+          setState(() {
+            _machineTypeController.clear();
+            _selectedDateFrom = null;
+            _selectedDateTo = null;
+          });
+          viewModel.resetFilters();
+        },
+        icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
+        tooltip: 'Réinitialiser les filtres',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isNarrow = constraints.maxWidth < 900;
+        if (isNarrow) {
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [...filters, addButton],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: filters,
+              ),
+            ),
+            const SizedBox(width: 12),
+            addButton,
+          ],
+        );
+      },
     );
   }
 

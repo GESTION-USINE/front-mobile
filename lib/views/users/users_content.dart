@@ -49,27 +49,6 @@ class _UsersContentState extends State<UsersContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // En-tête - Titre et bouton sur des lignes séparées
-                const Text(
-                  'Gestion des utilisateurs',
-                  style: AppTheme.headingLarge,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Gérez les comptes utilisateurs et leurs permissions',
-                  style: AppTheme.subtitleMedium,
-                ),
-                const SizedBox(height: 10),
-
-                // Bouton Nouvel utilisateur
-                ElevatedButton.icon(
-                  onPressed: () => context.go(AppRouter.usersCreate),
-                  style: AppTheme.industrialPrimaryButton,
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Nouvel utilisateur'),
-                ),
-                const SizedBox(height: 12),
-
                 // Barre de recherche et filtres
                 _buildFilters(viewModel),
                 const SizedBox(height: 12),
@@ -84,143 +63,183 @@ class _UsersContentState extends State<UsersContent> {
   }
 
   Widget _buildFilters(UserViewModel viewModel) {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        // Recherche
-        SizedBox(
-          width: 320,
-          child: TextField(
-            controller: _searchController,
-            style: const TextStyle(color: AppColors.industrialText),
-            decoration: AppTheme.industrialInputDecoration(
-              hint: 'Rechercher par nom, email, téléphone...',
-              prefixIcon: Icons.search,
-            ).copyWith(
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        viewModel.setListSearch('');
-                        viewModel.loadUsers();
-                      },
-                    )
-                  : null,
-            ),
-            onChanged: (value) {
-              viewModel.setListSearch(value);
-            },
-            onSubmitted: (value) {
-              viewModel.loadUsers();
-            },
+    final Widget addButton = SizedBox(
+      height: 44,
+      child: ElevatedButton.icon(
+        onPressed: () => context.go(AppRouter.usersCreate),
+        style: AppTheme.industrialPrimaryButton.copyWith(
+          minimumSize: MaterialStateProperty.all(const Size(170, 44)),
+          padding: MaterialStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
         ),
+        icon: const Icon(Icons.add, size: 20),
+        label: const Text('Nouvel utilisateur'),
+      ),
+    );
 
-        // Filtre Rôle
-        SizedBox(
-          width: 220,
-          child: DropdownButtonFormField<String?>(
-            key: ValueKey(_selectedRole),
-            value: _selectedRole ?? '',
-            isExpanded: true,
-            style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
-            dropdownColor: AppColors.white,
-            decoration: AppTheme.industrialInputDecoration(
-              hint: 'Rôle',
-              prefixIcon: Icons.admin_panel_settings,
-            ).copyWith(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 2,
-                vertical: 2,
-              ),
-            ),
-            items: const [
-              DropdownMenuItem(
-                  value: '',
-                  child: Text('Tous les rôles',
-                      style: TextStyle(color: AppColors.industrialText))),
-              DropdownMenuItem(
-                  value: 'super_admin',
-                  child: Text('Super Admin',
-                      style: TextStyle(color: AppColors.industrialText))),
-              DropdownMenuItem(
-                  value: 'associe',
-                  child: Text('Associé',
-                      style: TextStyle(color: AppColors.industrialText))),
-              DropdownMenuItem(
-                  value: 'employe',
-                  child: Text('Employé',
-                      style: TextStyle(color: AppColors.industrialText))),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _selectedRole = value;
-              });
-              viewModel.setListRole(value == '' ? null : value);
-              viewModel.loadUsers();
-            },
+    final List<Widget> filters = [
+      // Recherche
+      SizedBox(
+        width: 320,
+        child: TextField(
+          controller: _searchController,
+          style: const TextStyle(color: AppColors.industrialText),
+          decoration: AppTheme.industrialInputDecoration(
+            hint: 'Rechercher par nom, email, téléphone...',
+            prefixIcon: Icons.search,
+          ).copyWith(
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      viewModel.setListSearch('');
+                      viewModel.loadUsers();
+                    },
+                  )
+                : null,
           ),
-        ),
-
-        // Filtre Statut
-        SizedBox(
-          width: 125,
-          child: DropdownButtonFormField<bool?>(
-            key: ValueKey(_selectedIsActive),
-            value: _selectedIsActive,
-            isExpanded: true,
-            style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
-            dropdownColor: AppColors.white,
-            decoration: AppTheme.industrialInputDecoration(
-              hint: 'Statut',
-              prefixIcon: Icons.toggle_on,
-            ).copyWith(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
-            items: const [
-              DropdownMenuItem(
-                  value: null,
-                  child: Text('Tous',
-                      style: TextStyle(color: AppColors.industrialText))),
-              DropdownMenuItem(
-                  value: true,
-                  child: Text('Actif',
-                      style: TextStyle(color: AppColors.industrialText))),
-              DropdownMenuItem(
-                  value: false,
-                  child: Text('Inactif',
-                      style: TextStyle(color: AppColors.industrialText))),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _selectedIsActive = value;
-              });
-              viewModel.setListIsActive(value);
-              viewModel.loadUsers();
-            },
-          ),
-        ),
-
-        // Bouton reset filtres
-        IconButton(
-          onPressed: () {
-            setState(() {
-              _searchController.clear();
-              _selectedRole = '';
-              _selectedIsActive = null;
-            });
-            viewModel.clearFilters();
+          onChanged: (value) {
+            viewModel.setListSearch(value);
           },
-          icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
-          tooltip: 'Réinitialiser les filtres',
+          onSubmitted: (value) {
+            viewModel.loadUsers();
+          },
         ),
-      ],
+      ),
+
+      // Filtre Rôle
+      SizedBox(
+        width: 220,
+        child: DropdownButtonFormField<String?>(
+          key: ValueKey(_selectedRole),
+          value: _selectedRole ?? '',
+          isExpanded: true,
+          style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
+          dropdownColor: AppColors.white,
+          decoration: AppTheme.industrialInputDecoration(
+            hint: 'Rôle',
+            prefixIcon: Icons.admin_panel_settings,
+          ).copyWith(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 2,
+              vertical: 2,
+            ),
+          ),
+          items: const [
+            DropdownMenuItem(
+                value: '',
+                child: Text('Tous les rôles',
+                    style: TextStyle(color: AppColors.industrialText))),
+            DropdownMenuItem(
+                value: 'super_admin',
+                child: Text('Super Admin',
+                    style: TextStyle(color: AppColors.industrialText))),
+            DropdownMenuItem(
+                value: 'associe',
+                child: Text('Associé',
+                    style: TextStyle(color: AppColors.industrialText))),
+            DropdownMenuItem(
+                value: 'employe',
+                child: Text('Employé',
+                    style: TextStyle(color: AppColors.industrialText))),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedRole = value;
+            });
+            viewModel.setListRole(value == '' ? null : value);
+            viewModel.loadUsers();
+          },
+        ),
+      ),
+
+      // Filtre Statut
+      SizedBox(
+        width: 125,
+        child: DropdownButtonFormField<bool?>(
+          key: ValueKey(_selectedIsActive),
+          value: _selectedIsActive,
+          isExpanded: true,
+          style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
+          dropdownColor: AppColors.white,
+          decoration: AppTheme.industrialInputDecoration(
+            hint: 'Statut',
+            prefixIcon: Icons.toggle_on,
+          ).copyWith(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+          ),
+          items: const [
+            DropdownMenuItem(
+                value: null,
+                child: Text('Tous',
+                    style: TextStyle(color: AppColors.industrialText))),
+            DropdownMenuItem(
+                value: true,
+                child: Text('Actif',
+                    style: TextStyle(color: AppColors.industrialText))),
+            DropdownMenuItem(
+                value: false,
+                child: Text('Inactif',
+                    style: TextStyle(color: AppColors.industrialText))),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedIsActive = value;
+            });
+            viewModel.setListIsActive(value);
+            viewModel.loadUsers();
+          },
+        ),
+      ),
+
+      // Bouton reset filtres
+      IconButton(
+        onPressed: () {
+          setState(() {
+            _searchController.clear();
+            _selectedRole = '';
+            _selectedIsActive = null;
+          });
+          viewModel.clearFilters();
+        },
+        icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
+        tooltip: 'Réinitialiser les filtres',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isNarrow = constraints.maxWidth < 900;
+        if (isNarrow) {
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [...filters, addButton],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: filters,
+              ),
+            ),
+            const SizedBox(width: 12),
+            addButton,
+          ],
+        );
+      },
     );
   }
 

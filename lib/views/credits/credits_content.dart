@@ -154,53 +154,17 @@ class _CreditsContentState extends State<CreditsContent> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
-                    isMobile 
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Gestion des Crédits',
-                              style: AppTheme.headingLarge,
-                            ),
-                            Text(
-                              'Bons de pesée avec crédit restant',
-                              style: AppTheme.subtitleMedium.copyWith(
-                                color: AppColors.grey600,
-                              ),
-                            ),
-                            // Summary Card
-                            _buildSummaryCard(viewModel),
-                          ],
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Gestion des Crédits',
-                                    style: AppTheme.headingLarge,
-                                  ),
-                                  Text(
-                                    'Bons de pesée avec crédit restant',
-                                    style: AppTheme.subtitleMedium.copyWith(
-                                      color: AppColors.grey600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            _buildSummaryCard(viewModel),
-                          ],
+                    // Search Bar, Date Filter and Summary Card in one row
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildSearchAndDateFilter(),
                         ),
-                    const SizedBox(height: 8),
-
-                    // Search Bar and Date Filter
-                    _buildSearchAndDateFilter(),
+                        const SizedBox(width: 12),
+                        _buildSummaryCard(viewModel),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     // Table
                     _buildTable(viewModel),
