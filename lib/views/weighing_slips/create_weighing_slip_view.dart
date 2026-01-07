@@ -24,11 +24,12 @@ class CreateWeighingSlipView extends StatefulWidget {
 
 class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
   final _formKey = GlobalKey<FormState>();
-  final _weightController = TextEditingController();
-  final _paymentAmountController = TextEditingController();
-  final _checkNumberController = TextEditingController();
-  final _checkBankController = TextEditingController();
-  final _notesController = TextEditingController();
+  TextEditingController? _emptyWeightController;
+  TextEditingController? _fullWeightController;
+  TextEditingController? _paymentAmountController;
+  TextEditingController? _checkNumberController;
+  TextEditingController? _checkBankController;
+  TextEditingController? _notesController;
 
   late final WeighingSlipViewModel _slipViewModel;
   late final ClientViewModel _clientViewModel;
@@ -54,6 +55,13 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
   @override
   void initState() {
     super.initState();
+    _emptyWeightController = TextEditingController();
+    _fullWeightController = TextEditingController();
+    _paymentAmountController = TextEditingController();
+    _checkNumberController = TextEditingController();
+    _checkBankController = TextEditingController();
+    _notesController = TextEditingController();
+    
     _slipViewModel = getIt<WeighingSlipViewModel>();
     _clientViewModel = getIt<ClientViewModel>();
     _materialViewModel = getIt<MaterialViewModel>();
@@ -86,11 +94,12 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
 
   @override
   void dispose() {
-    _weightController.dispose();
-    _paymentAmountController.dispose();
-    _checkNumberController.dispose();
-    _checkBankController.dispose();
-    _notesController.dispose();
+    _emptyWeightController?.dispose();
+    _fullWeightController?.dispose();
+    _paymentAmountController?.dispose();
+    _checkNumberController?.dispose();
+    _checkBankController?.dispose();
+    _notesController?.dispose();
     super.dispose();
   }
 
@@ -101,10 +110,25 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
     setState(() => _isCreatingSlip = true);
 
     try {
+      final emptyWeight = double.parse(_emptyWeightController!.text);
+      final fullWeight = double.parse(_fullWeightController!.text);
+      final netWeight = fullWeight - emptyWeight;
+
+      if (netWeight <= 0) {
+        setState(() => _isCreatingSlip = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Le poids complet doit être supérieur au poids vide'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       final request = CreateWeighingSlipRequest(
         clientId: _selectedClientId!,
         materialId: _selectedMaterialId!,
-        weightTons: double.parse(_weightController.text),
+        weightTons: netWeight,
       );
 
       final slip = await _slipService.createSlip(request);
@@ -141,13 +165,13 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
         paymentType: _paymentType,
         amountPaid: amount,
         paymentDate: _paymentDate.toIso8601String().substring(0, 10),
-        checkNumber: _paymentType != 'cash' ? _checkNumberController.text : null,
+        checkNumber: _paymentType != 'cash' ? _checkNumberController?.text : null,
         checkDate: _paymentType != 'cash' && _checkDate != null
             ? _checkDate!.toIso8601String().substring(0, 10)
             : null,
-        checkBank: _paymentType != 'cash' ? _checkBankController.text : null,
+        checkBank: _paymentType != 'cash' ? _checkBankController?.text : null,
         checkStatus: _paymentType != 'cash' ? _checkStatus : null,
-        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+        notes: (_notesController?.text.isNotEmpty ?? false) ? _notesController?.text : null,
       );
 
       await _slipService.createPayment(paymentRequest);
@@ -173,7 +197,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
   Future<void> _createPayment() async {
     if (_createdSlip == null) return;
 
-    final amount = double.tryParse(_paymentAmountController.text);
+    final amount = double.tryParse(_paymentAmountController?.text ?? '');
     if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Montant invalide')),
@@ -208,14 +232,14 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
             Text('Type: $_paymentType'),
             Text('Date: ${_paymentDate.toIso8601String().substring(0, 10)}'),
             if (_paymentType != 'cash') ...[
-              Text('Chèque: ${_checkNumberController.text}'),
+              Text('Chèque: ${_checkNumberController?.text ?? ""}'),
               if (_checkDate != null)
                 Text('Date chèque: ${_checkDate!.toIso8601String().substring(0, 10)}'),
-              if (_checkBankController.text.isNotEmpty)
-                Text('Banque: ${_checkBankController.text}'),
+              if ((_checkBankController?.text.isNotEmpty ?? false))
+                Text('Banque: ${_checkBankController?.text}'),
             ],
-            if (_notesController.text.isNotEmpty)
-              Text('Notes: ${_notesController.text}'),
+            if ((_notesController?.text.isNotEmpty ?? false))
+              Text('Notes: ${_notesController?.text}'),
           ],
         ),
         actions: [
@@ -732,30 +756,119 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
   }
 
   Widget _buildWeightField() {
-    return TextFormField(
-      controller: _weightController,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}')),
+    // Protection contre les hot reloads
+    if (_emptyWeightController == null || _fullWeightController == null) {
+      return const SizedBox.shrink();
+    }
+    
+    final emptyWeight = double.tryParse(_emptyWeightController!.text) ?? 0;
+    final fullWeight = double.tryParse(_fullWeightController!.text) ?? 0;
+    final netWeight = fullWeight - emptyWeight;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Les deux champs côte à côte
+        Row(
+          children: [
+            // Poids vide
+            Expanded(
+              child: TextFormField(
+                controller: _emptyWeightController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}')),
+                ],
+                style: const TextStyle(color: AppColors.industrialText),
+                decoration: AppTheme.industrialInputDecoration(
+                  hint: 'Poids vide (tonnes)',
+                  prefixIcon: Icons.scale,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Requis';
+                  }
+                  final weight = double.tryParse(value);
+                  if (weight == null || weight < 0) {
+                    return 'Invalide';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  setState(() {}); // Update net weight and total amount display
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            // Poids complet
+            Expanded(
+              child: TextFormField(
+                controller: _fullWeightController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,3}')),
+                ],
+                style: const TextStyle(color: AppColors.industrialText),
+                decoration: AppTheme.industrialInputDecoration(
+                  hint: 'Poids complet (tonnes)',
+                  prefixIcon: Icons.scale,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Requis';
+                  }
+                  final weight = double.tryParse(value);
+                  if (weight == null || weight <= 0) {
+                    return 'Invalide';
+                  }
+                  final empty = double.tryParse(_emptyWeightController?.text ?? '') ?? 0;
+                  if (weight <= empty) {
+                    return 'Doit être > poids vide';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  setState(() {}); // Update net weight and total amount display
+                },
+              ),
+            ),
+          ],
+        ),
+        
+        // Affichage du poids net calculé
+        if (netWeight > 0) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.industrialPrimary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.industrialPrimary.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.calculate,
+                  color: AppColors.industrialPrimary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Poids net: ${netWeight.toStringAsFixed(3)} tonnes',
+                  style: const TextStyle(
+                    color: AppColors.industrialPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
-      style: const TextStyle(color: AppColors.industrialText),
-      decoration: AppTheme.industrialInputDecoration(
-        hint: 'Poids (tonnes) - Ex: 25.5',
-        prefixIcon: Icons.scale,
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Veuillez entrer le poids';
-        }
-        final weight = double.tryParse(value);
-        if (weight == null || weight <= 0) {
-          return 'Veuillez entrer un poids valide';
-        }
-        return null;
-      },
-      onChanged: (value) {
-        setState(() {}); // Update total amount display
-      },
     );
   }
 
@@ -824,8 +937,8 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
               setState(() {
                 _paymentType = value ?? 'cash';
                 if (_paymentType == 'cash') {
-                  _checkNumberController.clear();
-                  _checkBankController.clear();
+                  _checkNumberController?.clear();
+                  _checkBankController?.clear();
                   _checkDate = null;
                 }
               });

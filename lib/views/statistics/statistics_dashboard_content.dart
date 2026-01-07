@@ -18,9 +18,9 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../di/injection_container.dart';
 import '../../viewmodels/stats_viewmodel.dart';
+import 'credit_risk_stats_section.dart';
 
 class StatisticsDashboardContent extends StatefulWidget {
   const StatisticsDashboardContent({super.key});
@@ -80,20 +80,75 @@ _viewModel.refreshAll();
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Statistiques - Tableau de bord', style: AppTheme.headingLarge),
-                const SizedBox(height: 8),
-                const Text(
-                  'Vue globale : ventes, encaissements, credit, depenses, et indicateurs rapides.',
-                  style: AppTheme.subtitleMedium,
+                // Header visuel amélioré
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.industrialPrimary.withOpacity(0.08),
+                        AppColors.industrialPrimary.withOpacity(0.02),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.industrialPrimary.withOpacity(0.15),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.industrialPrimary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.analytics,
+                              color: AppColors.industrialPrimary,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Tableau de bord',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.industrialText,
+                                    )),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Vue globale : ventes, encaissements, crédits, dépenses',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.industrialTextLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
 
                 _buildHeaderFilters(viewModel),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
 
                 // KPI Cards
                 _buildKpiRow(viewModel),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
                 // Graphiques
                 LayoutBuilder(
@@ -138,7 +193,16 @@ _viewModel.refreshAll();
                   },
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+
+                // Section Gestion du Risque de Crédit
+                if (_dateFrom != null && _dateTo != null)
+                  CreditRiskStatsSection(
+                    dateFrom: _dateFrom!,
+                    dateTo: _dateTo!,
+                  ),
+
+                const SizedBox(height: 32),
               ],
             ),
           );
@@ -147,101 +211,120 @@ _viewModel.refreshAll();
     );
   }
 Widget _buildHeaderFilters(StatsViewModel viewModel) {
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Expanded(
-        child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _buildModeToggle(),
-            if (!_isRangeMode) _buildDayPicker(viewModel) else ...[
-              _buildFromPicker(),
-              _buildToPicker(),
-            ],
-          ],
+  return Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: Colors.grey.shade200),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
         ),
-      ),
-      const SizedBox(width: 12),
-
-      // ✅ bouton a droite, largeur finie (PAS infinity)
-      Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 42, maxWidth: 160),
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final from = _dateFrom ?? DateTime.now();
-                final to = _dateTo ?? DateTime.now();
-                await _applyDateRange(viewModel, from, to);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.industrialPrimary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              icon: const Icon(Icons.refresh, size: 18),
-              label: const Text(
-                'Actualiser',
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ),
+      ],
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _buildModeToggle(),
+              if (!_isRangeMode) _buildDayPicker(viewModel) else ...[
+                _buildFromPicker(),
+                _buildToPicker(),
+              ],
+            ],
           ),
+        ),
+        const SizedBox(width: 12),
 
-          if (viewModel.isLoading) ...[
-            const SizedBox(height: 8),
-            const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ],
-        ],
-      ),
-    ],
+        // Bouton actualiser avec état de chargement intégré
+        AnimatedBuilder(
+          animation: viewModel,
+          builder: (context, child) {
+            return ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 42, maxWidth: 160),
+              child: ElevatedButton.icon(
+                onPressed: viewModel.isLoading
+                    ? null
+                    : () async {
+                        final from = _dateFrom ?? DateTime.now();
+                        final to = _dateTo ?? DateTime.now();
+                        await _applyDateRange(viewModel, from, to);
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.industrialPrimary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  elevation: 0,
+                  disabledBackgroundColor: AppColors.industrialPrimary.withOpacity(0.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: viewModel.isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : const Icon(Icons.refresh, size: 18),
+                label: const Text(
+                  'Actualiser',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
   );
 }
 
 Widget _buildModeToggle() {
   return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
     decoration: BoxDecoration(
-      color: AppColors.industrialPrimary.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: AppColors.industrialPrimary.withOpacity(0.25)),
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: Colors.grey.shade300),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 4,
+          offset: const Offset(0, 1),
+        ),
+      ],
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          _isRangeMode ? 'Intervalle' : 'Jour',
-          style: const TextStyle(
-            color: AppColors.industrialText,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Switch(
-          value: _isRangeMode,
-          activeColor: AppColors.industrialPrimary,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          onChanged: (v) {
+        _ModeButton(
+          label: 'Jour',
+          isActive: !_isRangeMode,
+          onTap: () {
             setState(() {
-              _isRangeMode = v;
-
-              // Quand on repasse en mode Jour, on synchronise from/to sur le jour courant selectionne
-              if (!_isRangeMode) {
-                _dateFrom = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
-                _dateTo = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
-              }
+              _isRangeMode = false;
+              _dateFrom = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
+              _dateTo = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
             });
+          },
+        ),
+        const SizedBox(width: 4),
+        _ModeButton(
+          label: 'Intervalle',
+          isActive: _isRangeMode,
+          onTap: () {
+            setState(() => _isRangeMode = true);
           },
         ),
       ],
@@ -266,17 +349,35 @@ Widget _buildDayPicker(StatsViewModel vm) {
           await _applyDateRange(vm, _dateFrom!, _dateTo!);
         }
       },
-      child: InputDecorator(
-        decoration: AppTheme.industrialInputDecoration(
-          hint: 'Date',
-          prefixIcon: Icons.calendar_today,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        child: Text(
-          _dateFormat.format(_selectedDay),
-          style: const TextStyle(
-            color: AppColors.industrialText,
-            fontSize: 14,
-          ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today, size: 16, color: AppColors.industrialPrimary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _dateFormat.format(_selectedDay),
+                style: const TextStyle(
+                  color: AppColors.industrialText,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     ),
@@ -293,17 +394,35 @@ Widget _buildFromPicker() {
           setState(() => _dateFrom = picked);
         }
       },
-      child: InputDecorator(
-        decoration: AppTheme.industrialInputDecoration(
-          hint: 'Date debut',
-          prefixIcon: Icons.calendar_today,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        child: Text(
-          _dateFrom != null ? _dateFormat.format(_dateFrom!) : 'Date debut',
-          style: TextStyle(
-            color: _dateFrom != null ? AppColors.industrialText : AppColors.industrialTextLight,
-            fontSize: 14,
-          ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today, size: 16, color: AppColors.industrialPrimary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _dateFrom != null ? _dateFormat.format(_dateFrom!) : 'Début',
+                style: TextStyle(
+                  color: _dateFrom != null ? AppColors.industrialText : AppColors.industrialTextLight,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     ),
@@ -320,17 +439,35 @@ Widget _buildToPicker() {
           setState(() => _dateTo = picked);
         }
       },
-      child: InputDecorator(
-        decoration: AppTheme.industrialInputDecoration(
-          hint: 'Date fin',
-          prefixIcon: Icons.calendar_today,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
-        child: Text(
-          _dateTo != null ? _dateFormat.format(_dateTo!) : 'Date fin',
-          style: TextStyle(
-            color: _dateTo != null ? AppColors.industrialText : AppColors.industrialTextLight,
-            fontSize: 14,
-          ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today, size: 16, color: AppColors.industrialPrimary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _dateTo != null ? _dateFormat.format(_dateTo!) : 'Fin',
+                style: TextStyle(
+                  color: _dateTo != null ? AppColors.industrialText : AppColors.industrialTextLight,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     ),
@@ -359,22 +496,43 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
   // -------------------------
   Widget _buildKpiRow(StatsViewModel vm) {
     // Récupération safe des valeurs
-    final salesTotal = _safeNum(_try(() => vm.overviewStats?.sales?.salesTotal));
-    final creditRemaining = _safeNum(_try(() => vm.overviewStats?.credit?.remainingTotal));
-    final netCashflow = _safeNum(_try(() => vm.overviewStats?.netCashflow));
-    final paymentsTotal = _safeNum(_try(() => vm.paymentsStats?.grandTotal));
-    final expensesTotal = _safeNum(_try(() => vm.expensesStats?.totals?.grandTotal));
+    final salesTotal = _safeNum(_try(() {
+      final os = vm.overviewStats as dynamic;
+      return os?.sales?.salesTotal ?? 0;
+    }));
+    final slipsCount = _safeInt(_try(() {
+      final os = vm.overviewStats as dynamic;
+      return os?.sales?.slipsCount ?? 0;
+    }));
+    final creditRemaining = _safeNum(_try(() {
+      final os = vm.overviewStats as dynamic;
+      return os?.credit?.remainingTotal ?? 0;
+    }));
+    final netCashflow = _safeNum(_try(() {
+      final os = vm.overviewStats as dynamic;
+      return os?.netCashflow ?? 0;
+    }));
+    final paymentsTotal = _safeNum(_try(() {
+      final ps = vm.paymentsStats as dynamic;
+      return ps?.grandTotal ?? 0;
+    }));
+    final expensesTotal = _safeNum(_try(() {
+      final es = vm.expensesStats as dynamic;
+      return es?.totals?.grandTotal ?? 0;
+    }));
 
     // Fallback net cashflow si non present
     final computedNet = (netCashflow == 0) ? (paymentsTotal - expensesTotal) : netCashflow;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardWidth = constraints.maxWidth >= 1100
-            ? (constraints.maxWidth - 12 * 4) / 5
-            : constraints.maxWidth >= 800
-                ? (constraints.maxWidth - 12 * 2) / 3
-                : constraints.maxWidth;
+        final cardWidth = constraints.maxWidth >= 1400
+            ? (constraints.maxWidth - 12 * 5) / 6
+            : constraints.maxWidth >= 1100
+                ? (constraints.maxWidth - 12 * 4) / 5
+                : constraints.maxWidth >= 800
+                    ? (constraints.maxWidth - 12 * 2) / 3
+                    : constraints.maxWidth;
 
         return Wrap(
           spacing: 12,
@@ -386,6 +544,17 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
                 title: 'CA total',
                 value: _formatMoney(salesTotal),
                 icon: Icons.bar_chart,
+                accent: AppColors.industrialPrimary,
+                isLoading: vm.isLoading && vm.overviewStats == null,
+                hasError: vm.hasError && vm.overviewStats == null,
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Bons vendus',
+                value: slipsCount.toString(),
+                icon: Icons.receipt,
                 accent: AppColors.industrialPrimary,
                 isLoading: vm.isLoading && vm.overviewStats == null,
                 hasError: vm.hasError && vm.overviewStats == null,
@@ -445,9 +614,18 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
   // Payments chart card (simple bar visualization)
   // -------------------------
   Widget _buildPaymentsChartCard(StatsViewModel vm) {
-    final cash = _safeNum(_try(() => vm.paymentsStats?.payments?.cash?.totalAmount));
-    final check = _safeNum(_try(() => vm.paymentsStats?.payments?.check?.totalAmount));
-    final guarantee = _safeNum(_try(() => vm.paymentsStats?.payments?.guaranteeCheck?.totalAmount));
+    final cash = _safeNum(_try(() {
+      final ps = vm.paymentsStats as dynamic;
+      return ps?.payments?.cash?.totalAmount ?? 0;
+    }));
+    final check = _safeNum(_try(() {
+      final ps = vm.paymentsStats as dynamic;
+      return ps?.payments?.check?.totalAmount ?? 0;
+    }));
+    final guarantee = _safeNum(_try(() {
+      final ps = vm.paymentsStats as dynamic;
+      return ps?.payments?.guaranteeCheck?.totalAmount ?? 0;
+    }));
 
     final maxVal = [cash, check, guarantee].fold<double>(0, (p, e) => e > p ? e : p);
 
@@ -481,9 +659,18 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
   // Expenses chart card (simple bar visualization)
   // -------------------------
   Widget _buildExpensesChartCard(StatsViewModel vm) {
-    final frais = _safeNum(_try(() => vm.expensesStats?.totals?.frais));
-    final salaries = _safeNum(_try(() => vm.expensesStats?.totals?.salaries));
-    final other = _safeNum(_try(() => vm.expensesStats?.totals?.other));
+    final frais = _safeNum(_try(() {
+      final es = vm.expensesStats as dynamic;
+      return es?.totals?.frais ?? 0;
+    }));
+    final salaries = _safeNum(_try(() {
+      final es = vm.expensesStats as dynamic;
+      return es?.totals?.salaries ?? 0;
+    }));
+    final other = _safeNum(_try(() {
+      final es = vm.expensesStats as dynamic;
+      return es?.totals?.other ?? 0;
+    }));
 
     final maxVal = [frais, salaries, other].fold<double>(0, (p, e) => e > p ? e : p);
 
@@ -517,9 +704,18 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
   // Checks mini card
   // -------------------------
   Widget _buildChecksMiniCard(StatsViewModel vm) {
-    final pending = _safeInt(_try(() => vm.paymentsStats?.payments?.check?.pending));
-    final cleared = _safeInt(_try(() => vm.paymentsStats?.payments?.check?.cleared));
-    final rejected = _safeInt(_try(() => vm.paymentsStats?.payments?.check?.rejected));
+    final pending = _safeInt(_try(() {
+      final ps = vm.paymentsStats as dynamic;
+      return ps?.payments?.check?.pending ?? 0;
+    }));
+    final cleared = _safeInt(_try(() {
+      final ps = vm.paymentsStats as dynamic;
+      return ps?.payments?.check?.cleared ?? 0;
+    }));
+    final rejected = _safeInt(_try(() {
+      final ps = vm.paymentsStats as dynamic;
+      return ps?.payments?.check?.rejected ?? 0;
+    }));
 
     final hasAny = (pending + cleared + rejected) > 0;
 
@@ -610,50 +806,6 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
             ),
     );
   }
-
-  // -------------------------
-  // Date pickers
-  // -------------------------
-  Future<void> _selectDateFrom(BuildContext context, StatsViewModel viewModel) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _dateFrom ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.industrialPrimary),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() => _dateFrom = picked);
-    }
-  }
-
-  Future<void> _selectDateTo(BuildContext context, StatsViewModel viewModel) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _dateTo ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.industrialPrimary),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) {
-      setState(() => _dateTo = picked);
-    }
-  }
-
   // -------------------------
   // Helpers
   // -------------------------
@@ -732,18 +884,23 @@ class KpiCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.12),
+              gradient: LinearGradient(
+                colors: [
+                  accent.withOpacity(0.15),
+                  accent.withOpacity(0.05),
+                ],
+              ),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: accent, size: 22),
+            child: Icon(icon, color: accent, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: hasError
-                ? const Text('Erreur', style: TextStyle(color: AppColors.danger))
+                ? const Text('Erreur', style: TextStyle(color: AppColors.danger, fontSize: 12))
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -751,28 +908,29 @@ class KpiCard extends StatelessWidget {
                         title,
                         style: const TextStyle(
                           color: AppColors.industrialTextLight,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 6),
                       if (isLoading)
-                        Container(
-                          height: 18,
+                        ShimmerLoading(
                           width: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.06),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+                          height: 20,
+                          borderRadius: 6,
                         )
                       else
                         Text(
                           value,
                           style: TextStyle(
                             color: accent,
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                     ],
                   ),
@@ -783,7 +941,7 @@ class KpiCard extends StatelessWidget {
   }
 }
 
-class _SectionCard extends StatelessWidget {
+class _SectionCard extends StatefulWidget {
   final String title;
   final String subtitle;
   final Widget child;
@@ -799,13 +957,22 @@ class _SectionCard extends StatelessWidget {
   });
 
   @override
+  State<_SectionCard> createState() => _SectionCardState();
+}
+
+class _SectionCardState extends State<_SectionCard> {
+  @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.industrialPrimary.withOpacity(0.18)),
+        border: Border.all(
+          color: widget.hasError
+              ? AppColors.danger.withOpacity(0.2)
+              : AppColors.industrialPrimary.withOpacity(0.15),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
@@ -823,30 +990,78 @@ class _SectionCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(color: AppColors.industrialText, fontWeight: FontWeight.w700)),
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        color: AppColors.industrialText,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(subtitle, style: const TextStyle(color: AppColors.industrialTextLight, fontSize: 12)),
+                    Text(
+                      widget.subtitle,
+                      style: const TextStyle(
+                        color: AppColors.industrialTextLight,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              if (isLoading)
+              if (widget.isLoading)
                 const SizedBox(
-                  width: 18,
-                  height: 18,
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              if (hasError)
-                const Padding(
-                  padding: EdgeInsets.only(left: 8),
-                  child: Icon(Icons.error_outline, color: AppColors.danger, size: 18),
+                )
+              else if (widget.hasError)
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.error_outline, color: AppColors.danger, size: 18),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.check_circle_outline, color: AppColors.success, size: 18),
                 ),
             ],
           ),
-          const SizedBox(height: 12),
-          if (hasError)
-            const Text('Erreur de chargement', style: TextStyle(color: AppColors.danger))
+          const SizedBox(height: 14),
+          if (widget.hasError)
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text(
+                'Erreur de chargement',
+                style: TextStyle(
+                  color: AppColors.danger,
+                  fontSize: 12,
+                ),
+              ),
+            )
+          else if (widget.isLoading)
+            Column(
+              children: [
+                ShimmerLoading(width: double.infinity, height: 12),
+                const SizedBox(height: 8),
+                ShimmerLoading(width: double.infinity * 0.8, height: 12),
+              ],
+            )
           else
-            child,
+            widget.child,
         ],
       ),
     );
@@ -868,43 +1083,55 @@ class _MiniBarRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final ratio = (max <= 0) ? 0.0 : (value / max).clamp(0.0, 1.0);
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 110,
-          child: Text(label, style: const TextStyle(color: AppColors.industrialText)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.industrialText,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+            Text(
+              NumberFormat.decimalPattern('fr_FR').format(value),
+              style: const TextStyle(
+                color: AppColors.industrialTextLight,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: Stack(
-            children: [
-              Container(
-                height: 10,
+        const SizedBox(height: 6),
+        Stack(
+          children: [
+            Container(
+              height: 8,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            FractionallySizedBox(
+              widthFactor: ratio,
+              child: Container(
+                height: 8,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              FractionallySizedBox(
-                widthFactor: ratio,
-                child: Container(
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: AppColors.industrialPrimary,
-                    borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.industrialPrimary,
+                      AppColors.industrialPrimary.withOpacity(0.7),
+                    ],
                   ),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
-        SizedBox(
-          width: 110,
-          child: Text(
-            NumberFormat.decimalPattern('fr_FR').format(value),
-            textAlign: TextAlign.right,
-            style: const TextStyle(color: AppColors.industrialTextLight),
-          ),
+            ),
+          ],
         ),
       ],
     );
@@ -941,6 +1168,106 @@ class _StatChip extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ModeButton extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _ModeButton({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.industrialPrimary : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.white : AppColors.industrialTextLight,
+            fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Widget de chargement avec effet shimmer simple
+class ShimmerLoading extends StatefulWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const ShimmerLoading({
+    required this.width,
+    required this.height,
+    this.borderRadius = 6,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<ShimmerLoading> createState() => _ShimmerLoadingState();
+}
+
+class _ShimmerLoadingState extends State<ShimmerLoading>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              stops: const [0.0, 0.5, 1.0],
+              colors: [
+                Colors.grey.shade200,
+                Colors.grey.shade100,
+                Colors.grey.shade200,
+              ],
+              transform: GradientRotation(_animationController.value * 6.3),
+            ),
+          ),
+        );
+      },
     );
   }
 }

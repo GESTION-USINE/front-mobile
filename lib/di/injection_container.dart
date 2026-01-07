@@ -17,6 +17,7 @@ import '../services/payment_service.dart';
 import '../services/salary_payement.dart';
 import '../services/stats_service.dart';
 import '../services/user_service.dart';
+import '../services/credit_risk_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/product_viewmodel.dart';
 import '../viewmodels/client_viewmodel.dart';
@@ -30,6 +31,7 @@ import '../viewmodels/clients_credit_viewmodel.dart';
 import '../viewmodels/clients_with_slips_viewmodel.dart';
 import '../viewmodels/stats_viewmodel.dart';
 import '../viewmodels/user_viewmodel.dart';
+import '../viewmodels/credit_risk_viewmodel.dart';
 
 final getIt = GetIt.instance;
 
@@ -90,6 +92,10 @@ Future<void> initDependencies() async {
     () => UserService(getIt<ApiClient>()),
   );
 
+  getIt.registerLazySingleton<CreditRiskService>(
+    () => CreditRiskService(getIt<ApiClient>()),
+  );
+
   // ==================== ViewModels ====================
   // Factory car nouvelle instance par écran
   getIt.registerFactory<AuthViewModel>(
@@ -146,7 +152,11 @@ Future<void> initDependencies() async {
 
    getIt.registerFactory<UserViewModel>(
     () => UserViewModel(getIt<UserService>()),
-  ); 
+  );
+
+  getIt.registerFactory<CreditRiskViewModel>(
+    () => CreditRiskViewModel(getIt<CreditRiskService>()),
+  );
 
  
 

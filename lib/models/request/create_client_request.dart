@@ -6,6 +6,8 @@ class CreateClientRequest {
   final String? address;
   final String? email;
   final String? taxId;
+  final String? nis;
+  final String? registreCommerce;
   final bool canPayByCheck;
   final String? notes;
 
@@ -16,6 +18,8 @@ class CreateClientRequest {
     this.address,
     this.email,
     this.taxId,
+    this.nis,
+    this.registreCommerce,
     this.canPayByCheck = false,
     this.notes,
   });
@@ -28,6 +32,8 @@ class CreateClientRequest {
       if (address != null) 'address': address,
       if (email != null) 'email': email,
       if (taxId != null) 'tax_id': taxId,
+      if (nis != null) 'nis': nis,
+      if (registreCommerce != null) 'registre_commerce': registreCommerce,
       'can_pay_by_check': canPayByCheck,
       if (notes != null) 'notes': notes,
     };

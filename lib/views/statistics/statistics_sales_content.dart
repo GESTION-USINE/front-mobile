@@ -80,9 +80,9 @@ class _SalesStatsContentState extends State<SalesStatsContent> {
           final trend = vm.salesTrendStats;
 
           // KPI (safe parse)
-          final slipsCount = _safeInt(_try(() => daily?.weighingSlips?.count));
-          final totalWeight = _safeNum(_try(() => daily?.weighingSlips?.totalWeightTons));
-          final totalAmount = _safeNum(_try(() => daily?.weighingSlips?.totalAmount));
+          final slipsCount = _safeInt(_try(() => daily?.weighingSlips.count));
+          final totalWeight = _safeNum(_try(() => daily?.weighingSlips.totalWeightTons));
+          final totalAmount = _safeNum(_try(() => daily?.weighingSlips.totalAmount));
 
           return SingleChildScrollView(
             child: Column(

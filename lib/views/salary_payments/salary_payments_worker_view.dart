@@ -8,7 +8,6 @@ import '../../core/theme/app_theme.dart';
 import '../../di/injection_container.dart';
 import '../../models/entities/salary_payment.dart';
 import '../../models/entities/worker.dart';
-import '../../models/request/create_salary_payment_request.dart';
 import '../../viewmodels/salary_payement_viewmodel.dart';
 import '../../views/widgets/generic_data_table.dart';
 

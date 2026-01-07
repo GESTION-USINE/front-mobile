@@ -106,7 +106,6 @@ class SlipSummary {
   final double remainingCredit;
   final bool isFullyPaid;
   final DateTime createdAt;
-  final int paymentDurationDays;
 
   SlipSummary({
     required this.id,
@@ -118,7 +117,6 @@ class SlipSummary {
     required this.remainingCredit,
     required this.isFullyPaid,
     required this.createdAt,
-    required this.paymentDurationDays,
   });
 
   factory SlipSummary.fromJson(Map<String, dynamic> json) {
@@ -131,7 +129,6 @@ class SlipSummary {
       totalPaid: (json['total_paid'] as num?)?.toDouble() ?? 0.0,
       remainingCredit: (json['remaining_credit'] as num?)?.toDouble() ?? 0.0,
       isFullyPaid: (json['is_fully_paid'] as bool?) ?? false,
-      paymentDurationDays: json['payment_duration_days'] as int? ?? 0,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),

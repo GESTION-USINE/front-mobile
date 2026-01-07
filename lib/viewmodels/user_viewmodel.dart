@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_mvvm_template/core/base/base_viewmodel.dart';
 
 import '../models/user.dart';
@@ -20,8 +19,10 @@ class UserViewModel extends BaseViewModel {
   // Single user section
   User? _selectedUser;
 
-  // Create/Update section
+  // Create/Update request (tracked but not currently used)
+  // ignore: unused_field
   CreateUserRequest? _createRequest;
+  // ignore: unused_field
   UpdateUserRequest? _updateRequest;
 
   UserViewModel(this._userService);
@@ -127,7 +128,7 @@ class UserViewModel extends BaseViewModel {
   /// Deactivate user
   Future<void> deactivateUser(int userId) async {
     await runAsync(() async {
-      final response = await _userService.deactivateUser(userId);
+      await _userService.deactivateUser(userId);
       // Reload users list to reflect deactivation
       await loadUsers();
     });

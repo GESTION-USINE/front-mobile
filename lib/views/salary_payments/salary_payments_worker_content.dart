@@ -3,8 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_theme.dart';
-import '../../di/injection_container.dart';
 import '../../models/entities/salary_payment.dart';
 import '../../models/entities/worker.dart';
 import '../../viewmodels/salary_payement_viewmodel.dart';

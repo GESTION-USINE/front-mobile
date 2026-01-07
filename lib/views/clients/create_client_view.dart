@@ -25,6 +25,8 @@ class _CreateClientViewState extends State<CreateClientView> {
   final _emailController = TextEditingController();
   final _addressController = TextEditingController();
   final _taxIdController = TextEditingController();
+  final _nisController = TextEditingController();
+  final _registreCommerceController = TextEditingController();
   final _notesController = TextEditingController();
 
   String _selectedType = 'particulier';
@@ -45,6 +47,8 @@ class _CreateClientViewState extends State<CreateClientView> {
     _emailController.dispose();
     _addressController.dispose();
     _taxIdController.dispose();
+    _nisController.dispose();
+    _registreCommerceController.dispose();
     _notesController.dispose();
 
     // IMPORTANT:
@@ -264,7 +268,7 @@ class _CreateClientViewState extends State<CreateClientView> {
                         const SizedBox(height: 16),
 
                         // Adresse
-                        const Text('Adresse', style: AppTheme.fieldLabel),
+                        const Text('Adresse *', style: AppTheme.fieldLabel),
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _addressController,
@@ -274,13 +278,19 @@ class _CreateClientViewState extends State<CreateClientView> {
                             prefixIcon: Icons.location_on,
                           ),
                           maxLines: 2,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'L\'adresse est requise';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 16),
 
-                        // NIF (si entreprise)
+                        // Champs entreprise obligatoires
                         if (_selectedType == 'entreprise') ...[
                           const Text(
-                            'Numéro d\'identification fiscale (NIF)',
+                            'Numéro d\'identification fiscale (NIF) *',
                             style: AppTheme.fieldLabel,
                           ),
                           const SizedBox(height: 8),
@@ -291,6 +301,54 @@ class _CreateClientViewState extends State<CreateClientView> {
                               hint: 'NIF-XXXXX',
                               prefixIcon: Icons.numbers,
                             ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Le NIF est requis pour une entreprise';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          const Text(
+                            'Numéro d\'identification statistique (NIS) *',
+                            style: AppTheme.fieldLabel,
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _nisController,
+                            style: const TextStyle(color: AppColors.industrialText),
+                            decoration: AppTheme.industrialInputDecoration(
+                              hint: 'NIS-XXXXX',
+                              prefixIcon: Icons.numbers,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Le NIS est requis pour une entreprise';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          const Text(
+                            'Registre du commerce *',
+                            style: AppTheme.fieldLabel,
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _registreCommerceController,
+                            style: const TextStyle(color: AppColors.industrialText),
+                            decoration: AppTheme.industrialInputDecoration(
+                              hint: 'RC-XXXXX',
+                              prefixIcon: Icons.business_center,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Le registre du commerce est requis pour une entreprise';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -436,6 +494,8 @@ class _CreateClientViewState extends State<CreateClientView> {
       address:
           _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
       taxId: _taxIdController.text.trim().isEmpty ? null : _taxIdController.text.trim(),
+      nis: _nisController.text.trim().isEmpty ? null : _nisController.text.trim(),
+      registreCommerce: _registreCommerceController.text.trim().isEmpty ? null : _registreCommerceController.text.trim(),
       canPayByCheck: _selectedType == 'entreprise'
         ? context.read<UserProvider>().currentUser?.role.toLowerCase() == 'employe'
           ? false

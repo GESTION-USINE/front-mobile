@@ -332,100 +332,6 @@ class _ClientsBonsContentState extends State<ClientsBonsContent> {
     }
   }
 
-  Widget _buildClientDateRangeButton() {
-    final hasDate = _clientStartDate != null || _clientEndDate != null;
-    return InkWell(
-      onTap: _selectClientDateRange,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: hasDate ? AppColors.info.withOpacity(0.12) : AppColors.grey100,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: hasDate ? AppColors.info : AppColors.grey300,
-            width: hasDate ? 2 : 1,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.calendar_today,
-              size: 16,
-              color: hasDate ? AppColors.info : AppColors.grey600,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _getClientDateRangeLabel(),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: hasDate ? FontWeight.w600 : FontWeight.normal,
-                color: hasDate ? AppColors.info : AppColors.grey700,
-              ),
-            ),
-            if (hasDate) ...[
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _clientStartDate = null;
-                    _clientEndDate = null;
-                  });
-                },
-                child: const Icon(Icons.clear, size: 16, color: AppColors.info),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _getClientDateRangeLabel() {
-    if (_clientStartDate != null && _clientEndDate != null) {
-      return '${DateFormat('dd/MM').format(_clientStartDate!)} - ${DateFormat('dd/MM').format(_clientEndDate!)}';
-    }
-    if (_clientStartDate != null) {
-      return 'Depuis ${DateFormat('dd/MM/yy').format(_clientStartDate!)}';
-    }
-    if (_clientEndDate != null) {
-      return 'Jusqu\'au ${DateFormat('dd/MM/yy').format(_clientEndDate!)}';
-    }
-    return 'Période';
-  }
-
-  Future<void> _selectClientDateRange() async {
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDateRange: _clientStartDate != null && _clientEndDate != null
-          ? DateTimeRange(start: _clientStartDate!, end: _clientEndDate!)
-          : null,
-      locale: const Locale('fr', 'FR'),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: AppColors.white,
-              surface: AppColors.white,
-              onSurface: AppColors.grey700,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _clientStartDate = picked.start;
-        _clientEndDate = picked.end;
-      });
-    }
-  }
-
   Widget _buildClientsTable(
       ClientsWithSlipsViewModel viewModel, BoxConstraints constraints) {
     // Apply filters and search
@@ -893,8 +799,8 @@ class _ClientsBonsContentState extends State<ClientsBonsContent> {
 
       // Search filter
       final matchesSearch = query.isEmpty ||
-          (slip.slipNumber?.toLowerCase().contains(query) ?? false) ||
-          (slip.materialName?.toLowerCase().contains(query) ?? false);
+          slip.slipNumber.toLowerCase().contains(query) ||
+          slip.materialName.toLowerCase().contains(query);
 
       // Date filter (inclusive)
       bool matchesDate = true;
@@ -913,12 +819,12 @@ class _ClientsBonsContentState extends State<ClientsBonsContent> {
     final columns = <SimpleTableColumn<SlipDetail>>[
       SimpleTableColumn<SlipDetail>(
         label: 'N° Bon',
-        cellBuilder: (s) => Text(s.slipNumber ?? '-', overflow: TextOverflow.ellipsis),
+        cellBuilder: (s) => Text(s.slipNumber, overflow: TextOverflow.ellipsis),
       ),
       SimpleTableColumn<SlipDetail>(
         label: 'Matériau',
         cellBuilder: (s) =>
-            Text(s.materialName ?? '-', overflow: TextOverflow.ellipsis),
+            Text(s.materialName, overflow: TextOverflow.ellipsis),
       ),
       SimpleTableColumn<SlipDetail>(
         label: 'Montant',
@@ -968,7 +874,7 @@ class _ClientsBonsContentState extends State<ClientsBonsContent> {
       trailingBuilder: (s) {
         final canPay = !s.isFullyPaid && s.remainingCredit > 0;
         return ElevatedButton.icon(
-          onPressed: canPay ? () => _openPaymentFormDetail(client!, s) : null,
+          onPressed: canPay ? () => _openPaymentFormDetail(client, s) : null,
           icon: const Icon(Icons.payments, size: 18),
           label: const Text('Payer'),
           style: ElevatedButton.styleFrom(

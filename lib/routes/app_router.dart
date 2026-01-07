@@ -11,7 +11,6 @@ import '../models/entities/worker.dart';
 import '../models/user.dart';
 import '../views/auth/login_view.dart';
 import '../views/layouts/app_shell.dart';
-import '../views/home/dashboard_content.dart';
 import '../views/users/users_content.dart';
 import '../views/product/product_list_content.dart';
 import '../views/product/product_detail_view.dart';
@@ -34,7 +33,6 @@ import '../views/maintenance/create_maintenance_view.dart';
 import '../views/workers/workers_content.dart';
 import '../views/workers/create_worker_view.dart';
 import '../views/workers/edit_worker_view.dart';
-import '../views/users/users_content.dart';
 import '../views/users/create_user_view.dart';
 import '../views/users/edit_user_view.dart';
 import '../views/credits/credits_content.dart';
@@ -296,7 +294,7 @@ class AppRouter {
             GoRoute(
               path: dashboard,
               pageBuilder: (context, state) => const NoTransitionPage(
-                child: DashboardContent(),
+                child: StatisticsDashboardContent(),
               ),
             ),
 

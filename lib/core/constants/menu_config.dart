@@ -12,7 +12,7 @@ class MenuConfig {
           id: 'dashboard',
           title: 'Tableau de bord',
           icon: Icons.dashboard_outlined,
-          route: '/dashboard',
+          route: '/statistics/dashboard',
           allowedRoles: [], // Tous les rôles
         ),
 

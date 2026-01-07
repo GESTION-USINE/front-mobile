@@ -8,6 +8,7 @@ enum ViewState { idle, loading, success, error }
 abstract class BaseViewModel extends ChangeNotifier {
   ViewState _state = ViewState.idle;
   String? _errorMessage;
+  bool _isDisposed = false;
 
   /// État actuel
   ViewState get state => _state;
@@ -24,6 +25,7 @@ abstract class BaseViewModel extends ChangeNotifier {
   /// Passer à l'état loading
   @protected
   void setLoading() {
+    if (_isDisposed) return;
     _state = ViewState.loading;
     _errorMessage = null;
     notifyListeners();
@@ -32,6 +34,7 @@ abstract class BaseViewModel extends ChangeNotifier {
   /// Passer à l'état success
   @protected
   void setSuccess() {
+    if (_isDisposed) return;
     _state = ViewState.success;
     _errorMessage = null;
     notifyListeners();
@@ -40,6 +43,7 @@ abstract class BaseViewModel extends ChangeNotifier {
   /// Passer à l'état error
   @protected
   void setError(String message) {
+    if (_isDisposed) return;
     _state = ViewState.error;
     _errorMessage = message;
     notifyListeners();
@@ -48,6 +52,7 @@ abstract class BaseViewModel extends ChangeNotifier {
   /// Remettre à l'état idle
   @protected
   void setIdle() {
+    if (_isDisposed) return;
     _state = ViewState.idle;
     _errorMessage = null;
     notifyListeners();
@@ -87,6 +92,7 @@ abstract class BaseViewModel extends ChangeNotifier {
 
   /// Effacer l'erreur
   void clearError() {
+    if (_isDisposed) return;
     if (_errorMessage != null) {
       _errorMessage = null;
       if (_state == ViewState.error) {
@@ -94,5 +100,11 @@ abstract class BaseViewModel extends ChangeNotifier {
       }
       notifyListeners();
     }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }

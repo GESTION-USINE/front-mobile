@@ -27,8 +27,8 @@ class _ClientsContentState extends State<ClientsContent> {
 
   // Drawer state
   bool _isDrawerOpen = false;
-  // Controllers pour les prix par matériau
-  final Map<int, TextEditingController> _priceControllers = {};
+  // Keep for potential future use
+  // ignore: unused_field
   dynamic _selectedClient;
 
   @override

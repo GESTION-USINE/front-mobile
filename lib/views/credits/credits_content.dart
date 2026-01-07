@@ -517,14 +517,4 @@ class _CreditsContentState extends State<CreditsContent> {
       onDelete: (_) {},
     );
   }
-
-  Widget _buildDetailsButton() {
-    return IconButton(
-      icon: const Icon(Icons.info_outline),
-      tooltip: 'Détails',
-      onPressed: () {
-        // This will be handled by the table's onCustomAction with different logic
-      },
-    );
-  }
 }
