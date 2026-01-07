@@ -4,6 +4,7 @@ import '../core/network/api_client.dart';
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/sidebar_provider.dart';
 import '../services/interfaces/i_auth_service.dart';
 import '../services/interfaces/i_product_service.dart';
 import '../services/auth_service.dart';
@@ -45,6 +46,7 @@ Future<void> initDependencies() async {
   getIt.registerLazySingleton<UserProvider>(() => UserProvider());
   getIt.registerLazySingleton<ThemeProvider>(() => ThemeProvider());
   getIt.registerLazySingleton<LocaleProvider>(() => LocaleProvider());
+  getIt.registerLazySingleton<SidebarProvider>(() => SidebarProvider());
 
   // ==================== Services ====================
   // Singletons car pas d'état interne

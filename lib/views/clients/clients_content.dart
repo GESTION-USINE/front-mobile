@@ -85,19 +85,6 @@ class _ClientsContentState extends State<ClientsContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // En-tête - Titre et bouton sur des lignes séparées
-                const Text(
-                  'Gestion des clients',
-                  style: AppTheme.headingLarge,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Gérez vos clients particuliers et entreprises',
-                  style: AppTheme.subtitleMedium,
-                ),
-                const SizedBox(height: 10),
-
-                // Bouton Nouveau client - aligné à gauche, pas dans un Row
                 ElevatedButton.icon(
                   onPressed: () => context.go(AppRouter.clientsCreate),
                   style: AppTheme.industrialPrimaryButton,

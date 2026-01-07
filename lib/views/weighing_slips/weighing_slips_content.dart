@@ -50,11 +50,6 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Gestion des bons de pesée', style: AppTheme.headingLarge),
-                const SizedBox(height: 8),
-                const Text('Suivi des opérations de pesée', style: AppTheme.subtitleMedium),
-                const SizedBox(height: 10),
-
                 // Bouton Nouveau bon
                 ElevatedButton.icon(
                   onPressed: () => context.go(AppRouter.slipsCreate),

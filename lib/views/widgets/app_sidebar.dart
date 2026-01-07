@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/constants/menu_config.dart';
 import '../../models/entities/menu_item.dart';
 import '../../routes/app_router.dart';
+import '../../providers/sidebar_provider.dart';
 
 class AppSidebar extends StatelessWidget {
   final String currentRoute;
@@ -19,91 +21,118 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseMenu = MenuConfig.getMenuForRole(userRole);
-    // Inject "Bons de pesée" if missing
-    const slipsItem = MenuItem(
-      id: 'weighing_slips',
-      title: 'Bons de pesée',
-      icon: Icons.assignment_outlined,
-      route: AppRouter.slips,
-      allowedRoles: ['super_admin', 'associe', 'employe'],
-    );
-    const creditItem = MenuItem(
-      id: 'clients_credit',
-      title: 'Client Credit',
-      icon: Icons.account_balance_wallet_outlined,
-      route: AppRouter.clientsCredit,
-      allowedRoles: ['super_admin', 'associe'],
-    );
-    final hasSlips = baseMenu.any((m) => m.id == 'weighing_slips');
-    final hasClientsCredit = baseMenu.any((m) => m.id == 'clients_credit');
-    final hasBonsClients = baseMenu.any((m) => m.id == 'clients_bons');
-    const bonsClientsItem = MenuItem(
-      id: 'clients_bons',
-      title: 'Bons Clients',
-      icon: Icons.people_outline,
-      route: AppRouter.clientsBons,
-      allowedRoles: ['super_admin', 'associe'],
-    );
-    final menuItems = [...baseMenu, if (!hasSlips) slipsItem, if (!hasClientsCredit) creditItem, if (!hasBonsClients) bonsClientsItem];
+    return Consumer<SidebarProvider>(
+      builder: (context, sidebarProvider, _) {
+        final isCollapsed = sidebarProvider.isCollapsed;
+        final width = isCollapsed ? 60.0 : 200.0;
 
-    return Container(
-      width: 200,
-      decoration: const BoxDecoration(
-        gradient: AppTheme.industrialGradient,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 10,
-            offset: Offset(2, 0),
+        final baseMenu = MenuConfig.getMenuForRole(userRole);
+        // Inject "Bons de pesée" if missing
+        const slipsItem = MenuItem(
+          id: 'weighing_slips',
+          title: 'Bons de pesée',
+          icon: Icons.assignment_outlined,
+          route: AppRouter.slips,
+          allowedRoles: ['super_admin', 'associe', 'employe'],
+        );
+        const creditItem = MenuItem(
+          id: 'clients_credit',
+          title: 'Client Credit',
+          icon: Icons.account_balance_wallet_outlined,
+          route: AppRouter.clientsCredit,
+          allowedRoles: ['super_admin', 'associe'],
+        );
+        final hasSlips = baseMenu.any((m) => m.id == 'weighing_slips');
+        final hasClientsCredit = baseMenu.any((m) => m.id == 'clients_credit');
+        final hasBonsClients = baseMenu.any((m) => m.id == 'clients_bons');
+        const bonsClientsItem = MenuItem(
+          id: 'clients_bons',
+          title: 'Bons Clients',
+          icon: Icons.people_outline,
+          route: AppRouter.clientsBons,
+          allowedRoles: ['super_admin', 'associe'],
+        );
+        final menuItems = [...baseMenu, if (!hasSlips) slipsItem, if (!hasClientsCredit) creditItem, if (!hasBonsClients) bonsClientsItem];
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          width: width,
+          decoration: const BoxDecoration(
+            gradient: AppTheme.industrialGradient,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.shadowColor,
+                blurRadius: 10,
+                offset: Offset(2, 0),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Logo et titre de l'application
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.whiteTransparent20,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.factory_outlined,
-                    color: AppColors.white,
-                    size: 22,
-                  ),
+          child: Column(
+            children: [
+              // Logo et titre de l'application avec bouton collapse
+              Container(
+                padding: EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: isCollapsed ? 4 : 12,
                 ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Gestion Usine',
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                child: isCollapsed
+                    ? Center(
+                        child: IconButton(
+                          icon: const Icon(Icons.menu, color: AppColors.white),
+                          onPressed: () => sidebarProvider.toggleSidebar(),
+                          tooltip: 'Afficher menu',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          iconSize: 20,
                         ),
+                      )
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: const Row(
+                              children: [
+                                 Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Rahma Usine',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: AppColors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Production',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: Color(0xB3FFFFFF),
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left, color: AppColors.white),
+                            onPressed: () => sidebarProvider.toggleSidebar(),
+                            tooltip: 'Réduire menu',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            iconSize: 18,
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Production',
-                        style: TextStyle(
-                          color: Color(0xB3FFFFFF),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+              ),
 
           const Divider(
             color: AppColors.whiteTransparent20,
@@ -114,25 +143,57 @@ class AppSidebar extends StatelessWidget {
           // Liste des menus
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              padding: EdgeInsets.symmetric(vertical: 16, horizontal: isCollapsed ? 2 : 12),
               itemCount: menuItems.length,
               itemBuilder: (context, index) {
-                return _buildMenuItem(menuItems[index]);
+                return _buildMenuItem(menuItems[index], isCollapsed);
               },
             ),
           ),
         ],
       ),
+        );
+      },
     );
   }
 
-  Widget _buildMenuItem(MenuItem item) {
+  Widget _buildMenuItem(MenuItem item, bool isCollapsed) {
     final isSelected = currentRoute == item.route;
     final hasSubItems = item.subItems != null && item.subItems!.isNotEmpty;
 
     // Si l'item a des subItems, afficher un expandable, sinon naviguer directement
     if (hasSubItems) {
-      return _buildExpandableMenuItem(item);
+      return _buildExpandableMenuItem(item, isCollapsed);
+    }
+
+    if (isCollapsed) {
+      return Tooltip(
+        message: item.title,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 4),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => onMenuItemTap(item.route),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.whiteTransparent20
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  item.icon,
+                  color: AppColors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return Container(
@@ -143,7 +204,7 @@ class AppSidebar extends StatelessWidget {
           onTap: () => onMenuItemTap(item.route),
           borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             decoration: BoxDecoration(
               color: isSelected
                   ? AppColors.whiteTransparent20
@@ -155,12 +216,14 @@ class AppSidebar extends StatelessWidget {
                 Icon(
                   item.icon,
                   color: AppColors.white,
-                  size: 20,
+                  size: 16,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: AppColors.white,
                       fontSize: 14,
@@ -185,7 +248,41 @@ class AppSidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildExpandableMenuItem(MenuItem item) {
+  Widget _buildExpandableMenuItem(MenuItem item, bool isCollapsed) {
+    // When collapsed, show only icon with tooltip (no ExpansionTile)
+    if (isCollapsed) {
+      return Tooltip(
+        message: item.title,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 4),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                // Navigate to first sub-item or show message
+                if (item.subItems != null && item.subItems!.isNotEmpty) {
+                  onMenuItemTap(item.subItems!.first.route);
+                }
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  item.icon,
+                  color: AppColors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return StatefulBuilder(
       builder: (context, setState) {
         return ExpansionTile(
@@ -213,7 +310,7 @@ class AppSidebar extends StatelessWidget {
           collapsedBackgroundColor: Colors.transparent,
           children: item.subItems!
               .map((subItem) => Padding(
-                    padding: const EdgeInsets.only(left: 16),
+                    padding: const EdgeInsets.only(left: 8),
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 4),
                       child: Material(
@@ -224,7 +321,7 @@ class AppSidebar extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               vertical: 8,
-                              horizontal: 16,
+                              horizontal: 8,
                             ),
                             decoration: BoxDecoration(
                               color: currentRoute == subItem.route
@@ -237,12 +334,14 @@ class AppSidebar extends StatelessWidget {
                                 Icon(
                                   subItem.icon,
                                   color: AppColors.white,
-                                  size: 18,
+                                  size: 14,
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
                                     subItem.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: AppColors.white,
                                       fontSize: 13,

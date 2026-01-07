@@ -10,14 +10,54 @@ import '../../routes/app_router.dart';
 class AppNavBar extends StatelessWidget {
   const AppNavBar({super.key});
 
+  /// Retourne le titre de la page selon la route courante
+  String _getPageTitle(String location) {
+    if (location.contains(AppRouter.clients)) return 'Gestion des Clients';
+    if (location.contains(AppRouter.materials)) return 'Gestion des Matériaux';
+    if (location.contains(AppRouter.workers)) return 'Gestion des Travailleurs';
+    if (location.contains(AppRouter.slips)) return 'Bons de Pesée';
+    if (location.contains(AppRouter.statisticsPath)) return 'Statistiques';
+    if (location.contains(AppRouter.credits)) return 'Gestion des Crédits';
+    if (location.contains(AppRouter.invoices)) return 'Factures';
+    if (location.contains(AppRouter.products)) return 'Produits';
+    if (location.contains(AppRouter.maintenance)) return 'Maintenance';
+    if (location.contains(AppRouter.users)) return 'Gestion des Utilisateurs';
+    if (location.contains(AppRouter.settings)) return 'Paramètres';
+    if (location.contains(AppRouter.reports)) return 'Rapports';
+    if (location.contains(AppRouter.traceability)) return 'Traçabilité';
+    if (location.contains(AppRouter.dashboard)) return 'Tableau de Bord';
+    return 'Accueil';
+  }
+
+  /// Retourne l'icône de la page selon la route courante
+  IconData _getPageIcon(String location) {
+    if (location.contains(AppRouter.clients)) return Icons.people;
+    if (location.contains(AppRouter.materials)) return Icons.category;
+    if (location.contains(AppRouter.workers)) return Icons.engineering;
+    if (location.contains(AppRouter.slips)) return Icons.scale;
+    if (location.contains(AppRouter.statisticsPath)) return Icons.bar_chart;
+    if (location.contains(AppRouter.credits)) return Icons.credit_card;
+    if (location.contains(AppRouter.invoices)) return Icons.receipt_long;
+    if (location.contains(AppRouter.products)) return Icons.inventory_2;
+    if (location.contains(AppRouter.maintenance)) return Icons.build;
+    if (location.contains(AppRouter.users)) return Icons.admin_panel_settings;
+    if (location.contains(AppRouter.settings)) return Icons.settings;
+    if (location.contains(AppRouter.reports)) return Icons.assessment;
+    if (location.contains(AppRouter.traceability)) return Icons.timeline;
+    if (location.contains(AppRouter.dashboard)) return Icons.dashboard;
+    return Icons.home;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final location = GoRouterState.of(context).uri.path;
+    
     return Consumer<UserProvider>(
       builder: (context, userProvider, _) {
         final user = userProvider.currentUser;
 
         return Container(
-          height: 64,
+          height: 48,
           decoration: const BoxDecoration(
             color: AppColors.white,
             boxShadow: [
@@ -32,15 +72,25 @@ class AppNavBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
               children: [
-                // Breadcrumb ou titre de la page (optionnel)
-                const Expanded(
-                  child: Text(
-                    '', // Peut être rempli dynamiquement selon la route
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.industrialPrimary,
-                    ),
+                // Titre de la page avec icône
+                Expanded(
+                  child: Row(
+                    children: [
+                      Icon(
+                        _getPageIcon(location),
+                        color: AppColors.industrialPrimary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _getPageTitle(location),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.industrialPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 

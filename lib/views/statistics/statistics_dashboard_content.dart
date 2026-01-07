@@ -80,69 +80,6 @@ _viewModel.refreshAll();
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header visuel amélioré
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppColors.industrialPrimary.withOpacity(0.08),
-                        AppColors.industrialPrimary.withOpacity(0.02),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.industrialPrimary.withOpacity(0.15),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.industrialPrimary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.analytics,
-                              color: AppColors.industrialPrimary,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Tableau de bord',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.industrialText,
-                                    )),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Vue globale : ventes, encaissements, crédits, dépenses',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.industrialTextLight,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
                 _buildHeaderFilters(viewModel),
                 const SizedBox(height: 20),
 
