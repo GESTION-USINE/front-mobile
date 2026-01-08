@@ -142,6 +142,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: 'Segoe UI',
+      fontFamilyFallback: const ['Arial', 'sans-serif'],
       primaryColor: primaryColor,
       scaffoldBackgroundColor: lightBackground,
       colorScheme: const ColorScheme.light(
@@ -244,6 +246,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: 'Segoe UI',
+      fontFamilyFallback: const ['Arial', 'sans-serif'],
       primaryColor: primaryColor,
       scaffoldBackgroundColor: darkBackground,
       colorScheme: const ColorScheme.dark(

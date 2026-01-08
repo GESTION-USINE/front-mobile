@@ -10,7 +10,7 @@ import '../../di/injection_container.dart';
 import '../../viewmodels/client_viewmodel.dart';
 import '../../providers/user_provider.dart';
 import '../widgets/generic_data_table.dart';
-import '../widgets/client_material_prices_drawer.dart';
+import '../../models/entities/material_price.dart';
 
 /// Contenu de la liste des clients (sans wrapper)
 class ClientsContent extends StatefulWidget {
@@ -25,11 +25,12 @@ class _ClientsContentState extends State<ClientsContent> {
   late final MaterialViewModel _materialViewModel;
   final _searchController = TextEditingController();
 
-  // Drawer state
-  bool _isDrawerOpen = false;
-  // Keep for potential future use
-  // ignore: unused_field
+  bool _showPricesPanel = false;
   dynamic _selectedClient;
+
+  final Map<int, TextEditingController> _priceControllers = {};
+  int? _priceClientId;
+  bool _priceControllersReady = false;
 
   @override
   void initState() {
@@ -44,28 +45,55 @@ class _ClientsContentState extends State<ClientsContent> {
     _searchController.dispose();
     _viewModel.dispose();
     _materialViewModel.dispose();
+    _clearPriceControllers();
     super.dispose();
+  }
+
+  void _clearPriceControllers() {
+    for (final c in _priceControllers.values) {
+      c.dispose();
+    }
+    _priceControllers.clear();
+    _priceClientId = null;
+    _priceControllersReady = false;
+  }
+
+  void _initPriceControllers(List<MaterialPriceItem> items, int? clientId) {
+    if (clientId == null) return;
+
+    if (_priceClientId != clientId) {
+      _clearPriceControllers();
+      _priceClientId = clientId;
+    }
+
+    if (_priceControllersReady) return;
+
+    for (final item in items) {
+      final key = item.materialId;
+      if (key == null) continue;
+      _priceControllers.putIfAbsent(
+        key,
+        () => TextEditingController(text: item.customPricePerTon?.toString() ?? ''),
+      );
+    }
+
+    if (items.isNotEmpty) {
+      _priceControllersReady = true;
+    }
   }
 
   Future<void> _openPricesForClient(dynamic client) async {
     // D'abord charger les données
     await _materialViewModel.loadClientMaterialPrices(clientId: client.id, refresh: true);
-    
-    // Ensuite ouvrir le drawer avec les données fraîches
+    _priceControllersReady = false;
+
+    // Ensuite afficher le panneau avec les données fraîches
     if (mounted) {
       setState(() {
         _selectedClient = client;
-        _isDrawerOpen = true;
+        _showPricesPanel = true;
       });
     }
-  }
-
-   Widget _buildPricesDrawer(BuildContext ctx, dynamic client, VoidCallback close) {
-    return ClientMaterialPricesDrawer(
-      key: ValueKey('prices_drawer_${client.id}'), // Force la recréation pour chaque client
-      client: client,
-      onClose: close,
-    );
   }
 
   @override
@@ -90,6 +118,9 @@ class _ClientsContentState extends State<ClientsContent> {
                 const SizedBox(height: 12),
                 // Liste des clients
                 _buildClientsList(viewModel, role),
+
+                const SizedBox(height: 16),
+                _buildMaterialPricesPanel(materialVm, role),
 
                 // Drawer custom is handled by GenericDataTable via customDrawerBuilder and controlled open state
               ],
@@ -170,7 +201,7 @@ class _ClientsContentState extends State<ClientsContent> {
 
         // Filtre Paiement par chèque
         SizedBox(
-          width: 125,
+          width: 180,
           child: DropdownButtonFormField<bool?>(
             value: viewModel.canPayByCheckFilter,
             isExpanded: true,
@@ -192,52 +223,16 @@ class _ClientsContentState extends State<ClientsContent> {
                       style: TextStyle(color: AppColors.industrialText))),
               DropdownMenuItem(
                   value: true,
-                  child: Text('Oui',
+                  child: Text('Avec Chèque',
                       style: TextStyle(color: AppColors.industrialText))),
               DropdownMenuItem(
                   value: false,
-                  child: Text('Non',
+                  child: Text('Sans Chèque',
                       style: TextStyle(color: AppColors.industrialText))),
             ],
             onChanged: (value) => viewModel.filterByCanPayByCheck(value),
           ),
         ),
-
-        // Filtre Statut (masqué pour les employés)
-        if (!isEmployee)
-          SizedBox(
-          width: 125,
-          child: DropdownButtonFormField<bool?>(
-            value: viewModel.isActiveFilter,
-            isExpanded: true,
-            style: const TextStyle(color: AppColors.industrialText, fontSize: 14),
-            dropdownColor: AppColors.white,
-            decoration: AppTheme.industrialInputDecoration(
-              hint: 'Statut',
-              prefixIcon: Icons.toggle_on,
-            ).copyWith(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-            ),
-            items: const [
-              DropdownMenuItem(
-                  value: null,
-                  child: Text('Tous',
-                      style: TextStyle(color: AppColors.industrialText))),
-              DropdownMenuItem(
-                  value: true,
-                  child: Text('Actif',
-                      style: TextStyle(color: AppColors.industrialText))),
-              DropdownMenuItem(
-                  value: false,
-                  child: Text('Inactif',
-                      style: TextStyle(color: AppColors.industrialText))),
-            ],
-            onChanged: (value) => viewModel.filterByIsActive(value),
-          ),
-          ),
 
         // Bouton reset filtres
         IconButton(
@@ -280,7 +275,11 @@ class _ClientsContentState extends State<ClientsContent> {
     final columnsToDisplay = <DataTableColumn<dynamic>>[
       DataTableColumn<dynamic>(
         label: 'Nom',
-        value: (client) => client?.name ?? '-',
+        isWidget: true,
+        value: (client) => Text(
+          client?.name ?? '-',
+          style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.industrialText),
+        ),
       ),
       DataTableColumn<dynamic>(
         label: 'Type',
@@ -293,22 +292,28 @@ class _ClientsContentState extends State<ClientsContent> {
       ),
       DataTableColumn<dynamic>(
         label: 'Crédit',
+        isWidget: true,
         value: (client) {
           final dynamic c = client?.credit;
           final double d = c is num ? c.toDouble() : 0.0;
-          return d.toStringAsFixed(2);
+          return Text(
+            d.toStringAsFixed(2),
+            style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w600),
+          );
         },
       ),
       DataTableColumn<dynamic>(
         label: ' Chèque',
-        value: (client) => (client?.canPayByCheck ?? false) ? '✓' : '✗',
+        isWidget: true,
+        value: (client) {
+          final can = client?.canPayByCheck ?? false;
+          return Icon(
+            can ? Icons.check_circle : Icons.cancel,
+            color: can ? AppColors.success : AppColors.danger,
+            size: 18,
+          );
+        },
       ),
-      // Colonne Statut uniquement si pas employé
-      if (!isEmployee)
-        DataTableColumn<dynamic>(
-          label: 'Statut',
-          value: (client) => (client?.isActive ?? false) ? 'Actif' : 'Inactif',
-        ),
     ];
 
     return GenericDataTable<dynamic>(
@@ -317,17 +322,12 @@ class _ClientsContentState extends State<ClientsContent> {
       showActions: !isEmployee,
       showEditAction: true,
       showDeleteAction: false,
-      // Active la fenêtre glissante personnalisée
-      enableCustomWindow: true,
-      customDrawerBuilder: (ctx, client, close) => _buildPricesDrawer(ctx, client, close),
-      onOpenCustomWindow: (client) => _openPricesForClient(client),
-      // Mode contrôlé depuis cette page
-      isCustomWindowOpen: _isDrawerOpen,
-      onToggleCustomWindow: (v) => setState(() => _isDrawerOpen = v),
-      // Afficher un bouton supplémentaire dans la colonne Actions
+      enableCustomWindow: false,
+      // Bouton prix matériaux
       showCustomActionButton: true,
       customActionIcon: Icons.price_change,
       customActionTooltip: 'Prix matériaux',
+      onCustomAction: (client) => _openPricesForClient(client),
       onEdit: (client) {
         context.go('/clients/${client.id}/edit', extra: client);
       },
@@ -349,23 +349,209 @@ class _ClientsContentState extends State<ClientsContent> {
     );
   }
 
+  Widget _buildMaterialPricesPanel(MaterialViewModel materialVm, String? role) {
+    if (!_showPricesPanel || _selectedClient == null) {
+      return const SizedBox.shrink();
+    }
+
+    final bool isSuperAdmin = role?.toLowerCase() == 'super_admin';
+    final items = materialVm.materialPrices ?? const <MaterialPriceItem>[];
+    final clientId = _selectedClient?.id as int?;
+    _initPriceControllers(items, clientId);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final panelWidth = constraints.maxWidth * 0.5;
+
+        return Align(
+          alignment: Alignment.topLeft,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: panelWidth),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Prix matériaux - ${_selectedClient?.name ?? ''}',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.industrialText,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Liste des matériaux avec prix par défaut et prix client.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.industrialTextLight,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            setState(() {
+                              _showPricesPanel = false;
+                              _selectedClient = null;
+                            });
+                            _clearPriceControllers();
+                          },
+                          icon: const Icon(Icons.close, color: AppColors.industrialText),
+                          tooltip: 'Fermer',
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1, color: AppColors.grey200),
+                  if (materialVm.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (items.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'Aucun matériau disponible pour ce client.',
+                        style: TextStyle(color: AppColors.industrialTextLight),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: GenericDataTable<MaterialPriceItem>(
+                        items: items,
+                        columns: [
+                          DataTableColumn<MaterialPriceItem>(
+                            label: 'Matériau',
+                            value: (item) => item.materialName,
+                          ),
+                          DataTableColumn<MaterialPriceItem>(
+                            label: 'Prix défaut',
+                            value: (item) => '${item.defaultPricePerTon.toStringAsFixed(2)} DA',
+                          ),
+                          DataTableColumn<MaterialPriceItem>(
+                            label: 'Prix spécial',
+                            isWidget: true,
+                            value: (item) {
+                              final controller = _priceControllers[item.materialId] ??
+                                  TextEditingController(text: item.customPricePerTon?.toString() ?? '');
+                              _priceControllers[item.materialId ?? -1] = controller;
+                              return SizedBox(
+                                width: 110,
+                                child: TextFormField(
+                                  controller: controller,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  style: const TextStyle(fontSize: 12),
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    hintText: 'Optionnel',
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                        showActions: isSuperAdmin,
+                        showEditAction: true,
+                        showDeleteAction: true,
+                        showCustomActionButton: false,
+                        onEdit: (item) {
+                          final text = _priceControllers[item.materialId]?.text.trim() ?? '';
+                          final value = text.isNotEmpty ? double.tryParse(text.replaceAll(',', '.')) : null;
+                          if (value != null) {
+                            materialVm.createClientMaterialPrice(
+                              clientId: item.clientId,
+                              materialId: item.materialId,
+                              customPricePerTon: value,
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Prix spécial enregistré')),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Veuillez entrer un prix valide')),
+                            );
+                          }
+                        },
+                        onDelete: (item) {
+                          if (item.materialPriceId != null) {
+                            materialVm.deleteClientMaterialPrice(
+                              priceId: item.materialPriceId!,
+                              clientId: item.clientId,
+                            );
+                            _priceControllers[item.materialId]?.clear();
+                            setState(() {});
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Prix spécial supprimé'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          }
+                        },
+                        isLoading: false,
+                        hasError: false,
+                        emptyMessage: 'Aucun matériau disponible',
+                        showPagination: false,
+                        total: items.length,
+                        currentPage: 1,
+                        totalPages: 1,
+                        onPreviousPage: null,
+                        onNextPage: null,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildTypeBadge(String type) {
     final isEnterprise = type == 'entreprise';
+    final bgColor = isEnterprise ? AppColors.info.withOpacity(0.1) : AppColors.accent.withOpacity(0.12);
+    final textColor = isEnterprise ? AppColors.info : AppColors.accent;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isEnterprise
-            // ignore: deprecated_member_use
-            ? AppColors.info.withOpacity(0.1)
-            // ignore: deprecated_member_use
-            : AppColors.warning.withOpacity(0.1),
+        color: bgColor,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         isEnterprise ? 'Entreprise' : 'Particulier',
         style: TextStyle(
           fontSize: 12,
-          color: isEnterprise ? AppColors.info : AppColors.warning,
+          color: textColor,
           fontWeight: FontWeight.w500,
         ),
       ),

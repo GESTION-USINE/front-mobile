@@ -109,6 +109,182 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
     if (_isControlled) widget.onToggleCustomWindow!(true);
   }
 
+  Widget _buildMobileCard(dynamic item, BuildContext context) {
+    return InkWell(
+      onTap: widget.enableCustomWindow ? () => _openWindow(item) : null,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+          border: Border.all(color: AppColors.grey200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: widget.columns
+                    .where((col) => !col.hideOnMobile)
+                    .take(2)
+                    .map((col) {
+                  final value = col.value(item);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Flexible(
+                          flex: 1,
+                          child: Text(
+                            col.label,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.grey600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          flex: 2,
+                          child: col.isWidget
+                              ? (value is Widget ? value : const Text('-'))
+                              : Text(
+                                  value?.toString() ?? '-',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.industrialText,
+                                  ),
+                                  textAlign: TextAlign.right,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            if (widget.columns.where((col) => !col.hideOnMobile).length > 2)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: widget.columns
+                      .where((col) => !col.hideOnMobile)
+                      .skip(2)
+                      .map((col) {
+                    final value = col.value(item);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            flex: 1,
+                            child: Text(
+                              col.label,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.grey700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            flex: 2,
+                            child: col.isWidget
+                                ? (value is Widget ? value : const Text('-'))
+                                : Text(
+                                    value?.toString() ?? '-',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.industrialText,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            if (widget.showActions || widget.showCustomActionButton)
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (widget.showActions)
+                      Container(
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            left: BorderSide(color: AppColors.black, width: 1),
+                          ),
+                        ),
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.showEditAction)
+                              IconButton(
+                                onPressed: () => widget.onEdit(item),
+                                icon: Icon(widget.editIcon, color: widget.actionTextColor),
+                                tooltip: widget.editLabel,
+                              ),
+                            if (widget.showDeleteAction)
+                              IconButton(
+                                onPressed: () => widget.onDelete(item),
+                                icon: Icon(widget.deleteIcon, color: AppColors.errorText),
+                                tooltip: widget.deleteLabel,
+                              ),
+                          ],
+                        ),
+                      ),
+                    if (widget.showCustomActionButton)
+                      if (widget.enableCustomWindow)
+                        ElevatedButton.icon(
+                          onPressed: () => _openWindow(item),
+                          icon: Icon(widget.customActionIcon, size: 18),
+                          label: const Text('Détails'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.industrialPrimary,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            elevation: 0,
+                          ),
+                        )
+                      else if (widget.onCustomAction != null)
+                        ElevatedButton.icon(
+                          onPressed: () => widget.onCustomAction!(item),
+                          icon: Icon(widget.customActionIcon, size: 18),
+                          label: const Text('Détails'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.industrialPrimary,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            elevation: 0,
+                          ),
+                        ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _closeWindow() {
     setState(() {
       _selectedItem = null;
@@ -189,7 +365,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
     if (!widget.enableCustomWindow) return mainContent;
 
     final screenSize = MediaQuery.of(context).size;
-    
+
     return Stack(
       children: [
         mainContent,
@@ -212,183 +388,6 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
     );
   }
 
-  Widget _buildMobileCard(dynamic item, BuildContext context) {
-    return InkWell(
-      onTap: widget.enableCustomWindow ? () => _openWindow(item) : null,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.shadowColor,
-              blurRadius: 4,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // En-tête avec infos principales
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: widget.columns
-                    .where((col) => !col.hideOnMobile)
-                    .take(2)
-                    .map((col) {
-                  final value = col.value(item);
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Flexible(
-                          flex: 1,
-                          child: Text(
-                            col.label,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.grey600,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          flex: 2,
-                          child: col.isWidget
-                              ? (value is Widget ? value : const Text('-'))
-                              : Text(
-                                  value?.toString() ?? '-',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.industrialText,
-                                  ),
-                                  textAlign: TextAlign.right,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            // Détails additionnels
-            if (widget.columns.where((col) => !col.hideOnMobile).length > 2)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: widget.columns
-                      .where((col) => !col.hideOnMobile)
-                      .skip(2)
-                      .map((col) {
-                    final value = col.value(item);
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Flexible(
-                            flex: 1,
-                            child: Text(
-                              col.label,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.grey600,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            flex: 2,
-                            child: col.isWidget
-                                ? (value is Widget ? value : const Text('-'))
-                                : Text(
-                                    value?.toString() ?? '-',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppColors.industrialText,
-                                    ),
-                                    textAlign: TextAlign.right,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            // Actions
-            if (widget.showActions || widget.showCustomActionButton)
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (widget.showActions)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (widget.showEditAction)
-                            IconButton(
-                              onPressed: () => widget.onEdit(item),
-                              icon: Icon(widget.editIcon, color: widget.actionTextColor),
-                              tooltip: widget.editLabel,
-                            ),
-                          if (widget.showDeleteAction)
-                            IconButton(
-                              onPressed: () => widget.onDelete(item),
-                              icon: Icon(widget.deleteIcon, color: AppColors.errorText),
-                              tooltip: widget.deleteLabel,
-                            ),
-                        ],
-                      )
-                    else
-                      const SizedBox.shrink(),
-                    if (widget.showCustomActionButton)
-                      if (widget.enableCustomWindow)
-                        ElevatedButton.icon(
-                          onPressed: () => _openWindow(item),
-                          icon: Icon(widget.customActionIcon, size: 18),
-                          label: const Text('Détails'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.industrialPrimary,
-                            foregroundColor: AppColors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          ),
-                        )
-                      else if (widget.onCustomAction != null)
-                        ElevatedButton.icon(
-                          onPressed: () => widget.onCustomAction!(item),
-                          icon: Icon(widget.customActionIcon, size: 18),
-                          label: const Text('Détails'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.industrialPrimary,
-                            foregroundColor: AppColors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          ),
-                        ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildDesktopTable() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,13 +397,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
             decoration: BoxDecoration(
               color: AppColors.white,
               borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.shadowColor,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
+              border: Border.all(color: AppColors.grey700, width: 1),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
@@ -425,43 +418,56 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Header
+                          // Header with vertical dividers
                           Container(
-                            color: AppColors.industrialBackground,
+                            decoration: const BoxDecoration(
+                              color: AppColors.grey600,
+                              border: Border(
+                                bottom: BorderSide(color: AppColors.grey300, width: 1),
+                              ),
+                            ),
                             child: Row(
                               children: [
-                                ...widget.columns.where((col) => !col.hideOnMobile).map((col) {
-                                  return Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 16,
-                                      ),
-                                      child: Text(
-                                        col.label,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.industrialText,
-                                          fontSize: 13,
+                                ...() {
+                                  final cols = widget.columns.where((col) => !col.hideOnMobile).toList();
+                                  return List<Widget>.generate(cols.length, (i) {
+                                    final col = cols[i];
+                                    final isLast = i == cols.length - 1;
+                                    return Expanded(
+                                          child: Container(
+                                        decoration: BoxDecoration(
+                                          border: Border(
+                                            right: isLast
+                                                ? BorderSide.none
+                                                : const BorderSide(color: AppColors.black, width: 1),
+                                          ),
                                         ),
-                                        overflow: TextOverflow.ellipsis,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+                                          child: Text(
+                                            col.label,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.black,
+                                              fontSize: 13,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                }),
+                                    );
+                                  });
+                                }(),
                                 if (widget.showActions)
                                   SizedBox(
                                     width: _getActionColumnWidth(),
                                     child: const Padding(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 16,
-                                      ),
+                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                                       child: Text(
                                         'Actions',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.industrialText,
+                                          color: AppColors.black,
                                           fontSize: 13,
                                         ),
                                       ),
@@ -477,52 +483,66 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  ...widget.items.map((item) {
+                                  ...widget.items.asMap().entries.map((entry) {
+                                    final index = entry.key;
+                                    final item = entry.value;
                                     return InkWell(
                                       onTap: widget.enableCustomWindow ? () => _openWindow(item) : null,
-                                      child: Container(
-                                        decoration: const BoxDecoration(
-                                          border: Border(
-                                            bottom: BorderSide(
-                                              color: AppColors.grey200,
-                                              width: 1,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: index.isOdd ? AppColors.grey400 : AppColors.white,
+                                            border: Border(
+                                              top: index == 0
+                                                  ? BorderSide.none
+                                                  : const BorderSide(color: AppColors.black, width: 1),
+                                              bottom: const BorderSide(color: AppColors.black, width: 1),
                                             ),
-                                          ),
                                         ),
                                         child: Row(
                                           children: [
-                                            ...widget.columns.where((col) => !col.hideOnMobile).map((col) {
-                                              final value = col.value(item);
-                                              return Expanded(
-                                                child: Padding(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 12,
+                                            ...() {
+                                              final cols = widget.columns.where((col) => !col.hideOnMobile).toList();
+                                              return List<Widget>.generate(cols.length, (i) {
+                                                final col = cols[i];
+                                                final isLast = i == cols.length - 1;
+                                                final value = col.value(item);
+                                                return Expanded(
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      border: Border(
+                                                        right: isLast
+                                                            ? BorderSide.none
+                                                            : const BorderSide(color: AppColors.black, width: 1),
+                                                      ),
+                                                    ),
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                                                      child: col.isWidget
+                                                          ? (value is Widget ? value : const Text('-'))
+                                                          : Text(
+                                                              value?.toString() ?? '-',
+                                                              style: const TextStyle(
+                                                                color: AppColors.industrialText,
+                                                                fontSize: 12,
+                                                              ),
+                                                              maxLines: 2,
+                                                              overflow: TextOverflow.ellipsis,
+                                                            ),
+                                                    ),
                                                   ),
-                                                  child: col.isWidget
-                                                      ? (value is Widget
-                                                          ? value
-                                                          : const Text('-'))
-                                                      : Text(
-                                                          value?.toString() ?? '-',
-                                                          style: const TextStyle(
-                                                            color: AppColors.industrialText,
-                                                            fontSize: 12,
-                                                          ),
-                                                          maxLines: 2,
-                                                          overflow: TextOverflow.ellipsis,
-                                                        ),
-                                                ),
-                                              );
-                                            }),
+                                                );
+                                              });
+                                            }(),
                                             if (widget.showActions)
-                                              SizedBox(
+                                              Container(
                                                 width: _getActionColumnWidth(),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 8,
+                                                decoration: const BoxDecoration(
+                                                  border: Border(
+                                                    left: BorderSide(color: AppColors.black, width: 1),
                                                   ),
+                                                ),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                                                   child: Row(
                                                     mainAxisSize: MainAxisSize.min,
                                                     mainAxisAlignment: MainAxisAlignment.start,

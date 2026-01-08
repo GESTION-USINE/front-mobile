@@ -7,9 +7,9 @@ import '../services/weighing_slip_service.dart';
 
 class WeighingSlipViewModel extends BaseViewModel {
   final WeighingSlipService _service;
-  WeighingSlipViewModel(this._service);
 
   List<WeighingSlip> _items = [];
+  List<WeighingSlip> _allItems = []; // Store all items before filtering
   List<WeighingSlip> get items => _items;
 
   // Pagination
@@ -33,6 +33,13 @@ class WeighingSlipViewModel extends BaseViewModel {
   bool? _isFullyPaid;
   String _sortBy = 'created_at';
   String _sortOrder = 'desc';
+
+  WeighingSlipViewModel(this._service) {
+    // Set default date filter to today
+    final today = DateTime.now();
+    _dateFrom = DateTime(today.year, today.month, today.day).toIso8601String().substring(0, 10);
+    _dateTo = _dateFrom;
+  }
 
   String? get searchQuery => _searchQuery;
   int? get clientIdFilter => _clientId;
@@ -69,10 +76,11 @@ class WeighingSlipViewModel extends BaseViewModel {
     });
 
     if (result != null) {
-      _items = result.items.map((item) {
+      _allItems = result.items.map((item) {
         if (item is WeighingSlip) return item;
         return WeighingSlip.fromJson(item as Map<String, dynamic>);
       }).toList();
+      _applySearchFilter();
       _currentPage = result.page;
       _pageSize = result.pageSize;
       _total = result.total;
@@ -80,7 +88,36 @@ class WeighingSlipViewModel extends BaseViewModel {
     }
   }
 
-  void searchSlips(String query) { _searchQuery = query.isEmpty ? null : query; _currentPage = 1; loadSlips(); }
+  /// Apply local search filter across all fields
+  void _applySearchFilter() {
+    if (_allItems.isEmpty) {
+      _items = [];
+      return;
+    }
+    
+    if (_searchQuery == null || _searchQuery!.isEmpty) {
+      _items = _allItems;
+      return;
+    }
+    
+    final query = _searchQuery!.toLowerCase();
+    _items = _allItems.where((slip) {
+      return (slip.slipNumber?.toLowerCase().contains(query) ?? false) ||
+             (slip.clientName?.toLowerCase().contains(query) ?? false) ||
+             (slip.materialName?.toLowerCase().contains(query) ?? false) ||
+             (slip.weightTons.toString().contains(query)) ||
+             (slip.totalAmount.toString().contains(query)) ||
+             ((slip.totalPaid ?? 0).toString().contains(query)) ||
+             ((slip.remainingCredit ?? 0).toString().contains(query)) ||
+             ((slip.isFullyPaid ? 'Payé' : 'Crédit').toLowerCase().contains(query));
+    }).toList();
+  }
+
+  void searchSlips(String query) { 
+    _searchQuery = query.isEmpty ? null : query; 
+    _applySearchFilter();
+    notifyListeners();
+  }
   void filterByClient(int? clientId) { _clientId = clientId; _currentPage = 1; loadSlips(); }
   void filterByCreatedBy(int? userId) { _createdBy = userId; _currentPage = 1; loadSlips(); }
   void filterByDateRange(String? from, String? to) { _dateFrom = from; _dateTo = to; _currentPage = 1; loadSlips(); }

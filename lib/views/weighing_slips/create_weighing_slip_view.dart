@@ -42,7 +42,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
   String _paymentType = 'cash';
   DateTime _paymentDate = DateTime.now();
   DateTime? _checkDate;
-  String _checkStatus = 'pending';
+  String _checkStatus = 'cleared';
 
   List<Client> _clients = [];
   List<mat.Material> _materials = [];
@@ -51,6 +51,9 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
   // État du flux de création
   WeighingSlip? _createdSlip; // Bon créé avec montant total
   bool _isCreatingSlip = false;
+  final GlobalKey<FormState> _paymentFormKey = GlobalKey<FormState>();
+  FocusNode? _checkNumberFocusNode;
+  FocusNode? _checkBankFocusNode;
 
   @override
   void initState() {
@@ -61,6 +64,8 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
     _checkNumberController = TextEditingController();
     _checkBankController = TextEditingController();
     _notesController = TextEditingController();
+    _checkNumberFocusNode = FocusNode();
+    _checkBankFocusNode = FocusNode();
     
     _slipViewModel = getIt<WeighingSlipViewModel>();
     _clientViewModel = getIt<ClientViewModel>();
@@ -100,30 +105,275 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
     _checkNumberController?.dispose();
     _checkBankController?.dispose();
     _notesController?.dispose();
+    _checkNumberFocusNode?.dispose();
+    _checkBankFocusNode?.dispose();
     super.dispose();
   }
 
-  /// Crée le bon de pesée SANS paiement
+  /// Affiche un popup de confirmation avant de créer le bon
   Future<void> _createSlip() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final emptyWeight = double.parse(_emptyWeightController!.text);
+    final fullWeight = double.parse(_fullWeightController!.text);
+    final netWeight = fullWeight - emptyWeight;
+
+    if (netWeight <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Le poids complet doit être supérieur au poids vide'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Récupérer les infos du client et matériau sélectionnés
+    final selectedClient = _clients.firstWhere(
+      (c) => c.id == _selectedClientId,
+      orElse: () => _clients.first,
+    );
+    final selectedMaterial = _materials.firstWhere(
+      (m) => m.id == _selectedMaterialId,
+      orElse: () => _materials.first,
+    );
+
+    // Charger les prix spéciaux du client pour ce matériau
+    await _materialViewModel.loadClientMaterialPrices(clientId: _selectedClientId!);
+    
+    // Trouver le prix spécial du client pour ce matériau
+    final clientMaterialPrices = _materialViewModel.materialPrices
+        .where((p) => p.materialId == _selectedMaterialId)
+        .toList();
+    
+    final specialPrice = clientMaterialPrices.isNotEmpty 
+        ? (clientMaterialPrices.first.customPricePerTon ?? clientMaterialPrices.first.defaultPricePerTon)
+        : selectedMaterial.defaultPricePerTon;
+    
+    // Calculer le montant estimé avec le prix spécial
+    final estimatedAmount = netWeight * specialPrice;
+
+    // Afficher le popup de confirmation
+    _showCreateConfirmationDialog(
+      selectedClient,
+      selectedMaterial,
+      netWeight,
+      estimatedAmount,
+      specialPrice,
+      selectedMaterial.defaultPricePerTon,
+    );
+  }
+
+  /// Affiche un popup avec les infos du bon à créer
+  void _showCreateConfirmationDialog(
+    Client client,
+    mat.Material material,
+    double netWeight,
+    double estimatedAmount,
+    double specialPrice,
+    double defaultPrice,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmer la création du bon'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.industrialPrimary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.industrialPrimary.withOpacity(0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildConfirmationRow('Client:', client.name),
+                  const SizedBox(height: 12),
+                  _buildConfirmationRow('Téléphone:', client.phone),
+                  const SizedBox(height: 12),
+                  _buildConfirmationRow('Matériau:', material.name),
+                  const SizedBox(height: 12),
+                  // Afficher les prix
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Prix/Tonne:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.industrialText,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (specialPrice != defaultPrice) ...[
+                            Text(
+                              '${specialPrice.toStringAsFixed(2)} DZD',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.industrialPrimary,
+                              ),
+                            ),
+                            Text(
+                              '(défaut: ${defaultPrice.toStringAsFixed(2)} DZD)',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.grey600,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                          ] else
+                            Text(
+                              '${defaultPrice.toStringAsFixed(2)} DZD',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.industrialText,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  _buildConfirmationRow(
+                    'Poids vide:',
+                    '${_emptyWeightController!.text} T',
+                    isGrey: true,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildConfirmationRow(
+                    'Poids complet:',
+                    '${_fullWeightController!.text} T',
+                    isGrey: true,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.industrialPrimary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Poids net:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                        ),
+                        Text(
+                          '${netWeight.toStringAsFixed(3)} T',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: AppColors.industrialPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Montant total:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        '${estimatedAmount.toStringAsFixed(2)} DZD',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: AppColors.industrialPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.industrialPrimary,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _submitCreateSlip();
+            },
+            child: const Text(
+              'Confirmer et créer',
+              style: TextStyle(color: AppColors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Widget helper pour afficher une ligne de confirmation
+  Widget _buildConfirmationRow(
+    String label,
+    String value, {
+    bool isGrey = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: isGrey ? AppColors.grey600 : AppColors.industrialText,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: isGrey ? AppColors.grey700 : AppColors.industrialText,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Crée le bon de pesée SANS paiement (après confirmation)
+  Future<void> _submitCreateSlip() async {
     setState(() => _isCreatingSlip = true);
 
     try {
       final emptyWeight = double.parse(_emptyWeightController!.text);
       final fullWeight = double.parse(_fullWeightController!.text);
       final netWeight = fullWeight - emptyWeight;
-
-      if (netWeight <= 0) {
-        setState(() => _isCreatingSlip = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Le poids complet doit être supérieur au poids vide'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
 
       final request = CreateWeighingSlipRequest(
         clientId: _selectedClientId!,
@@ -136,6 +386,8 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
       setState(() {
         _createdSlip = slip;
         _isCreatingSlip = false;
+        // Remplir automatiquement le montant payé avec le montant total
+        _paymentAmountController?.text = slip.totalAmount.toStringAsFixed(2);
       });
 
       // Afficher le montant total
@@ -166,8 +418,8 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
         amountPaid: amount,
         paymentDate: _paymentDate.toIso8601String().substring(0, 10),
         checkNumber: _paymentType != 'cash' ? _checkNumberController?.text : null,
-        checkDate: _paymentType != 'cash' && _checkDate != null
-            ? _checkDate!.toIso8601String().substring(0, 10)
+        checkDate: _paymentType != 'cash'
+            ? (_checkDate ?? DateTime.now()).toIso8601String().substring(0, 10)
             : null,
         checkBank: _paymentType != 'cash' ? _checkBankController?.text : null,
         checkStatus: _paymentType != 'cash' ? _checkStatus : null,
@@ -212,6 +464,29 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
       return;
     }
 
+    // Valider le formulaire de paiement et focaliser le premier champ invalide
+    if (_paymentType != 'cash') {
+      final valid = _paymentFormKey.currentState?.validate() ?? true;
+      if (!valid) {
+        final checkNumber = _checkNumberController?.text ?? '';
+        final bank = _checkBankController?.text ?? '';
+        
+        if (checkNumber.isEmpty || checkNumber.length != 20) {
+          _checkNumberFocusNode?.requestFocus();
+        } else if (bank.isEmpty) {
+          _checkBankFocusNode?.requestFocus();
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Veuillez remplir tous les champs obligatoires'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+    }
+
     // Afficher popup de confirmation
     _showPaymentConfirmationDialog(amount);
   }
@@ -226,20 +501,306 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Bon: ${_createdSlip!.slipNumber}'),
-            Text('Montant total: ${_createdSlip!.totalAmount} DZD'),
-            Text('Paiement: $amount DZD'),
-            Text('Type: $_paymentType'),
-            Text('Date: ${_paymentDate.toIso8601String().substring(0, 10)}'),
-            if (_paymentType != 'cash') ...[
-              Text('Chèque: ${_checkNumberController?.text ?? ""}'),
-              if (_checkDate != null)
-                Text('Date chèque: ${_checkDate!.toIso8601String().substring(0, 10)}'),
-              if ((_checkBankController?.text.isNotEmpty ?? false))
-                Text('Banque: ${_checkBankController?.text}'),
-            ],
-            if ((_notesController?.text.isNotEmpty ?? false))
-              Text('Notes: ${_notesController?.text}'),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.industrialPrimary.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.industrialPrimary.withOpacity(0.2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Numéro du bon
+                  Row(
+                    children: [
+                      const Icon(Icons.receipt, size: 20, color: AppColors.industrialPrimary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Numéro du bon:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.grey600,
+                              ),
+                            ),
+                            Text(
+                              _createdSlip!.slipNumber ?? '-',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.industrialText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  
+                  // Montant total
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Montant total:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.industrialText,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        '${_createdSlip!.totalAmount.toStringAsFixed(2)} DZD',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.industrialPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Montant payé
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.industrialPrimary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Montant payé:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.industrialText,
+                          ),
+                        ),
+                        Text(
+                          '${amount.toStringAsFixed(2)} DZD',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.industrialPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Reste
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Reste:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.industrialText,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        '${(_createdSlip!.totalAmount - amount).toStringAsFixed(2)} DZD',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: (_createdSlip!.totalAmount - amount) > 0
+                              ? Colors.orange
+                              : Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  
+                  // Type de paiement
+                  Row(
+                    children: [
+                      const Icon(Icons.payment, size: 20, color: AppColors.industrialText),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Type de paiement:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.grey600,
+                              ),
+                            ),
+                            Text(
+                              _paymentType == 'cash'
+                                  ? 'Espèces'
+                                  : _paymentType == 'check'
+                                      ? 'Chèque'
+                                      : 'Chèque de garantie',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.industrialText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Date de paiement
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20, color: AppColors.industrialText),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Date de paiement:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.grey600,
+                              ),
+                            ),
+                            Text(
+                              _paymentDate.toIso8601String().substring(0, 10),
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.industrialText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // Détails du chèque si applicable
+                  if (_paymentType != 'cash') ...[
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    
+                    Row(
+                      children: [
+                        const Icon(Icons.numbers, size: 20, color: AppColors.industrialText),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Numéro de chèque:',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.grey600,
+                                ),
+                              ),
+                              Text(
+                                _checkNumberController?.text ?? '-',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.industrialText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    if ((_checkBankController?.text.isNotEmpty ?? false)) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.account_balance, size: 20, color: AppColors.industrialText),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Banque:',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.grey600,
+                                  ),
+                                ),
+                                Text(
+                                  _checkBankController?.text ?? '-',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.industrialText,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                  
+                  // Notes si présentes
+                  if ((_notesController?.text.isNotEmpty ?? false)) ...[
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.note, size: 20, color: AppColors.industrialText),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Notes:',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.grey600,
+                                ),
+                              ),
+                              Text(
+                                _notesController?.text ?? '-',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.industrialText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
         actions: [
@@ -248,11 +809,17 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
             child: const Text('Annuler'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.industrialPrimary,
+            ),
             onPressed: () {
               Navigator.pop(context);
               _submitPayment(amount);
             },
-            child: const Text('Confirmer'),
+            child: const Text(
+              'Confirmer',
+              style: TextStyle(color: AppColors.white),
+            ),
           ),
         ],
       ),
@@ -530,7 +1097,10 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
               const Divider(),
               const SizedBox(height: 24),
 
-              _buildPaymentSection(),
+              Form(
+                key: _paymentFormKey,
+                child: _buildPaymentSection(),
+              ),
 
               const SizedBox(height: 32),
 
@@ -544,9 +1114,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
                   const SizedBox(width: 12),
                   Flexible(
                     child: ElevatedButton.icon(
-                      onPressed: _isCreatingSlip
-                          ? null
-                          : (_includePayment ? _createPayment : () => context.go('/weighing-slips')),
+                      onPressed: _includePayment ? _createPayment : () => context.go('/weighing-slips'),
                       style: AppTheme.industrialPrimaryButton,
                       icon: _isCreatingSlip
                           ? const SizedBox(
@@ -930,8 +1498,6 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
             items: const [
               DropdownMenuItem(value: 'cash', child: Text('Espèces')),
               DropdownMenuItem(value: 'check', child: Text('Chèque')),
-              DropdownMenuItem(
-                  value: 'guarantee_check', child: Text('Chèque de garantie')),
             ],
             onChanged: (value) {
               setState(() {
@@ -945,110 +1511,53 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
             },
           ),
           const SizedBox(height: 16),
-          InkWell(
-            onTap: () async {
-              final date = await showDatePicker(
-                context: context,
-                initialDate: _paymentDate,
-                firstDate: DateTime(2020),
-                lastDate: DateTime.now(),
-              );
-              if (date != null) {
-                setState(() {
-                  _paymentDate = date;
-                });
-              }
-            },
-            child: InputDecorator(
-              decoration: AppTheme.industrialInputDecoration(
-                hint: 'Date de paiement',
-                prefixIcon: Icons.calendar_today,
-              ),
-              child: Text(
-                _paymentDate.toIso8601String().substring(0, 10),
-                style: const TextStyle(color: AppColors.industrialText),
-              ),
-            ),
-          ),
-
-          // Check fields (visible only if payment type is not cash)
+                    // Check fields (visible only if payment type is not cash)
           if (_paymentType != 'cash') ...[
             const SizedBox(height: 16),
             TextFormField(
               controller: _checkNumberController,
+              focusNode: _checkNumberFocusNode,
               style: const TextStyle(color: AppColors.industrialText),
               decoration: AppTheme.industrialInputDecoration(
-                hint: 'Numéro de chèque',
+                hint: 'Numéro de chèque (20 chiffres) *',
                 prefixIcon: Icons.numbers,
               ),
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(20),
+              ],
+              keyboardType: TextInputType.number,
               validator: _paymentType != 'cash'
                   ? (value) {
                       if (value == null || value.isEmpty) {
                         return 'Veuillez entrer le numéro de chèque';
+                      }
+                      if (value.length != 20) {
+                        return 'Le numéro doit contenir exactement 20 chiffres';
+                      }
+                      return null;
+                    }
+                  : null,
+            ),
+           const SizedBox(height: 16),
+            TextFormField(
+              controller: _checkBankController,
+              focusNode: _checkBankFocusNode,
+              style: const TextStyle(color: AppColors.industrialText),
+              decoration: AppTheme.industrialInputDecoration(
+                hint: 'Banque *',
+                prefixIcon: Icons.account_balance,
+              ),
+              validator: _paymentType != 'cash'
+                  ? (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez entrer la banque';
                       }
                       return null;
                     }
                   : null,
             ),
             const SizedBox(height: 16),
-            InkWell(
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _checkDate ?? DateTime.now(),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (date != null) {
-                  setState(() {
-                    _checkDate = date;
-                  });
-                }
-              },
-              child: InputDecorator(
-                decoration: AppTheme.industrialInputDecoration(
-                  hint: 'Date du chèque',
-                  prefixIcon: Icons.calendar_today,
-                ),
-                child: Text(
-                  _checkDate?.toIso8601String().substring(0, 10) ??
-                      'Sélectionner',
-                  style: TextStyle(
-                    color: _checkDate == null
-                        ? AppColors.industrialText.withOpacity(0.5)
-                        : AppColors.industrialText,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _checkBankController,
-              style: const TextStyle(color: AppColors.industrialText),
-              decoration: AppTheme.industrialInputDecoration(
-                hint: 'Banque',
-                prefixIcon: Icons.account_balance,
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _checkStatus,
-              isExpanded: true,
-              decoration: AppTheme.industrialInputDecoration(
-                hint: 'Statut du chèque',
-                prefixIcon: Icons.check_circle_outline,
-              ),
-              items: const [
-                DropdownMenuItem(value: 'pending', child: Text('En attente')),
-                DropdownMenuItem(value: 'cleared', child: Text('Encaissé')),
-                DropdownMenuItem(value: 'bounced', child: Text('Rejeté')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _checkStatus = value ?? 'pending';
-                });
-              },
-            ),
           ],
 
           const SizedBox(height: 16),

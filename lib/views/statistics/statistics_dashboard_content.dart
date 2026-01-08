@@ -463,13 +463,9 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cardWidth = constraints.maxWidth >= 1400
-            ? (constraints.maxWidth - 12 * 5) / 6
-            : constraints.maxWidth >= 1100
-                ? (constraints.maxWidth - 12 * 4) / 5
-                : constraints.maxWidth >= 800
-                    ? (constraints.maxWidth - 12 * 2) / 3
-                    : constraints.maxWidth;
+        final cardWidth = constraints.maxWidth >= 800
+          ? (constraints.maxWidth - 12 * 2) / 3
+          : constraints.maxWidth;
 
         return Wrap(
           spacing: 12,
@@ -478,34 +474,14 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
             SizedBox(
               width: cardWidth,
               child: KpiCard(
-                title: 'CA total',
-                value: _formatMoney(salesTotal),
-                icon: Icons.bar_chart,
-                accent: AppColors.industrialPrimary,
-                isLoading: vm.isLoading && vm.overviewStats == null,
-                hasError: vm.hasError && vm.overviewStats == null,
-              ),
-            ),
-            SizedBox(
-              width: cardWidth,
-              child: KpiCard(
-                title: 'Bons vendus',
-                value: slipsCount.toString(),
-                icon: Icons.receipt,
-                accent: AppColors.industrialPrimary,
-                isLoading: vm.isLoading && vm.overviewStats == null,
-                hasError: vm.hasError && vm.overviewStats == null,
-              ),
-            ),
-            SizedBox(
-              width: cardWidth,
-              child: KpiCard(
                 title: 'Encaissements',
                 value: _formatMoney(paymentsTotal),
                 icon: Icons.payments,
                 accent: AppColors.industrialPrimary,
-                isLoading: vm.isLoading && vm.paymentsStats == null,
-                hasError: vm.hasError && vm.paymentsStats == null,
+                  isLoading: vm.isLoading && vm.paymentsStats == null,
+                  hasError: vm.hasError && vm.paymentsStats == null,
+                  titleFontSize: 12,
+                  valueFontSize: 18,
               ),
             ),
             SizedBox(
@@ -515,19 +491,23 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
                 value: _formatMoney(creditRemaining),
                 icon: Icons.account_balance_wallet,
                 accent: creditRemaining > 0 ? AppColors.warning : AppColors.success,
-                isLoading: vm.isLoading && vm.overviewStats == null,
-                hasError: vm.hasError && vm.overviewStats == null,
+                  isLoading: vm.isLoading && vm.overviewStats == null,
+                  hasError: vm.hasError && vm.overviewStats == null,
+                  titleFontSize: 12,
+                  valueFontSize: 18,
               ),
             ),
             SizedBox(
               width: cardWidth,
               child: KpiCard(
-                title: 'Depenses',
+                title: 'Frais et Salaires',
                 value: _formatMoney(expensesTotal),
                 icon: Icons.receipt_long,
                 accent: AppColors.industrialPrimary,
-                isLoading: vm.isLoading && vm.expensesStats == null,
-                hasError: vm.hasError && vm.expensesStats == null,
+                  isLoading: vm.isLoading && vm.expensesStats == null,
+                  hasError: vm.hasError && vm.expensesStats == null,
+                  titleFontSize: 12,
+                  valueFontSize: 18,
               ),
             ),
             SizedBox(
@@ -537,8 +517,36 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
                 value: _formatMoney(computedNet),
                 icon: Icons.trending_up,
                 accent: computedNet >= 0 ? AppColors.success : AppColors.danger,
-                isLoading: vm.isLoading,
-                hasError: vm.hasError && (vm.paymentsStats == null || vm.expensesStats == null),
+                  isLoading: vm.isLoading,
+                  hasError: vm.hasError && (vm.paymentsStats == null || vm.expensesStats == null),
+                  titleFontSize: 12,
+                  valueFontSize: 18,
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Total des ventes',
+                value: _formatMoney(salesTotal),
+                icon: Icons.bar_chart,
+                accent: AppColors.industrialPrimary,
+                  isLoading: vm.isLoading && vm.overviewStats == null,
+                  hasError: vm.hasError && vm.overviewStats == null,
+                  titleFontSize: 12,
+                  valueFontSize: 18,
+              ),
+            ),
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Bons vendus',
+                value: slipsCount.toString(),
+                icon: Icons.receipt,
+                accent: AppColors.industrialPrimary,
+                  isLoading: vm.isLoading && vm.overviewStats == null,
+                  hasError: vm.hasError && vm.overviewStats == null,
+                  titleFontSize: 12,
+                  valueFontSize: 18,
               ),
             ),
           ],
@@ -577,9 +585,7 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
           _MiniBarRow(label: 'Cash', value: cash, max: maxVal),
           const SizedBox(height: 10),
           _MiniBarRow(label: 'Cheque', value: check, max: maxVal),
-          const SizedBox(height: 10),
-          _MiniBarRow(label: 'Cheque garanti', value: guarantee, max: maxVal),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             'Total: ${_formatMoney(cash + check + guarantee)}',
             style: const TextStyle(
@@ -622,9 +628,7 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
           _MiniBarRow(label: 'Frais', value: frais, max: maxVal),
           const SizedBox(height: 10),
           _MiniBarRow(label: 'Salaires', value: salaries, max: maxVal),
-          const SizedBox(height: 10),
-          _MiniBarRow(label: 'Autres', value: other, max: maxVal),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Text(
             'Total: ${_formatMoney(frais + salaries + other)}',
             style: const TextStyle(
@@ -791,6 +795,8 @@ class KpiCard extends StatelessWidget {
   final Color accent;
   final bool isLoading;
   final bool hasError;
+  final double titleFontSize;
+  final double valueFontSize;
 
   const KpiCard({
     super.key,
@@ -800,6 +806,8 @@ class KpiCard extends StatelessWidget {
     required this.accent,
     this.isLoading = false,
     this.hasError = false,
+    this.titleFontSize = 11,
+    this.valueFontSize = 16,
   });
 
   @override
@@ -837,15 +845,15 @@ class KpiCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: hasError
-                ? const Text('Erreur', style: TextStyle(color: AppColors.danger, fontSize: 12))
+                ? Text('Erreur', style: TextStyle(color: AppColors.danger, fontSize: titleFontSize))
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.industrialTextLight,
-                          fontSize: 11,
+                          fontSize: titleFontSize,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
                         ),
@@ -862,7 +870,7 @@ class KpiCard extends StatelessWidget {
                           value,
                           style: TextStyle(
                             color: accent,
-                            fontSize: 16,
+                            fontSize: valueFontSize,
                             fontWeight: FontWeight.bold,
                             letterSpacing: -0.5,
                           ),

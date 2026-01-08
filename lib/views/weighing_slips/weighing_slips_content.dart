@@ -27,6 +27,9 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
     super.initState();
     _viewModel = getIt<WeighingSlipViewModel>();
     _viewModel.loadSlips();
+    _searchController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -69,9 +72,9 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       spacing: 12,
       runSpacing: 12,
       children: [
-        _statCard('Bons du jour', vm.todayTotalCount, Icons.today),
-        _statCard('Bons avec crédit', vm.todayCreditCount, Icons.credit_card),
-        _statCard('Bons payés', vm.todayPaidCount, Icons.payments_outlined),
+        _statCard('Bons du jour :', vm.todayTotalCount, Icons.today),
+        _statCard('Bons avec crédit :', vm.todayCreditCount, Icons.credit_card),
+        _statCard('Bons payés :', vm.todayPaidCount, Icons.payments_outlined),
       ],
     );
   }
@@ -89,13 +92,9 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
         children: [
           Icon(icon, color: AppColors.industrialPrimary),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(color: AppColors.industrialText)),
-              Text('$count', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            ],
-          ),
+          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600 ,color: AppColors.industrialText)),
+          const SizedBox(width: 16),
+           Text('$count', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -120,7 +119,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
     final List<Widget> filters = [
       // Recherche
       SizedBox(
-        width: 320,
+        width: 280,
         child: TextField(
           controller: _searchController,
           style: const TextStyle(color: AppColors.industrialText),
@@ -144,8 +143,49 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
           },
         ),
       ),
+      // Date filter
       SizedBox(
-        width: 180,
+        width: 140,
+        child: GestureDetector(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: vm.dateFromFilter != null 
+                  ? DateTime.parse(vm.dateFromFilter!) 
+                  : DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+            );
+            if (picked != null) {
+              final dateStr = picked.toIso8601String().substring(0, 10);
+              vm.filterByDateRange(dateStr, dateStr);
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.grey300),
+              borderRadius: BorderRadius.circular(8),
+              color: AppColors.white,
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today, color: AppColors.grey600, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    vm.dateFromFilter ?? DateTime.now().toIso8601String().substring(0, 10),
+                    style: const TextStyle(fontSize: 14, color: AppColors.industrialText),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      SizedBox(
+        width: 140,
         child: DropdownButtonFormField<bool?>(
           isExpanded: true,
           value: vm.isFullyPaidFilter,
