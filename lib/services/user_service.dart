@@ -81,6 +81,18 @@ class UserService {
     }
   }
 
+  /// Get current user profile
+  Future<User> getMyProfile() async {
+    try {
+      final response = await _apiClient.get('/users/profile');
+
+      final data = response.data['data'] as Map<String, dynamic>;
+      return User.fromJson(data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
   /// Deactivate user
   Future<DeactivateUserResponse> deactivateUser(int userId) async {
     try {

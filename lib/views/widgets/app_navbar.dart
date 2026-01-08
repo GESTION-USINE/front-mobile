@@ -26,6 +26,7 @@ class AppNavBar extends StatelessWidget {
     if (location.contains(AppRouter.reports)) return 'Rapports';
     if (location.contains(AppRouter.traceability)) return 'Traçabilité';
     if (location.contains(AppRouter.dashboard)) return 'Tableau de Bord';
+    if(location.contains(AppRouter.profile)) return 'Mon Profil';
     return 'Accueil';
   }
 
@@ -45,6 +46,7 @@ class AppNavBar extends StatelessWidget {
     if (location.contains(AppRouter.reports)) return Icons.assessment;
     if (location.contains(AppRouter.traceability)) return Icons.timeline;
     if (location.contains(AppRouter.dashboard)) return Icons.dashboard;
+    if(location.contains(AppRouter.profile)) return Icons.person; 
     return Icons.home;
   }
 
@@ -243,7 +245,7 @@ class AppNavBar extends StatelessWidget {
   Future<void> _handleMenuAction(BuildContext context, String action) async {
     switch (action) {
       case 'profile':
-
+        context.go(AppRouter.profile);
         break;
       case 'settings':
         context.go(AppRouter.settings);

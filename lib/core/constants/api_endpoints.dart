@@ -2,8 +2,8 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL
-  // static const String baseUrl = 'http://localhost:3000/api';
-   static const String baseUrl = 'https://backend-a7rx.onrender.com/api';
+  static const String baseUrl = 'http://localhost:3000/api';
+  //  static const String baseUrl = 'https://backend-a7rx.onrender.com/api';
 
   // Auth
   static const String login = '/auth/login';

@@ -33,6 +33,7 @@ import '../viewmodels/clients_with_slips_viewmodel.dart';
 import '../viewmodels/stats_viewmodel.dart';
 import '../viewmodels/user_viewmodel.dart';
 import '../viewmodels/credit_risk_viewmodel.dart';
+import '../viewmodels/profile_viewmodel.dart';
 
 final getIt = GetIt.instance;
 
@@ -158,6 +159,10 @@ Future<void> initDependencies() async {
 
   getIt.registerFactory<CreditRiskViewModel>(
     () => CreditRiskViewModel(getIt<CreditRiskService>()),
+  );
+
+  getIt.registerFactory<ProfileViewModel>(
+    () => ProfileViewModel(getIt<UserService>()),
   );
 
  

@@ -18,6 +18,7 @@ WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
 SetupIconFile=windows\runner\resources\app_icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayName={#MyAppName}
 
 [Languages]
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"
@@ -35,4 +36,3 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Lancer {#MyAppName}"; Flags: nowait postinstall skipifsilent
-```

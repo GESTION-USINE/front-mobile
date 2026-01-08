@@ -2,11 +2,12 @@ class CreateWeighingSlipRequest {
   final int clientId;
   final int materialId;
   final double weightTons;
-
+final CreatePaymentRequest? payment;
   CreateWeighingSlipRequest({
     required this.clientId,
     required this.materialId,
     required this.weightTons,
+    this.payment,
   });
 
   Map<String, dynamic> toJson() {
@@ -14,9 +15,33 @@ class CreateWeighingSlipRequest {
       'client_id': clientId,
       'material_id': materialId,
       'weight_tons': weightTons,
+      if (payment != null) 'payment': payment!.toJson(),
     };
   }
 }
+
+class Payment {
+  final String paymentType; // 'cash', 'check', 'guarantee_check'
+  final double amountPaid;
+  final String paymentDate;
+  final String? checkNumber;
+  final String? checkDate;
+  final String? checkBank;
+  final String? checkStatus;
+  final String? notes;
+
+  Payment({
+    required this.paymentType,
+    required this.amountPaid,
+    required this.paymentDate,
+    this.checkNumber,
+    this.checkDate,
+    this.checkBank,
+    this.checkStatus,
+    this.notes,
+  });
+}
+
 
 class CreatePaymentRequest {
   final int weighingSlipId;

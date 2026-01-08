@@ -259,6 +259,14 @@ class _UsersContentState extends State<UsersContent> {
         value: (user) => user?.phone ?? '-',
       ),
       DataTableColumn<dynamic>(
+        label: 'Limite Crédit',
+        value: (user) => user?.creditLimit ?? '-',
+      ),
+       DataTableColumn<dynamic>(
+        label: 'Crédit Utilisé',
+        value: (user) => user?.currentCreditUsed ?? '-',
+      ),
+      DataTableColumn<dynamic>(
         label: 'Rôle',
         value: (user) {
           final String role = user?.role ?? '-';

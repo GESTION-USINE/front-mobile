@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -325,7 +326,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
             ),
             onPressed: () {
               Navigator.pop(context);
-              _submitCreateSlip();
+              _submitCreateSlip(estimatedAmount);
             },
             child: const Text(
               'Confirmer et créer',
@@ -366,53 +367,45 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
     );
   }
 
-  /// Crée le bon de pesée SANS paiement (après confirmation)
-  Future<void> _submitCreateSlip() async {
-    setState(() => _isCreatingSlip = true);
-
-    try {
-      final emptyWeight = double.parse(_emptyWeightController!.text);
-      final fullWeight = double.parse(_fullWeightController!.text);
-      final netWeight = fullWeight - emptyWeight;
-
-      final request = CreateWeighingSlipRequest(
-        clientId: _selectedClientId!,
-        materialId: _selectedMaterialId!,
-        weightTons: netWeight,
-      );
-
-      final slip = await _slipService.createSlip(request);
-      
-      setState(() {
-        _createdSlip = slip;
-        _isCreatingSlip = false;
-        // Remplir automatiquement le montant payé avec le montant total
-        _paymentAmountController?.text = slip.totalAmount.toStringAsFixed(2);
-      });
-
-      // Afficher le montant total
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Bon créé! Montant total: ${slip.totalAmount} DZD'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } catch (e) {
-      setState(() => _isCreatingSlip = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+  /// Passe au formulaire de paiement (après confirmation)
+  void _submitCreateSlip(double estimatedAmount) {
+    // Créer un objet temporaire pour afficher les infos dans le formulaire de paiement
+    final emptyWeight = double.parse(_emptyWeightController!.text);
+    final fullWeight = double.parse(_fullWeightController!.text);
+    final netWeight = fullWeight - emptyWeight;
+    
+    // Créer un WeighingSlip temporaire avec les données saisies
+    final tempSlip = WeighingSlip(
+      createdBy: 0,
+      id: 0, // Temporaire, sera remplacé après la vraie création
+      slipNumber: 'En attente...', // Temporaire
+      clientId: _selectedClientId!,
+      materialId: _selectedMaterialId!,
+      weightTons: netWeight,
+      isFullyPaid: false,
+      pricePerTon: estimatedAmount / netWeight,
+      totalAmount: estimatedAmount,
+      remainingCredit: estimatedAmount, // Tout est en crédit au début
+      createdAt: DateTime.now(),
+    );
+    
+    setState(() {
+      _createdSlip = tempSlip;
+      // Remplir automatiquement le montant payé avec le montant total
+      _paymentAmountController?.text = estimatedAmount.toStringAsFixed(2);
+    });
   }
 
   Future<void> _submitPayment(double amount) async {
     setState(() => _isCreatingSlip = true);
-
+   
     try {
-      final paymentRequest = CreatePaymentRequest(
+    
+       
+     final slipRequest ; 
+      if (_includePayment) {
+
+  final paymentRequest = CreatePaymentRequest(
         weighingSlipId: _createdSlip!.id,
         paymentType: _paymentType,
         amountPaid: amount,
@@ -426,22 +419,114 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
         notes: (_notesController?.text.isNotEmpty ?? false) ? _notesController?.text : null,
       );
 
-      await _slipService.createPayment(paymentRequest);
+           slipRequest =  CreateWeighingSlipRequest(
+          clientId: _createdSlip!.clientId,
+          materialId: _createdSlip!.materialId,
+          weightTons: _createdSlip!.weightTons,
+          payment: paymentRequest,
+        );
+      }else{
+          slipRequest =  CreateWeighingSlipRequest(
+          clientId: _createdSlip!.clientId,
+          materialId: _createdSlip!.materialId,
+          weightTons: _createdSlip!.weightTons,
+        );
+      }
+        
+      final slipCreated = await _slipService.createSlip(
+       slipRequest
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Paiement enregistré avec succès')),
+          const SnackBar(
+            content: Text('Bon de pesée et paiement enregistrés avec succès'),
+            backgroundColor: Colors.green,
+          ),
         );
         context.go('/weighing-slips');
       }
+    } on DioException catch (e) {
+      setState(() => _isCreatingSlip = false);
+      
+      // Parser l'erreur structurée du backend
+      String errorMessage = 'Une erreur est survenue';
+      
+      if (e.error is Map<String, dynamic>) {
+        final errorInfo = e.error as Map<String, dynamic>;
+        final code = errorInfo['code'] ?? '';
+        final message = errorInfo['message'] ?? 'Erreur inconnue';
+        final details = errorInfo['details'] as Map<String, dynamic>? ?? {};
+        
+        // Messages personnalisés selon le code d'erreur
+        switch (code) {
+          case 'CREDIT_LIMIT_REACHED':
+            final creditLimit = details['credit_limit'] ?? 0;
+            final currentCredit = details['current_credit_used'] ?? 0;
+            final requestedAmount = details['requested_amount'] ?? 0;
+            errorMessage = 'Limite de crédit atteinte!\n\n'
+                'Crédit actuel: ${currentCredit.toStringAsFixed(2)} DZD\n'
+                'Limite: ${creditLimit.toStringAsFixed(2)} DZD\n'
+                'Montant demandé: ${requestedAmount.toStringAsFixed(2)} DZD';
+            break;
+          
+          case 'CLIENT_NOT_FOUND':
+            errorMessage = 'Client introuvable';
+            break;
+          
+          case 'MATERIAL_NOT_FOUND':
+            errorMessage = 'Matériau introuvable';
+            break;
+          
+          case 'MATERIAL_NOT_ACTIVE':
+            errorMessage = 'Ce matériau n\'est plus actif';
+            break;
+          
+          case 'PAYMENT_AMOUNT_INVALID':
+            errorMessage = 'Montant de paiement invalide';
+            break;
+          
+          case 'PAYMENT_EXCEEDS_REMAINING':
+            final remaining = details['remaining_credit'] ?? 0;
+            errorMessage = 'Le montant dépasse le total du bon\n'
+                'Montant restant: ${remaining.toStringAsFixed(2)} DZD';
+            break;
+          
+          case 'CHECK_NOT_ALLOWED':
+            errorMessage = 'Paiement par chèque non autorisé pour ce client\n'
+                'Le client doit être de type entreprise';
+            break;
+          
+          default:
+            errorMessage = message;
+        }
+      } else if (e.response?.data != null) {
+        // Si l'erreur n'a pas été parsée par le service
+        final responseData = e.response!.data;
+        if (responseData is Map && responseData['error'] != null) {
+          errorMessage = responseData['error']['message'] ?? 'Erreur serveur';
+        }
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _isCreatingSlip = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erreur paiement: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur inattendue: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -1107,14 +1192,20 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => context.go('/weighing-slips'),
-                    child: const Text('Terminer'),
-                  ),
-                  const SizedBox(width: 12),
+                  // TextButton(
+                  //   onPressed: () => context.go('/weighing-slips'),
+                  //   child: const Text('Terminer'),
+                  // ),
+                  // const SizedBox(width: 12),
                   Flexible(
                     child: ElevatedButton.icon(
-                      onPressed: _includePayment ? _createPayment : () => context.go('/weighing-slips'),
+                      // onPressed: _includePayment ? _createPayment : () => context.go('/weighing-slips'),
+                                            onPressed: _includePayment ? _createPayment :  () {
+                                              _submitPayment(0.0);
+                                              // context.go('/weighing-slips');
+                                              // navi.pop(context);
+                                              },
+
                       style: AppTheme.industrialPrimaryButton,
                       icon: _isCreatingSlip
                           ? const SizedBox(
@@ -1126,7 +1217,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
                           : const Icon(Icons.save),
                       label: Text(_isCreatingSlip
                           ? 'Traitement...'
-                          : (_includePayment ? 'Evectuer Paiement' : 'Terminer')),
+                          : (_includePayment ? 'Crée le bon avec Paiement' : 'Crée le bon ')),
                     ),
                   ),
                 ],

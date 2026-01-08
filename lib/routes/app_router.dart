@@ -43,6 +43,7 @@ import '../views/statistics/statistics_inventory_content.dart';
 import '../views/statistics/statistics_workers_content.dart';
 import '../views/credits/clients_bons_content.dart';
 import '../views/credits/client_credit_content.dart';
+import '../views/profile/profile_view.dart';
 
 class AppRouter {
   AppRouter._();
@@ -77,6 +78,7 @@ class AppRouter {
   static const String workersEdit = '/workers/:id/edit';
   static const String traceability = '/traceability';
   static const String settings = '/settings';
+  static const String profile = '/profile';
   static const String slips = '/weighing-slips';
   static const String slipsCreate = '/weighing-slips/create';
   static const String slipsDetail = '/weighing-slips/:id';
@@ -456,6 +458,14 @@ class AppRouter {
               path: '$statisticsPath/workers',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: StatisticsWorkersContent(),
+              ),
+            ),
+
+            // Profil utilisateur
+            GoRoute(
+              path: profile,
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: ProfileView(),
               ),
             ),
           ],

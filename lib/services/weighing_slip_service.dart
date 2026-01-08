@@ -56,8 +56,31 @@ class WeighingSlipService {
         data: request.toJson(),
       );
       final data = response.data['data'] as Map<String, dynamic>;
+      print(response.data['statusCode']);
       return WeighingSlip.fromJson(data);
-    } on DioException {
+    } on DioException catch (e) {
+      // Capter la structure d'erreur du backend
+      if (e.response != null && e.response!.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map<String, dynamic> && errorData['error'] != null) {
+          final error = errorData['error'];
+          final code = error['code'] ?? 'UNKNOWN_ERROR';
+          final message = error['message'] ?? 'Une erreur est survenue';
+          final details = error['details'] ?? {};
+          
+          // Vous pouvez créer une exception personnalisée ou throw avec le message
+          throw DioException(
+            requestOptions: e.requestOptions,
+            response: e.response,
+            type: e.type,
+            error: {
+              'code': code,
+              'message': message,
+              'details': details,
+            },
+          );
+        }
+      }
       rethrow;
     }
   }
