@@ -33,13 +33,29 @@ class WeighingSlipDetailView extends StatefulWidget {
 class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
   late Future<WeighingSlip> _slipFuture;
 
+  String _formatPaymentType(String? type) {
+    if (type == null || type.isEmpty) return '-';
+    switch (type.toLowerCase()) {
+      case 'cash':
+        return 'Espèces';
+      case 'check':
+      case 'cheque':
+        return 'Chèque';
+      default:
+        return type;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    final service = getIt<WeighingSlipService>();
-    _slipFuture = service.getSlipById(widget.slipId);
+    if (widget.initialSlip != null) {
+      _slipFuture = Future.value(widget.initialSlip!);
+    } else {
+      final service = getIt<WeighingSlipService>();
+      _slipFuture = service.getSlipById(widget.slipId);
+    }
   }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<WeighingSlip>(
@@ -92,7 +108,13 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  context.go('/weighing-slips');
+                }
+              },
             ),
             title: const Text('Bon de pesée'),
             actions: [
@@ -432,6 +454,31 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                                             fontSize: 14,
                                             color: AppColors.success,
                                             fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      const Text(
+                                        'Type paiement: ',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: AppColors.grey600,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 24),
+                                      SizedBox(
+                                        width: 120,
+                                        child: Text(
+                                          _formatPaymentType(slip.paymentType),
+                                          textAlign: TextAlign.right,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.industrialText,
                                           ),
                                         ),
                                       ),

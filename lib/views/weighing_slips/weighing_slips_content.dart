@@ -79,6 +79,19 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
     );
   }
 
+  String _formatPaymentType(String? type) {
+    if (type == null || type.isEmpty) return '-';
+    switch (type.toLowerCase()) {
+      case 'cash':
+        return 'Espèces';
+      case 'check':
+      case 'cheque':
+        return 'Chèque';
+      default:
+        return type;
+    }
+  }
+
   Widget _statCard(String title, int count, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -106,7 +119,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       child: ElevatedButton.icon(
         onPressed: () => context.go(AppRouter.slipsCreate),
         style: AppTheme.industrialPrimaryButton.copyWith(
-          minimumSize: MaterialStateProperty.all(const Size(170, 44)),
+          minimumSize: MaterialStateProperty.all(const Size(130, 44)),
           padding: MaterialStateProperty.all(
             const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
@@ -119,7 +132,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
     final List<Widget> filters = [
       // Recherche
       SizedBox(
-        width: 280,
+        width: 230,
         child: TextField(
           controller: _searchController,
           style: const TextStyle(color: AppColors.industrialText),
@@ -145,7 +158,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       ),
       // Date filter
       SizedBox(
-        width: 140,
+        width: 130,
         child: GestureDetector(
           onTap: () async {
             final picked = await showDatePicker(
@@ -185,7 +198,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
         ),
       ),
       SizedBox(
-        width: 140,
+        width: 130,
         child: DropdownButtonFormField<bool?>(
           isExpanded: true,
           value: vm.isFullyPaidFilter,
@@ -198,7 +211,29 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
         ),
       ),
       SizedBox(
-        width: 180,
+        width: 130,
+        child: DropdownButtonFormField<String?>(
+          isExpanded: true,
+          value: vm.paymentTypeFilter,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.grey300),
+            ),
+          ),
+          items: const [
+            DropdownMenuItem(value: '', child: Text('Tous')),
+            DropdownMenuItem(value: 'cash', child: Text('Espèces')),
+            DropdownMenuItem(value: 'check', child: Text('Chèque')),
+          ],
+          onChanged: (value) {
+            vm.filterByPaymentType(value == '' ? null : value);
+          },
+        ),
+      ),
+      SizedBox(
+        width: 130,
         child: DropdownButtonFormField<bool?>(
           isExpanded: true,
           value: vm.isInvoicedFilter,
@@ -215,6 +250,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
           _searchController.clear();
           vm.resetFilters();
         },
+        iconSize: 25,
         icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
         tooltip: 'Réinitialiser',
       ),
@@ -256,11 +292,21 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       DataTableColumn<WeighingSlip>(label: 'N° Bon', value: (e) => e.slipNumber ?? '-'),
       DataTableColumn<WeighingSlip>(label: 'Client', value: (e) => e.clientName ?? e.clientId.toString()),
       DataTableColumn<WeighingSlip>(label: 'Matériau', value: (e) => e.materialName ?? e.materialId.toString()),
-      DataTableColumn<WeighingSlip>(label: 'Tonnes', value: (e) => e.weightTons.toStringAsFixed(1)),
       DataTableColumn<WeighingSlip>(label: 'Montant', value: (e) => e.totalAmount.toStringAsFixed(2)),
       DataTableColumn<WeighingSlip>(label: 'Payé', value: (e) => (e.totalPaid ?? 0).toStringAsFixed(2), hideOnMobile: true),
-      DataTableColumn<WeighingSlip>(label: 'Reste', value: (e) => (e.remainingCredit ?? 0).toStringAsFixed(2)),
+      DataTableColumn<WeighingSlip>(
+        label: 'Reste',
+        isWidget: true,
+        value: (e) => Text(
+          (e.remainingCredit ?? 0).toStringAsFixed(2),
+          style: const TextStyle(
+            color: AppColors.errorText,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
       DataTableColumn<WeighingSlip>(label: 'Statut', value: (e) => e.isFullyPaid ? 'Payé' : 'Crédit'),
+      DataTableColumn<WeighingSlip>(label: 'Type Paiement', value: (e) => _formatPaymentType(e.paymentType)),
       DataTableColumn<WeighingSlip>(label: 'Date', value: (e) => e.createdAt.toIso8601String().substring(0,10),hideOnMobile: true),
     ];
 

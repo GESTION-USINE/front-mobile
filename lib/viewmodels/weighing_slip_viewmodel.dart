@@ -31,6 +31,7 @@ class WeighingSlipViewModel extends BaseViewModel {
   String? _dateTo;
   bool? _isInvoiced;
   bool? _isFullyPaid;
+  String? _paymentType;
   String _sortBy = 'created_at';
   String _sortOrder = 'desc';
 
@@ -48,6 +49,7 @@ class WeighingSlipViewModel extends BaseViewModel {
   String? get dateToFilter => _dateTo;
   bool? get isInvoicedFilter => _isInvoiced;
   bool? get isFullyPaidFilter => _isFullyPaid;
+  String? get paymentTypeFilter => _paymentType ?? '';
 
   // Stats (for today)
   int get todayTotalCount => _items.length;
@@ -68,6 +70,7 @@ class WeighingSlipViewModel extends BaseViewModel {
         dateTo: dt,
         isInvoiced: _isInvoiced,
         isFullyPaid: _isFullyPaid,
+        paymentType: _paymentType,
         sortBy: _sortBy,
         sortOrder: _sortOrder,
         page: _currentPage,
@@ -95,22 +98,34 @@ class WeighingSlipViewModel extends BaseViewModel {
       return;
     }
     
-    if (_searchQuery == null || _searchQuery!.isEmpty) {
-      _items = _allItems;
-      return;
+    // Start with all items
+    List<WeighingSlip> filtered = _allItems;
+    
+    // Apply payment type filter locally
+    if (_paymentType != null && _paymentType!.isNotEmpty) {
+      filtered = filtered.where((slip) {
+        final slipPaymentType = slip.paymentType?.toLowerCase() ?? '';
+        return slipPaymentType == _paymentType!.toLowerCase();
+      }).toList();
     }
     
-    final query = _searchQuery!.toLowerCase();
-    _items = _allItems.where((slip) {
-      return (slip.slipNumber?.toLowerCase().contains(query) ?? false) ||
-             (slip.clientName?.toLowerCase().contains(query) ?? false) ||
-             (slip.materialName?.toLowerCase().contains(query) ?? false) ||
-             (slip.weightTons.toString().contains(query)) ||
-             (slip.totalAmount.toString().contains(query)) ||
-             ((slip.totalPaid ?? 0).toString().contains(query)) ||
-             ((slip.remainingCredit ?? 0).toString().contains(query)) ||
-             ((slip.isFullyPaid ? 'Payé' : 'Crédit').toLowerCase().contains(query));
-    }).toList();
+    // Apply search query filter
+    if (_searchQuery != null && _searchQuery!.isNotEmpty) {
+      final query = _searchQuery!.toLowerCase();
+      filtered = filtered.where((slip) {
+        return (slip.slipNumber?.toLowerCase().contains(query) ?? false) ||
+               (slip.clientName?.toLowerCase().contains(query) ?? false) ||
+               (slip.materialName?.toLowerCase().contains(query) ?? false) ||
+               (slip.weightTons.toString().contains(query)) ||
+               (slip.totalAmount.toString().contains(query)) ||
+               ((slip.totalPaid ?? 0).toString().contains(query)) ||
+               ((slip.remainingCredit ?? 0).toString().contains(query)) ||
+               ((slip.paymentType ?? '').toLowerCase().contains(query)) ||
+               ((slip.isFullyPaid ? 'Payé' : 'Crédit').toLowerCase().contains(query));
+      }).toList();
+    }
+    
+    _items = filtered;
   }
 
   void searchSlips(String query) { 
@@ -123,11 +138,18 @@ class WeighingSlipViewModel extends BaseViewModel {
   void filterByDateRange(String? from, String? to) { _dateFrom = from; _dateTo = to; _currentPage = 1; loadSlips(); }
   void filterByInvoiced(bool? invoiced) { _isInvoiced = invoiced; _currentPage = 1; loadSlips(); }
   void filterByFullyPaid(bool? paid) { _isFullyPaid = paid; _currentPage = 1; loadSlips(); }
+  void filterByPaymentType(String? type) { 
+    _paymentType = (type == null || type.isEmpty) ? null : type; 
+    _applySearchFilter();
+    notifyListeners();
+  }
   void changeSorting(String sortBy, String sortOrder) { _sortBy = sortBy; _sortOrder = sortOrder; _currentPage = 1; loadSlips(); }
 
   void resetFilters() {
-    _searchQuery = null; _clientId = null; _createdBy = null; _dateFrom = null; _dateTo = null; _isInvoiced = null; _isFullyPaid = null;
-    _sortBy = 'created_at'; _sortOrder = 'desc'; _currentPage = 1; loadSlips();
+    _searchQuery = null; _clientId = null; _createdBy = null; _dateFrom = null; _dateTo = null; _isInvoiced = null; _isFullyPaid = null; _paymentType = null;
+    _sortBy = 'created_at'; _sortOrder = 'desc'; _currentPage = 1; 
+    notifyListeners();
+    loadSlips();
   }
 
   Future<void> nextPage() async { if (hasNextPage) { _currentPage++; await loadSlips(); } }

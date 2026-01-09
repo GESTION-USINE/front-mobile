@@ -202,42 +202,77 @@ class _EditClientViewState extends State<EditClientView> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Paiement par chèque (si entreprise et pas employé)
-                        if (widget.initialClient.type == 'entreprise' && !isEmployee) ...[
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                _canPayByCheck = !_canPayByCheck;
-                              });
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                        // Paiement par chèque - Section mise en évidence
+                        if (!isEmployee) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.industrialPrimary.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.industrialPrimary.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Checkbox(
-                                  value: _canPayByCheck,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _canPayByCheck = value ?? false;
-                                    });
-                                  },
-                                ),
-                                const SizedBox(width: 8),
-                                const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                Row(
                                   children: [
-                                    Text(
-                                      'Autorisé à payer par chèque',
+                                    const Icon(
+                                      Icons.credit_card,
+                                      size: 20,
+                                      color: AppColors.industrialPrimary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Text(
+                                      'Autorisation de paiement par chèque',
                                       style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
                                         color: AppColors.industrialText,
-                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    Text(
-                                      'Disponible uniquement pour les entreprises',
-                                      style: TextStyle(
-                                        color: AppColors.industrialTextLight,
-                                        fontSize: 12,
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _canPayByCheck 
+                                              ? 'Client autorisé à payer par chèque' 
+                                              : 'Client non autorisé à payer par chèque',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: _canPayByCheck ? Colors.green : Colors.orange,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            widget.initialClient.type == 'entreprise'
+                                              ? 'Recommandé pour les entreprises'
+                                              : 'Généralement réservé aux entreprises',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.industrialTextLight,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                    ),
+                                    Switch(
+                                      value: _canPayByCheck,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _canPayByCheck = value;
+                                        });
+                                      },
+                                      activeColor: AppColors.industrialPrimary,
                                     ),
                                   ],
                                 ),

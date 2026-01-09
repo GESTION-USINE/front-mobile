@@ -157,7 +157,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                   value?.toString() ?? '-',
                                   style: const TextStyle(
                                     fontSize: 13,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.industrialText,
                                   ),
                                   textAlign: TextAlign.right,
@@ -206,6 +206,7 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                     value?.toString() ?? '-',
                                     style: const TextStyle(
                                       fontSize: 11,
+                                      fontWeight: FontWeight.w700,
                                       color: AppColors.industrialText,
                                     ),
                                     textAlign: TextAlign.right,
@@ -447,9 +448,9 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                           child: Text(
                                             col.label,
                                             style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              color: AppColors.black,
-                                              fontSize: 13,
+                                              fontWeight: FontWeight.w900,
+                                              color: AppColors.white,
+                                              fontSize: 15,
                                             ),
                                             overflow: TextOverflow.ellipsis,
                                           ),
@@ -466,9 +467,9 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                       child: Text(
                                         'Actions',
                                         style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.black,
-                                          fontSize: 13,
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.white,
+                                          fontSize: 15,
                                         ),
                                       ),
                                     ),
@@ -523,7 +524,8 @@ class _GenericDataTableState<T> extends State<GenericDataTable<T>> with SingleTi
                                                               value?.toString() ?? '-',
                                                               style: const TextStyle(
                                                                 color: AppColors.industrialText,
-                                                                fontSize: 12,
+                                                                fontSize: 14,
+                                                                fontWeight: FontWeight.w700,
                                                               ),
                                                               maxLines: 2,
                                                               overflow: TextOverflow.ellipsis,

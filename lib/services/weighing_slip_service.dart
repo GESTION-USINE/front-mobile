@@ -19,6 +19,7 @@ class WeighingSlipService {
     String? dateTo,
     bool? isInvoiced,
     bool? isFullyPaid,
+    String? paymentType,
     String sortBy = 'created_at',
     String sortOrder = 'desc',
     int? page,
@@ -38,6 +39,7 @@ class WeighingSlipService {
       if (dateTo != null) query['date_to'] = dateTo;
       if (isInvoiced != null) query['is_invoiced'] = isInvoiced;
       if (isFullyPaid != null) query['is_fully_paid'] = isFullyPaid;
+      if (paymentType != null && paymentType.isNotEmpty) query['payment_type'] = paymentType;
 
       final response = await _apiClient.get(
         ApiEndpoints.all_weighing_slips,
@@ -103,7 +105,28 @@ class WeighingSlipService {
       );
       final data = response.data['data'] as Map<String, dynamic>;
       return WeighingSlip.fromJson(data);
-    } on DioException {
+    } on DioException catch (e) {
+      // Capter la structure d'erreur du backend
+      if (e.response != null && e.response!.data != null) {
+        final errorData = e.response!.data;
+        if (errorData is Map<String, dynamic> && errorData['error'] != null) {
+          final error = errorData['error'];
+          final code = error['code'] ?? 'UNKNOWN_ERROR';
+          final message = error['message'] ?? 'Une erreur est survenue';
+          final details = error['details'] ?? {};
+          
+          throw DioException(
+            requestOptions: e.requestOptions,
+            response: e.response,
+            type: e.type,
+            error: {
+              'code': code,
+              'message': message,
+              'details': details,
+            },
+          );
+        }
+      }
       rethrow;
     }
   }

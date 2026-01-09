@@ -12,6 +12,8 @@ class WeighingSlip {
   final double? totalPaid;
   final double? remainingCredit;
   final bool isFullyPaid;
+  final String? paymentType;
+  final double? paymentAmount;
   final int createdBy;
   final DateTime createdAt;
 
@@ -29,6 +31,8 @@ class WeighingSlip {
     this.totalPaid,
     this.remainingCredit,
     required this.isFullyPaid,
+    this.paymentType,
+    this.paymentAmount,
     required this.createdBy,
     required this.createdAt,
   });
@@ -48,6 +52,8 @@ class WeighingSlip {
       totalPaid: (json['credit_info']?['total_paid'] as num?)?.toDouble(),
       remainingCredit: (json['credit_info']?['remaining_credit'] as num?)?.toDouble(),
       isFullyPaid: json['credit_info']?['is_fully_paid'] as bool? ?? json['is_fully_paid'] as bool? ?? false,
+      paymentType: json['payment_type'] as String?,
+      paymentAmount: (json['payment_amount'] as num?)?.toDouble(),
       createdBy: json['created_by'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
@@ -69,6 +75,8 @@ class WeighingSlip {
         'is_fully_paid': isFullyPaid,
       },
       'is_fully_paid': isFullyPaid,
+      'payment_type': paymentType,
+      'payment_amount': paymentAmount,
       'created_by': createdBy,
       'created_at': createdAt.toIso8601String(),
     };

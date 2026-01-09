@@ -103,7 +103,66 @@ class _EditWeighingSlipViewState extends State<EditWeighingSlipView> {
         const SnackBar(content: Text('Bon de pesée mis à jour'), backgroundColor: AppColors.success),
       );
       context.go('/weighing-slips');
+    } else if (!ok && mounted && _slipViewModel.hasError) {
+      // Check for specific error code
+      final errorMsg = _slipViewModel.errorMessage ?? '';
+      if (errorMsg.contains('AMOUNT_LESS_THAN_PAID') || 
+          errorMsg.contains('inférieur au montant déjà payé')) {
+        _showAmountLessThanPaidDialog();
+      } else {
+        _showErrorDialog(errorMsg);
+      }
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error, color: AppColors.errorText, size: 28),
+            SizedBox(width: 12),
+            Text('Erreur'),
+          ],
+        ),
+        content: Text(
+          message.isNotEmpty ? message : 'Une erreur est survenue lors de la mise à jour',
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAmountLessThanPaidDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.warning, size: 28),
+            SizedBox(width: 12),
+            Text('Modification impossible'),
+          ],
+        ),
+        content: const Text(
+          'Le nouveau montant ne peut pas être inférieur au montant déjà payé pour ce bon de pesée.',
+          style: TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Compris'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

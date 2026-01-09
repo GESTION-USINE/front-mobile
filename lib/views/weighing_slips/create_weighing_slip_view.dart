@@ -42,7 +42,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
   bool _includePayment = false;
   String _paymentType = 'cash';
   DateTime _paymentDate = DateTime.now();
-  DateTime? _checkDate;
+  DateTime? _checkDate = DateTime.now();
   String _checkStatus = 'cleared';
 
   List<Client> _clients = [];
@@ -497,6 +497,15 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
                 'Le client doit être de type entreprise';
             break;
           
+          case 'WEIGHING_SLIP_NOT_FOUND':
+            errorMessage = 'Bon de pesée non trouvé';
+            break;
+          
+          case 'FORBIDDEN_NOT_TODAY':
+            errorMessage = 'Paiement interdit pour ce bon\n'
+                'Le paiement ne peut être effectué que le jour de création';
+            break;
+          
           default:
             errorMessage = message;
         }
@@ -509,21 +518,34 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
       }
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Erreur'),
             content: Text(errorMessage),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       }
     } catch (e) {
       setState(() => _isCreatingSlip = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Erreur'),
             content: Text('Erreur inattendue: $e'),
-            backgroundColor: Colors.red,
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       }

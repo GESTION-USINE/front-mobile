@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import '../exceptions/app_exceptions.dart';
 
 /// États possibles d'un ViewModel
@@ -69,6 +70,20 @@ abstract class BaseViewModel extends ChangeNotifier {
     } on AppException catch (e) {
       setError(e.message);
       return null;
+    } on DioException catch (e) {
+      // Extraire le message d'erreur de la réponse du backend
+      String errorMessage = 'Une erreur est survenue';
+      if (e.error is Map<String, dynamic>) {
+        final errorData = e.error as Map<String, dynamic>;
+        errorMessage = errorData['message'] ?? errorMessage;
+      } else if (e.response?.data != null) {
+        final responseData = e.response!.data;
+        if (responseData is Map<String, dynamic> && responseData['error'] != null) {
+          errorMessage = responseData['error']['message'] ?? errorMessage;
+        }
+      }
+      setError(errorMessage);
+      return null;
     } catch (e) {
       setError('Une erreur inattendue est survenue');
       return null;
@@ -83,6 +98,20 @@ abstract class BaseViewModel extends ChangeNotifier {
       return await action();
     } on AppException catch (e) {
       setError(e.message);
+      return null;
+    } on DioException catch (e) {
+      // Extraire le message d'erreur de la réponse du backend
+      String errorMessage = 'Une erreur est survenue';
+      if (e.error is Map<String, dynamic>) {
+        final errorData = e.error as Map<String, dynamic>;
+        errorMessage = errorData['message'] ?? errorMessage;
+      } else if (e.response?.data != null) {
+        final responseData = e.response!.data;
+        if (responseData is Map<String, dynamic> && responseData['error'] != null) {
+          errorMessage = responseData['error']['message'] ?? errorMessage;
+        }
+      }
+      setError(errorMessage);
       return null;
     } catch (e) {
       setError('Une erreur inattendue est survenue');
