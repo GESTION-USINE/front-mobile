@@ -44,6 +44,26 @@ class UserViewModel extends BaseViewModel {
   // Single user getter
   User? get selectedUser => _selectedUser;
 
+  // ==================== Cache Methods ====================
+
+  /// Générer une clé cache unique basée sur les paramètres de filtre
+  String _generateCacheKey({
+    required int page,
+    required int pageSize,
+    String? role,
+    bool? isActive,
+    String? search,
+    String sortBy = 'created_at',
+    String sortOrder = 'desc',
+  }) {
+    return 'users_'
+        'p${page}_ps${pageSize}_'
+        'r${role ?? 'null'}_'
+        'ia${isActive ?? 'null'}_'
+        's${search ?? 'null'}_'
+        'sb${sortBy}_so${sortOrder}';
+  }
+
   // ==================== Setters ====================
 
   void setListRole(String? role) {
@@ -81,8 +101,43 @@ class UserViewModel extends BaseViewModel {
 
   // ==================== Load Methods ====================
 
-  /// Load users list with current filters
-  Future<void> loadUsers() async {
+  /// Load users list with current filters avec cache intelligent
+  Future<void> loadUsers({bool refresh = false}) async {
+    if (refresh) {
+      _listPage = 1;
+      // Nettoyer le cache lors d'un refresh explicite
+      clearCacheEntry(_generateCacheKey(
+        page: 1,
+        pageSize: _listPageSize,
+        role: _listRole,
+        isActive: _listIsActive,
+        search: _listSearch.isNotEmpty ? _listSearch : null,
+        sortBy: _listSortBy,
+        sortOrder: _listSortOrder,
+      ));
+    }
+
+    // Générer la clé cache
+    final cacheKey = _generateCacheKey(
+      page: _listPage,
+      pageSize: _listPageSize,
+      role: _listRole,
+      isActive: _listIsActive,
+      search: _listSearch.isNotEmpty ? _listSearch : null,
+      sortBy: _listSortBy,
+      sortOrder: _listSortOrder,
+    );
+
+    // 🔥 Vérifier le cache en premier
+    if (isCacheValid(cacheKey)) {
+      final cachedResult = getCacheEntry(cacheKey);
+      if (cachedResult != null) {
+        _usersListResponse = cachedResult['response'] as UsersListResponse;
+        setSuccess();
+        return; // 👈 Pas d'appel API!
+      }
+    }
+
     await runAsync(() async {
       _usersListResponse = await _userService.getUsers(
         role: _listRole,
@@ -93,6 +148,15 @@ class UserViewModel extends BaseViewModel {
         page: _listPage,
         pageSize: _listPageSize,
       );
+
+      // 💾 Mettre en cache le résultat (30 minutes)
+      if (_usersListResponse != null) {
+        setCacheEntry(
+          cacheKey,
+          {'response': _usersListResponse},
+          cacheDuration: const Duration(minutes: 30),
+        );
+      }
     });
   }
 
@@ -109,8 +173,10 @@ class UserViewModel extends BaseViewModel {
     await runAsync(() async {
       final newUser = await _userService.createUser(request);
       _selectedUser = newUser;
+      // Nettoyer le cache après création
+      clearAllCache();
       // Reload users list to include the new user
-      await loadUsers();
+      await loadUsers(refresh: true);
     });
   }
 
@@ -120,8 +186,10 @@ class UserViewModel extends BaseViewModel {
     await runAsync(() async {
       final updatedUser = await _userService.updateUser(userId, request);
       _selectedUser = updatedUser;
+      // Nettoyer le cache après mise à jour
+      clearAllCache();
       // Reload users list to reflect the update
-      await loadUsers();
+      await loadUsers(refresh: true);
     });
   }
 
@@ -129,8 +197,10 @@ class UserViewModel extends BaseViewModel {
   Future<void> deactivateUser(int userId) async {
     await runAsync(() async {
       await _userService.deactivateUser(userId);
+      // Nettoyer le cache après désactivation
+      clearAllCache();
       // Reload users list to reflect deactivation
-      await loadUsers();
+      await loadUsers(refresh: true);
     });
   }
 
@@ -157,10 +227,15 @@ class UserViewModel extends BaseViewModel {
 
   // ==================== Refresh Methods ====================
 
+  /// Rafraîchir la liste (force fetch backend)
+  Future<void> refresh() async {
+    await loadUsers(refresh: true);
+  }
+
   /// Refresh users list with current filters
   Future<void> refreshUsers() async {
     _listPage = 1;
-    await loadUsers();
+    await loadUsers(refresh: true);
   }
 
   /// Refresh selected user

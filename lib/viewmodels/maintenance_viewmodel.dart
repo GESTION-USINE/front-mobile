@@ -40,10 +40,32 @@ class MaintenanceViewModel extends BaseViewModel {
 
   bool get hasMaintenanceExpenses => _maintenanceExpenses.isNotEmpty;
 
+  // ==================== Cache Methods ====================
+
+  /// Générer une clé cache unique basée sur les paramètres de filtre
+  String _generateCacheKey() {
+    return 'maintenance_p${_currentPage}_ps${_pageSize}_df${_dateFromFilter}_dt${_dateToFilter}_mt${_machineTypeFilter}_sb${_sortBy}_so${_sortOrder}';
+  }
+
   /// Charge la liste des dépenses de maintenance
   Future<void> loadMaintenanceExpenses({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
+      clearAllCache();
+    }
+
+    final cacheKey = _generateCacheKey();
+
+    // 💾 Vérifier le cache d'abord
+    if (!refresh && isCacheValid(cacheKey)) {
+      final cachedData = getCacheEntry<Map<String, dynamic>>(cacheKey);
+      if (cachedData != null) {
+        _maintenanceExpenses = cachedData['expenses'] ?? [];
+        _total = cachedData['total'] ?? 0;
+        _totalCost = cachedData['totalCost'] ?? 0.0;
+        notifyListeners();
+        return;
+      }
     }
 
     try {
@@ -59,13 +81,17 @@ class MaintenanceViewModel extends BaseViewModel {
         );
       });
 
-
       if (result != null) {
-      _maintenanceExpenses = result.items.cast<MaintenanceExpense>().toList();
-
-    
+        _maintenanceExpenses = result.items.cast<MaintenanceExpense>().toList();
         _total = result.meta.total;
         _totalCost = result.meta.totalCost;
+
+        // 💾 Mettre en cache le résultat
+        setCacheEntry(
+          cacheKey,
+          {'expenses': _maintenanceExpenses, 'total': _total, 'totalCost': _totalCost},
+        );
+
         notifyListeners();
       }
     } catch (e, stackTrace) {
@@ -148,7 +174,8 @@ class MaintenanceViewModel extends BaseViewModel {
     });
 
     if (result != null) {
-      // Recharger la liste après création
+      // Vider le cache et recharger la liste après création
+      clearAllCache();
       await loadMaintenanceExpenses(refresh: true);
       return true;
     }
@@ -165,7 +192,8 @@ class MaintenanceViewModel extends BaseViewModel {
     });
 
     if (result != null) {
-      // Recharger la liste après mise à jour
+      // Vider le cache et recharger la liste après mise à jour
+      clearAllCache();
       await loadMaintenanceExpenses(refresh: true);
       return true;
     }
@@ -180,7 +208,8 @@ class MaintenanceViewModel extends BaseViewModel {
     });
 
     if (result == true) {
-      // Recharger la liste après suppression
+      // Vider le cache et recharger la liste après suppression
+      clearAllCache();
       await loadMaintenanceExpenses(refresh: true);
       return true;
     }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_template/core/base/base_viewmodel.dart';
 import '../models/user.dart';
 import '../services/user_service.dart';
 
-class ProfileViewModel extends ChangeNotifier {
+class ProfileViewModel extends BaseViewModel {
   final UserService _userService;
 
   ProfileViewModel(this._userService);

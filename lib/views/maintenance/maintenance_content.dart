@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/machine_types.dart';
 import '../../core/theme/app_theme.dart';
 import '../../di/injection_container.dart';
 import '../../viewmodels/maintenance_viewmodel.dart';
@@ -19,7 +20,7 @@ class MaintenanceContent extends StatefulWidget {
 
 class _MaintenanceContentState extends State<MaintenanceContent> {
   late final MaintenanceViewModel _viewModel;
-  final _machineTypeController = TextEditingController();
+  String? _selectedMachineType;
   DateTime? _selectedDateFrom;
   DateTime? _selectedDateTo;
   final _dateFormat = DateFormat('dd/MM/yyyy');
@@ -35,7 +36,6 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
 
   @override
   void dispose() {
-    _machineTypeController.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -162,25 +162,30 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
         // Filtre Type de machine
         SizedBox(
           width: 250,
-          child: TextField(
-            controller: _machineTypeController,
+          child: DropdownButtonFormField<String>(
+            value: _selectedMachineType,
+            isExpanded: true,
             style: const TextStyle(color: AppColors.industrialText),
+            dropdownColor: AppColors.white,
             decoration: AppTheme.industrialInputDecoration(
-              hint: 'Type de machine...',
+              hint: 'Type de frais...',
               prefixIcon: Icons.precision_manufacturing,
-            ).copyWith(
-              suffixIcon: _machineTypeController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _machineTypeController.clear();
-                        viewModel.filterByMachineType(null);
-                      },
-                    )
-                  : null,
             ),
+            items: [
+              const DropdownMenuItem<String>(
+                value: null,
+                child: Text('Tous', style: TextStyle(color: AppColors.industrialTextLight)),
+              ),
+              ...machineTypes.map((type) => DropdownMenuItem<String>(
+                value: type,
+                child: Text(type, style: TextStyle(color: AppColors.industrialText)),
+              )),
+            ],
             onChanged: (value) {
-              viewModel.filterByMachineType(value.isEmpty ? null : value);
+              setState(() {
+                _selectedMachineType = value;
+              });
+              viewModel.filterByMachineType(value);
             },
           ),
         ),
@@ -189,15 +194,17 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
       IconButton(
         onPressed: () {
           setState(() {
-            _machineTypeController.clear();
+            _selectedMachineType = null;
             _selectedDateFrom = null;
             _selectedDateTo = null;
           });
-          viewModel.resetFilters();
+          viewModel.refresh();
         },
         icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
         tooltip: 'Réinitialiser les filtres',
       ),
+
+    
     ];
 
     return LayoutBuilder(

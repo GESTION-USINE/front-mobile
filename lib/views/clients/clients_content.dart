@@ -238,7 +238,7 @@ class _ClientsContentState extends State<ClientsContent> {
         IconButton(
           onPressed: () {
             _searchController.clear();
-            viewModel.resetFilters();
+            viewModel.refresh();
           },
           icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
           tooltip: 'Réinitialiser les filtres',

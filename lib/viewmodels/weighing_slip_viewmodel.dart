@@ -56,12 +56,93 @@ class WeighingSlipViewModel extends BaseViewModel {
   int get todayCreditCount => _items.where((e) => !e.isFullyPaid).length;
   int get todayPaidCount => _items.where((e) => e.isFullyPaid).length;
 
-  Future<void> loadSlips({bool refresh = false, bool forceTodayForEmployees = false}) async {
-    if (refresh) _currentPage = 1;
+  /// Générer une clé cache unique basée sur les paramètres de filtre
+  String _generateCacheKey({
+    required int page,
+    required int pageSize,
+    String? search,
+    int? clientId,
+    int? createdBy,
+    String? dateFrom,
+    String? dateTo,
+    bool? isInvoiced,
+    bool? isFullyPaid,
+    String? paymentType,
+    String sortBy = 'created_at',
+    String sortOrder = 'desc',
+  }) {
+    return 'slips_'
+        'p${page}_ps${pageSize}_'
+        's${search ?? 'null'}_'
+        'c${clientId ?? 'null'}_'
+        'cb${createdBy ?? 'null'}_'
+        'df${dateFrom ?? 'null'}_'
+        'dt${dateTo ?? 'null'}_'
+        'inv${isInvoiced ?? 'null'}_'
+        'paid${isFullyPaid ?? 'null'}_'
+        'pt${paymentType ?? 'null'}_'
+        'sb${sortBy}_so${sortOrder}';
+  }
+
+  Future<void> loadSlips({
+    bool refresh = false, 
+    bool forceTodayForEmployees = false,
+  }) async {
+    if (refresh) {
+      _currentPage = 1;
+      // Nettoyer le cache lors d'un refresh explicite
+      final df = forceTodayForEmployees ? _todayIsoDate() : _dateFrom;
+      final dt = forceTodayForEmployees ? _todayIsoDate() : _dateTo;
+      clearCacheEntry(_generateCacheKey(
+        page: 1,
+        pageSize: _pageSize,
+        search: _searchQuery,
+        clientId: _clientId,
+        createdBy: _createdBy,
+        dateFrom: df,
+        dateTo: dt,
+        isInvoiced: _isInvoiced,
+        isFullyPaid: _isFullyPaid,
+        paymentType: _paymentType,
+        sortBy: _sortBy,
+        sortOrder: _sortOrder,
+      ));
+    }
+
+    final String? df = forceTodayForEmployees ? _todayIsoDate() : _dateFrom;
+    final String? dt = forceTodayForEmployees ? _todayIsoDate() : _dateTo;
+
+    // Générer la clé cache
+    final cacheKey = _generateCacheKey(
+      page: _currentPage,
+      pageSize: _pageSize,
+      search: _searchQuery,
+      clientId: _clientId,
+      createdBy: _createdBy,
+      dateFrom: df,
+      dateTo: dt,
+      isInvoiced: _isInvoiced,
+      isFullyPaid: _isFullyPaid,
+      paymentType: _paymentType,
+      sortBy: _sortBy,
+      sortOrder: _sortOrder,
+    );
+
+    // 🔥 Vérifier le cache en premier
+    if (isCacheValid(cacheKey)) {
+      final cachedResult = getCacheEntry(cacheKey);
+      if (cachedResult != null) {
+        _allItems = cachedResult['allItems'] as List<WeighingSlip>;
+        _items = cachedResult['items'] as List<WeighingSlip>;
+        _currentPage = cachedResult['page'] as int;
+        _pageSize = cachedResult['pageSize'] as int;
+        _total = cachedResult['total'] as int;
+        setSuccess();
+        return; // 👈 Pas d'appel API!
+      }
+    }
 
     final result = await runAsync(() async {
-      final String? df = forceTodayForEmployees ? _todayIsoDate() : _dateFrom;
-      final String? dt = forceTodayForEmployees ? _todayIsoDate() : _dateTo;
       return await _service.getSlips(
         search: _searchQuery,
         clientId: _clientId,
@@ -87,6 +168,16 @@ class WeighingSlipViewModel extends BaseViewModel {
       _currentPage = result.page;
       _pageSize = result.pageSize;
       _total = result.total;
+
+      // 💾 Mettre en cache le résultat
+      setCacheEntry(cacheKey, {
+        'allItems': _allItems,
+        'items': _items,
+        'page': result.page,
+        'pageSize': result.pageSize,
+        'total': result.total,
+      });
+
       notifyListeners();
     }
   }
@@ -141,21 +232,41 @@ class WeighingSlipViewModel extends BaseViewModel {
   Future<void> previousPage() async { if (hasPreviousPage) { _currentPage--; await loadSlips(); } }
   Future<void> goToPage(int page) async { if (page >= 1 && page <= totalPages) { _currentPage = page; await loadSlips(); } }
 
+  /// Rafraîchir la liste (force fetch backend)
+  Future<void> refresh() async {
+    await loadSlips(refresh: true);
+  }
+
   Future<bool> createSlip(CreateWeighingSlipRequest request) async {
     final result = await runAsync(() async { return await _service.createSlip(request); });
-    if (result != null) { await loadSlips(refresh: true); return true; }
+    if (result != null) { 
+      // Nettoyer le cache après création
+      clearAllCache();
+      await loadSlips(refresh: true); 
+      return true; 
+    }
     return false;
   }
 
   Future<bool> updateSlip(int id, UpdateWeighingSlipRequest request) async {
     final result = await runAsync(() async { return await _service.updateSlip(id, request); });
-    if (result != null) { await loadSlips(refresh: true); return true; }
+    if (result != null) { 
+      // Nettoyer le cache après mise à jour
+      clearAllCache();
+      await loadSlips(refresh: true); 
+      return true; 
+    }
     return false;
   }
 
   Future<bool> deleteSlip(int id) async {
     final result = await runAsync(() async { await _service.deleteSlip(id); return true; });
-    if (result == true) { await loadSlips(refresh: true); return true; }
+    if (result == true) { 
+      // Nettoyer le cache après suppression
+      clearAllCache();
+      await loadSlips(refresh: true); 
+      return true; 
+    }
     return false;
   }
 

@@ -205,7 +205,7 @@ class _UsersContentState extends State<UsersContent> {
             _selectedRole = '';
             _selectedIsActive = null;
           });
-          viewModel.clearFilters();
+          viewModel.refresh();
         },
         icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
         tooltip: 'Réinitialiser les filtres',

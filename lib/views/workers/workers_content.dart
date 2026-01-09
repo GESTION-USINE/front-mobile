@@ -144,11 +144,14 @@ class _WorkersContentState extends State<WorkersContent> {
             _searchController.clear();
             _selectedIsActive = null;
           });
-          viewModel.resetFilters();
+          viewModel.refresh();
         },
         icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
         tooltip: 'Réinitialiser les filtres',
       ),
+
+      // Bouton refresh (force fetch backend)
+  
     ];
 
     return LayoutBuilder(

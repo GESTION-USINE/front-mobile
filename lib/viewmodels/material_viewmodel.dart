@@ -1,7 +1,6 @@
 import 'package:flutter_mvvm_template/core/base/base_viewmodel.dart';
 import 'package:flutter_mvvm_template/models/entities/material_price.dart';
 import 'package:flutter_mvvm_template/core/constants/api_endpoints.dart';
-import 'package:flutter_mvvm_template/models/response/delete_response.dart';
 
 import '../core/network/api_client.dart';
 import '../models/entities/material.dart';
@@ -46,89 +45,62 @@ class MaterialViewModel extends BaseViewModel {
 
   bool get hasMaterials => _materials.isNotEmpty;
 
+  /// Générer une clé cache unique pour les matériaux
+  String _generateCacheKey({
+    required int page,
+    required int pageSize,
+    String? search,
+    String? category,
+    bool? isActive,
+    String sortBy = 'name',
+    String sortOrder = 'asc',
+  }) {
+    return 'materials_'
+        'p${page}_ps${pageSize}_'
+        's${search ?? 'null'}_'
+        'c${category ?? 'null'}_'
+        'ia${isActive ?? 'null'}_'
+        'sb${sortBy}_so${sortOrder}';
+  }
 
-
-  Future<void> loadClientMaterialPrices({
-    required int clientId,
-    bool refresh = false,
-    }) async {
-      if (refresh) {
-        _currentPage = 1;
-        // Vider les anciennes données immédiatement pour éviter les confusions
-        _materialPrices = [];
-        notifyListeners();
-      }
-
-      final result = await runAsync(() async {
-        return await _materialService.getClientMaterialPrices(
-          clientId: clientId,
-          page: _currentPage,
-          pageSize: _pageSize,
-        );
-      });
-
-      if (result != null) {
-              _materialPrices = result.items.map((item) {
-           if (item is MaterialPriceItem) return item;
-          return MaterialPriceItem.fromJson(item as Map<String, dynamic>);
-        }).toList();
-        _currentPage = result.page;
-        _pageSize = result.pageSize;
-        _total = result.total;
-
-        notifyListeners();
-      }
-    }
-
-   Future<bool> createClientMaterialPrice({
-      required int clientId,
-      required int materialId,
-      required double customPricePerTon,
-    }) async {
-      final result = await runAsync(() async {
-       return await _materialService.createClientMaterialPrice(
-          clientId: clientId,
-          materialId: materialId,
-          customPricePerTon: customPricePerTon,
-        );
-      });
-
-      if (result != null) {
-        // Recharger les prix du client après création
-        await loadClientMaterialPrices(
-          clientId: clientId,
-          refresh: true,
-        );
-        return true;
-      }
-      return false;
-    }
-  
-   Future<bool> deleteClientMaterialPrice({
-      required int priceId,
-      required int clientId,
-    }) async {
-      DeleteResponse? result = await runAsync(() async {
-       return await _materialService.deleteClientMaterialPrice(
-          priceId: priceId,
-        );
-      });
-
-      if (result!.deleted) {
-        // Recharger la liste après suppression
-        await loadClientMaterialPrices(
-          clientId: clientId,
-          refresh: true,
-        );
-        return true ; 
-      }
-      return false ; 
-    }
-
-  /// Charge la liste des matériaux
+  /// Charger la liste des matériaux avec cache intelligent
   Future<void> loadMaterials({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
+      // Nettoyer le cache pour les matériaux lors d'un refresh explicite
+      clearCacheEntry(_generateCacheKey(
+        page: 1,
+        pageSize: _pageSize,
+        search: _searchQuery,
+        category: _categoryFilter,
+        isActive: _isActiveFilter,
+        sortBy: _sortBy,
+        sortOrder: _sortOrder,
+      ));
+    }
+
+    // Générer la clé cache
+    final cacheKey = _generateCacheKey(
+      page: _currentPage,
+      pageSize: _pageSize,
+      search: _searchQuery,
+      category: _categoryFilter,
+      isActive: _isActiveFilter,
+      sortBy: _sortBy,
+      sortOrder: _sortOrder,
+    );
+
+    // 🔥 Vérifier le cache en premier
+    if (isCacheValid(cacheKey)) {
+      final cachedResult = getCacheEntry(cacheKey);
+      if (cachedResult != null) {
+        _materials = cachedResult['items'] as List<Material>;
+        _currentPage = cachedResult['page'] as int;
+        _pageSize = cachedResult['pageSize'] as int;
+        _total = cachedResult['total'] as int;
+        setSuccess();
+        return; // 👈 Pas d'appel API!
+      }
     }
 
     final result = await runAsync(() async {
@@ -151,6 +123,15 @@ class MaterialViewModel extends BaseViewModel {
       _currentPage = result.page;
       _pageSize = result.pageSize;
       _total = result.total;
+      
+      // 💾 Mettre en cache le résultat
+      setCacheEntry(cacheKey, {
+        'items': _materials,
+        'page': result.page,
+        'pageSize': result.pageSize,
+        'total': result.total,
+      });
+      
       notifyListeners();
     }
   }
@@ -167,6 +148,103 @@ class MaterialViewModel extends BaseViewModel {
     _categoryFilter = category;
     _currentPage = 1;
     loadMaterials();
+  }
+
+  /// Charger les prix des matériaux pour un client avec cache intelligent
+  Future<void> loadClientMaterialPrices({
+    required int clientId,
+    bool refresh = false,
+  }) async {
+    if (refresh) {
+      _currentPage = 1;
+      _materialPrices = [];
+      notifyListeners();
+    }
+
+    // Générer la clé cache pour les prix
+    final cacheKey = 'client_material_prices_${clientId}_p${_currentPage}_ps${_pageSize}';
+
+    // 🔥 Vérifier le cache en premier
+    if (isCacheValid(cacheKey)) {
+      final cachedResult = getCacheEntry(cacheKey);
+      if (cachedResult != null) {
+        _materialPrices = cachedResult['items'] as List<MaterialPriceItem>;
+        _currentPage = cachedResult['page'] as int;
+        _pageSize = cachedResult['pageSize'] as int;
+        _total = cachedResult['total'] as int;
+        setSuccess();
+        return; // 👈 Pas d'appel API!
+      }
+    }
+
+    final result = await runAsync(() async {
+      return await _materialService.getClientMaterialPrices(
+        clientId: clientId,
+        page: _currentPage,
+        pageSize: _pageSize,
+      );
+    });
+
+    if (result != null) {
+      _materialPrices = result.items.map((item) {
+        if (item is MaterialPriceItem) return item;
+        return MaterialPriceItem.fromJson(item as Map<String, dynamic>);
+      }).toList();
+      _currentPage = result.page;
+      _pageSize = result.pageSize;
+      _total = result.total;
+
+      // 💾 Mettre en cache le résultat
+      setCacheEntry(cacheKey, {
+        'items': _materialPrices,
+        'page': result.page,
+        'pageSize': result.pageSize,
+        'total': result.total,
+      });
+
+      notifyListeners();
+    }
+  }
+
+  /// Créer un prix matériau personnalisé pour un client
+  Future<bool> createClientMaterialPrice({
+    required int clientId,
+    required int materialId,
+    required double customPricePerTon,
+  }) async {
+    final result = await runAsync(() async {
+      return await _materialService.createClientMaterialPrice(
+        clientId: clientId,
+        materialId: materialId,
+        customPricePerTon: customPricePerTon,
+      );
+    });
+
+    if (result != null) {
+      // Nettoyer le cache et recharger
+      clearCacheEntry('client_material_prices_${clientId}_p${_currentPage}_ps${_pageSize}');
+      await loadClientMaterialPrices(clientId: clientId, refresh: true);
+      return true;
+    }
+    return false;
+  }
+
+  /// Supprimer un prix matériau personnalisé
+  Future<bool> deleteClientMaterialPrice({
+    required int priceId,
+    required int clientId,
+  }) async {
+    final result = await runAsync(() async {
+      return await _materialService.deleteClientMaterialPrice(priceId: priceId);
+    });
+
+    if (result != null && result.deleted) {
+      // Nettoyer le cache et recharger
+      clearCacheEntry('client_material_prices_${clientId}_p${_currentPage}_ps${_pageSize}');
+      await loadClientMaterialPrices(clientId: clientId, refresh: true);
+      return true;
+    }
+    return false;
   }
 
   /// Filtre par statut actif
@@ -225,6 +303,8 @@ class MaterialViewModel extends BaseViewModel {
       return await _materialService.createMaterial(request);
     });
     if (result != null) {
+      // Nettoyer le cache après création
+      clearAllCache();
       // Recharger la liste après création
       await loadMaterials(refresh: true);
       return true;
@@ -239,6 +319,8 @@ class MaterialViewModel extends BaseViewModel {
     });
 
     if (result != null) {
+      // Nettoyer le cache après mise à jour
+      clearAllCache();
       // Recharger la liste après mise à jour
       await loadMaterials(refresh: true);
       return true;

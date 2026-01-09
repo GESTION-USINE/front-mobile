@@ -20,7 +20,7 @@ class AppNavBar extends StatelessWidget {
     if (location.contains(AppRouter.credits)) return 'Gestion des Crédits';
     if (location.contains(AppRouter.invoices)) return 'Factures';
     if (location.contains(AppRouter.products)) return 'Produits';
-    if (location.contains(AppRouter.maintenance)) return 'Maintenance';
+    if (location.contains(AppRouter.maintenance)) return 'Frais';
     if (location.contains(AppRouter.users)) return 'Gestion des Utilisateurs';
     if (location.contains(AppRouter.settings)) return 'Paramètres';
     if (location.contains(AppRouter.reports)) return 'Rapports';

@@ -60,7 +60,7 @@ class _ClientCreditContentState extends State<ClientCreditContent> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: () => viewModel.loadClientsWithCredit(),
+                    onPressed: () => viewModel.refresh(),
                     icon: const Icon(Icons.refresh),
                     label: const Text('Réessayer'),
                   ),
@@ -132,7 +132,7 @@ class _ClientCreditContentState extends State<ClientCreditContent> {
               // Clients list
               Expanded(
                 child: RefreshIndicator(
-                  onRefresh: () => viewModel.loadClientsWithCredit(),
+                  onRefresh: () => viewModel.refresh(),
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: viewModel.clients.length,

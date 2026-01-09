@@ -100,8 +100,9 @@ Future<void> initDependencies() async {
   );
 
   // ==================== ViewModels ====================
-  // Factory car nouvelle instance par écran
-  getIt.registerFactory<AuthViewModel>(
+  // LazySingleton car données persistent à travers les navigations
+  // Cela permet le cache intelligent de fonctionner correctement
+  getIt.registerLazySingleton<AuthViewModel>(
     () => AuthViewModel(
       getIt<IAuthService>(),
       getIt<UserProvider>(),
@@ -109,59 +110,58 @@ Future<void> initDependencies() async {
     ),
   );
 
-
-  getIt.registerFactory<ProductViewModel>(
+  getIt.registerLazySingleton<ProductViewModel>(
     () => ProductViewModel(getIt<IProductService>()),
   );
 
-  getIt.registerFactory<ClientViewModel>(
+  getIt.registerLazySingleton<ClientViewModel>(
     () => ClientViewModel(getIt<ClientService>()),
   );
 
-  getIt.registerFactory<MaterialViewModel>(
+  getIt.registerLazySingleton<MaterialViewModel>(
     () => MaterialViewModel(getIt<MaterialService>()),
   );
 
-  getIt.registerFactory<WeighingSlipViewModel>(
+  getIt.registerLazySingleton<WeighingSlipViewModel>(
     () => WeighingSlipViewModel(getIt<WeighingSlipService>()),
   );
 
-  getIt.registerFactory<MaintenanceViewModel>(
+  getIt.registerLazySingleton<MaintenanceViewModel>(
     () => MaintenanceViewModel(getIt<MaintenanceService>()),
   );
 
-  getIt.registerFactory<WorkerViewModel>(
+  getIt.registerLazySingleton<WorkerViewModel>(
     () => WorkerViewModel(getIt<WorkerService>()),
   );
 
-  getIt.registerFactory<CreditPaymentViewModel>(
+  getIt.registerLazySingleton<CreditPaymentViewModel>(
     () => CreditPaymentViewModel(getIt<PaymentService>()),
   );
 
-  getIt.registerFactory<SalaryPaymentViewModel>(
+  getIt.registerLazySingleton<SalaryPaymentViewModel>(
     () => SalaryPaymentViewModel(getIt<SalaryPaymentService>()),
   );
-  getIt.registerFactory<ClientsCreditViewModel>(
+  getIt.registerLazySingleton<ClientsCreditViewModel>(
     () => ClientsCreditViewModel(getIt<ClientService>()),
   );
 
-  getIt.registerFactory<ClientsWithSlipsViewModel>(
+  getIt.registerLazySingleton<ClientsWithSlipsViewModel>(
     () => ClientsWithSlipsViewModel(getIt<ClientService>()),
   );
 
-  getIt.registerFactory<StatsViewModel>(
+  getIt.registerLazySingleton<StatsViewModel>(
    () => StatsViewModel(getIt<StatsService>()),
   );
 
-   getIt.registerFactory<UserViewModel>(
+   getIt.registerLazySingleton<UserViewModel>(
     () => UserViewModel(getIt<UserService>()),
   );
 
-  getIt.registerFactory<CreditRiskViewModel>(
+  getIt.registerLazySingleton<CreditRiskViewModel>(
     () => CreditRiskViewModel(getIt<CreditRiskService>()),
   );
 
-  getIt.registerFactory<ProfileViewModel>(
+  getIt.registerLazySingleton<ProfileViewModel>(
     () => ProfileViewModel(getIt<UserService>()),
   );
 
@@ -169,6 +169,28 @@ Future<void> initDependencies() async {
 
   // ==================== Initialisation ====================
   await _initializeProviders();
+  
+  // Marquer tous les ViewModels comme singletons (ne pas disposer)
+  _markAllViewModelsAsSingletons();
+}
+
+/// Marquer tous les ViewModels LazySingleton comme singletons pour éviter dispose()
+void _markAllViewModelsAsSingletons() {
+  getIt<AuthViewModel>().markAsSingleton();
+  getIt<ProductViewModel>().markAsSingleton();
+  getIt<ClientViewModel>().markAsSingleton();
+  getIt<MaterialViewModel>().markAsSingleton();
+  getIt<WeighingSlipViewModel>().markAsSingleton();
+  getIt<MaintenanceViewModel>().markAsSingleton();
+  getIt<WorkerViewModel>().markAsSingleton();
+  getIt<CreditPaymentViewModel>().markAsSingleton();
+  getIt<SalaryPaymentViewModel>().markAsSingleton();
+  getIt<ClientsCreditViewModel>().markAsSingleton();
+  getIt<ClientsWithSlipsViewModel>().markAsSingleton();
+  getIt<StatsViewModel>().markAsSingleton();
+  getIt<UserViewModel>().markAsSingleton();
+  getIt<CreditRiskViewModel>().markAsSingleton();
+  getIt<ProfileViewModel>().markAsSingleton();
 }
 
 /// Initialiser les providers qui nécessitent une initialisation async

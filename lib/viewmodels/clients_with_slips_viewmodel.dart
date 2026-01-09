@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
 import '../models/response/clients_with_slips_response.dart';
 import '../services/client_service.dart';
+import '../core/base/base_viewmodel.dart';
 
-class ClientsWithSlipsViewModel extends ChangeNotifier {
+class ClientsWithSlipsViewModel extends BaseViewModel {
   final ClientService _clientService;
 
   ClientsWithSlipsViewModel(this._clientService);
@@ -24,15 +24,47 @@ class ClientsWithSlipsViewModel extends ChangeNotifier {
   int get totalPages => _totalPages;
   int get totalRecords => _totalRecords;
 
+  /// Générer une clé cache unique
+  String _generateCacheKey({
+    required int page,
+    String sortBy = 'total_remaining_credit',
+    String sortOrder = 'desc',
+  }) {
+    return 'clients_slips_p${page}_sb${sortBy}_so${sortOrder}';
+  }
+
   /// Load all clients with their slips and credit information
   Future<void> loadClientsWithSlips({
     int page = 1,
     String sortBy = 'total_remaining_credit',
     String sortOrder = 'desc',
   }) async {
+    _currentPage = page;
+
+    // Générer la clé cache
+    final cacheKey = _generateCacheKey(
+      page: page,
+      sortBy: sortBy,
+      sortOrder: sortOrder,
+    );
+
+    // 🔥 Vérifier le cache en premier
+    if (isCacheValid(cacheKey)) {
+      final cachedResult = getCacheEntry(cacheKey);
+      if (cachedResult != null) {
+        _clients = cachedResult['items'] as List<ClientWithSlips>;
+        _currentPage = cachedResult['page'] as int;
+        _totalPages = cachedResult['totalPages'] as int;
+        _totalRecords = cachedResult['total'] as int;
+        _isLoading = false;
+        _error = null;
+        setSuccess();
+        return; // 👈 Pas d'appel API!
+      }
+    }
+
     _isLoading = true;
     _error = null;
-    _currentPage = page;
     notifyListeners();
 
     try {
@@ -48,9 +80,20 @@ class ClientsWithSlipsViewModel extends ChangeNotifier {
       _totalPages = response.totalPages;
       _totalRecords = response.total;
       _error = null;
+      
+      // 💾 Mettre en cache le résultat
+      setCacheEntry(cacheKey, {
+        'items': response.items,
+        'page': response.page,
+        'totalPages': response.totalPages,
+        'total': response.total,
+      });
+      
+      setSuccess();
     } catch (e) {
       _error = e.toString();
       _clients = [];
+      setError(e.toString());
     } finally {
       _isLoading = false;
       notifyListeners();

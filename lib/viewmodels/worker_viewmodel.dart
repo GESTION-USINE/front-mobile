@@ -36,10 +36,31 @@ class WorkerViewModel extends BaseViewModel {
 
   bool get hasWorkers => _workers.isNotEmpty;
 
+  // ==================== Cache Methods ====================
+
+  /// Générer une clé cache unique basée sur les paramètres de filtre
+  String _generateCacheKey() {
+    return 'workers_p${_currentPage}_ps${_pageSize}_ia${_isActiveFilter}_s${_searchQuery}_sb${_sortBy}_so${_sortOrder}';
+  }
+
   /// Charge la liste des travailleurs
   Future<void> loadWorkers({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
+      clearAllCache();
+    }
+
+    final cacheKey = _generateCacheKey();
+
+    // 💾 Vérifier le cache d'abord
+    if (!refresh && isCacheValid(cacheKey)) {
+      final cachedData = getCacheEntry<Map<String, dynamic>>(cacheKey);
+      if (cachedData != null) {
+        _workers = cachedData['workers'] ?? [];
+        _total = cachedData['total'] ?? 0;
+        notifyListeners();
+        return;
+      }
     }
 
     final result = await runAsync(() async {
@@ -55,6 +76,14 @@ class WorkerViewModel extends BaseViewModel {
     if (result != null) {
       _workers = result.items.cast<Worker>().toList();
       _total = result.meta.total;
+
+      // 💾 Mettre en cache le résultat (50 minutes)
+      setCacheEntry(
+        cacheKey,
+        {'workers': _workers, 'total': _total},
+        cacheDuration: const Duration(minutes: 50),
+      );
+
       notifyListeners();
     }
   }
@@ -129,7 +158,8 @@ class WorkerViewModel extends BaseViewModel {
     });
 
     if (result != null) {
-      // Recharger la liste après création
+      // Vider le cache et recharger la liste après création
+      clearAllCache();
       await loadWorkers(refresh: true);
       return true;
     }
@@ -143,7 +173,8 @@ class WorkerViewModel extends BaseViewModel {
     });
 
     if (result != null) {
-      // Recharger la liste après mise à jour
+      // Vider le cache et recharger la liste après mise à jour
+      clearAllCache();
       await loadWorkers(refresh: true);
       return true;
     }

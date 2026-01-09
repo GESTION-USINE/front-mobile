@@ -40,10 +40,45 @@ class ClientViewModel extends BaseViewModel {
 
   bool get hasClients => _clients.isNotEmpty;
 
-  /// Charge la liste des clients
-  Future<void> loadClients({bool refresh = false, int? pageSize, int? isActive}) async {
+  /// Générer une clé cache unique basée sur les paramètres de filtre
+  String _generateCacheKey({
+    required int page,
+    required int pageSize,
+    String? search,
+    String? type,
+    bool? canPayByCheck,
+    bool? isActive,
+    String sortBy = 'created_at',
+    String sortOrder = 'desc',
+  }) {
+    return 'clients_'
+        'p${page}_ps${pageSize}_'
+        's${search ?? 'null'}_'
+        't${type ?? 'null'}_'
+        'c${canPayByCheck ?? 'null'}_'
+        'ia${isActive ?? 'null'}_'
+        'sb${sortBy}_so${sortOrder}';
+  }
+
+  /// Charge la liste des clients avec cache intelligent
+  Future<void> loadClients({
+    bool refresh = false,
+    int? pageSize,
+    int? isActive,
+  }) async {
     if (refresh) {
       _currentPage = 1;
+      // Nettoyer le cache pour les clients lors d'un refresh explicite
+      clearCacheEntry(_generateCacheKey(
+        page: 1,
+        pageSize: _pageSize,
+        search: _searchQuery,
+        type: _typeFilter,
+        canPayByCheck: _canPayByCheckFilter,
+        isActive: _isActiveFilter,
+        sortBy: _sortBy,
+        sortOrder: _sortOrder,
+      ));
     }
     
     // Mettre à jour le pageSize si fourni
@@ -53,6 +88,32 @@ class ClientViewModel extends BaseViewModel {
     if (isActive != null) {
       _isActiveFilter = isActive == 1 ? true : false;
     }
+
+    // Générer la clé cache
+    final cacheKey = _generateCacheKey(
+      page: _currentPage,
+      pageSize: _pageSize,
+      search: _searchQuery,
+      type: _typeFilter,
+      canPayByCheck: _canPayByCheckFilter,
+      isActive: _isActiveFilter,
+      sortBy: _sortBy,
+      sortOrder: _sortOrder,
+    );
+
+    // 🔥 Vérifier le cache en premier
+    if (isCacheValid(cacheKey)) {
+      final cachedResult = getCacheEntry(cacheKey);
+      if (cachedResult != null) {
+        _clients = cachedResult['items'] as List<Client>;
+        _currentPage = cachedResult['page'] as int;
+        _pageSize = cachedResult['pageSize'] as int;
+        _total = cachedResult['total'] as int;
+        setSuccess();
+        return; // 👈 Pas d'appel API!
+      }
+    }
+
     final result = await runAsync(() async {
       return await _clientService.getClients(
         search: _searchQuery,
@@ -65,11 +126,21 @@ class ClientViewModel extends BaseViewModel {
         pageSize: _pageSize,
       );
     });
+
     if (result != null) {
       _clients = result.items;
       _currentPage = result.page;
       _pageSize = result.pageSize;
       _total = result.total;
+      
+      // 💾 Mettre en cache le résultat
+      setCacheEntry(cacheKey, {
+        'items': result.items,
+        'page': result.page,
+        'pageSize': result.pageSize,
+        'total': result.total,
+      });
+      
       notifyListeners();
     }
   }
@@ -153,6 +224,8 @@ class ClientViewModel extends BaseViewModel {
     });
 
     if (result != null) {
+      // Nettoyer le cache après création
+      clearAllCache();
       // Recharger la liste après création
       await loadClients(refresh: true);
       return true;
@@ -167,6 +240,8 @@ class ClientViewModel extends BaseViewModel {
     });
 
     if (result != null) {
+      // Nettoyer le cache après mise à jour
+      clearAllCache();
       // Recharger la liste après mise à jour
       await loadClients(refresh: true);
       return true;

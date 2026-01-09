@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_template/core/base/base_viewmodel.dart';
 import '../models/entities/payment.dart';
 import '../models/entities/weighing_slip.dart';
 import '../models/request/create_payment_request.dart';
 import '../models/response/payment_response.dart';
 import '../services/payment_service.dart';
 
-class CreditPaymentViewModel extends ChangeNotifier {
+class CreditPaymentViewModel extends BaseViewModel{
   final PaymentService _paymentService;
 
   CreditPaymentViewModel(this._paymentService);
