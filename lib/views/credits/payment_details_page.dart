@@ -34,9 +34,14 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Détails du Bon de Pesée'),
-        backgroundColor: AppColors.industrialPrimary,
-        foregroundColor: AppColors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text('Détails du paiement'),
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.industrialText,
+        elevation: 0,
       ),
       body: FutureBuilder<PaymentDetailsResponse>(
         future: _futureDetails,
@@ -125,12 +130,12 @@ class _PaymentDetailsPageState extends State<PaymentDetailsPage> {
                             _buildInfoRow(
                               'Crédit restant',
                               _currencyFormat.format(slip.creditInfo.remainingCredit),
-                              color: AppColors.warning,
+                              color: AppColors.lightError,
                             ),
                             _buildInfoRow(
                               'Statut',
                               slip.creditInfo.isFullyPaid ? 'Payé' : 'Crédit',
-                              color: slip.creditInfo.isFullyPaid ? AppColors.success : AppColors.warning,
+                              color: slip.creditInfo.isFullyPaid ? AppColors.success : AppColors.lightError,
                             ),
                           ],
                         ),

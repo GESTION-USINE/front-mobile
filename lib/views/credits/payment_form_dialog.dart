@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -31,7 +32,7 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
   String _paymentType = 'cash';
   DateTime _paymentDate = DateTime.now();
   DateTime _checkDate = DateTime.now();
-  String _checkStatus = 'pending';
+  String _checkStatus = 'cashed';
   bool _isLoading = false;
 
   final _currencyFormat = NumberFormat.currency(locale: 'fr_FR', symbol: 'DZD');
@@ -79,34 +80,56 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
       final request = CreatePaymentRequest(
         weighingSlipId: widget.slip.id,
         paymentType: _paymentType,
-        amountPaid: double.parse(_amountController.text),
+        amountPaid: double.parse(_amountController.text.replaceAll(',', '.')),
         paymentDate: DateFormat('yyyy-MM-dd').format(_paymentDate),
-        checkNumber: _paymentType != 'cash' ? _checkNumberController.text : null,
+        checkNumber: _paymentType != 'cash' ? _checkNumberController.text.trim() : null,
         checkDate: _paymentType != 'cash'
             ? DateFormat('yyyy-MM-dd').format(_checkDate)
             : null,
-        checkBank: _paymentType != 'cash' ? _checkBankController.text : null,
-        checkStatus: _paymentType != 'cash' ? _checkStatus : null,
-        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+        checkBank: _paymentType != 'cash' ? _checkBankController.text.trim() : null,
+        checkStatus: _paymentType != 'cash' ? 'cashed' : null,
+        notes: _notesController.text.isNotEmpty ? _notesController.text.trim() : null,
       );
 
       final response = await context.read<CreditPaymentViewModel>().createPayment(request);
 
       if (!mounted) return;
-      print(response.success);
       if (response.success) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Paiement enregistré avec succès'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        _showSuccessDialog();
       } else {
         _showErrorDialog(response.error ?? 'Une erreur est survenue', response.details);
       }
     } catch (e) {
       if (!mounted) return;
+      
+      // Parse DioException to extract error code
+      if (e is DioException && e.response != null) {
+        final statusCode = e.response?.statusCode;
+        final data = e.response?.data;
+        
+        // Handle 403 - CHECK_NOT_ALLOWED
+        if (statusCode == 403) {
+          _showErrorDialog('CHECK_NOT_ALLOWED', null);
+          return;
+        }
+        
+        // Try to extract error from response body
+        if (data is Map) {
+          if (data['error'] is Map) {
+            final err = data['error'] as Map;
+            final code = err['code']?.toString();
+            final message = err['message']?.toString();
+            final details = err['details'] is Map ? err['details'] as Map<String, dynamic> : null;
+            _showErrorDialog(code ?? message ?? e.toString(), details);
+            return;
+          } else if (data['error'] is String) {
+            _showErrorDialog(data['error'] as String, null);
+            return;
+          }
+        }
+      }
+      
       _showErrorDialog(e.toString(), null);
     } finally {
       if (mounted) {
@@ -141,10 +164,40 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
             Text('Erreur'),
           ],
         ),
-        content: Text(message),
+        content: Text("Client n'a pas possibilite de payer par cheque."),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: AppColors.success, size: 32),
+            SizedBox(width: 12),
+            Text('Succès'),
+          ],
+        ),
+        content: const Text(
+          'Le paiement a été enregistré avec succès',
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.success,
+              foregroundColor: AppColors.white,
+            ),
             child: const Text('OK'),
           ),
         ],
@@ -157,8 +210,9 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Enregistrer un paiement'),
-        backgroundColor: AppColors.industrialPrimary,
-        foregroundColor: AppColors.white,
+        backgroundColor: AppColors.white,
+        foregroundColor: AppColors.industrialText,
+        elevation: 0,
       ),
       body: SafeArea(
         child: Center(
@@ -210,7 +264,7 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
                               const SizedBox(height: 4),
                               Text(
                                 'Crédit restant: ${_currencyFormat.format(widget.slip.remainingCredit ?? 0)}',
-                                style: const TextStyle(color: AppColors.warning),
+                                style: const TextStyle(color: AppColors.lightError),
                               ),
                             ],
                           ),
@@ -310,38 +364,6 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
 
                         const SizedBox(height: 16),
 
-                        const Text(
-                          'Date de paiement',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: () => _selectDate(context, false),
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(DateFormat('dd/MM/yyyy').format(_paymentDate)),
-                                const Icon(Icons.calendar_today, size: 18),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
                         if (_paymentType == 'check') ...[
                           const Text(
                             'Informations chèque',
@@ -362,7 +384,13 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _checkNumberController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(20),
+                            ],
                             decoration: InputDecoration(
+                              hintText: '20 chiffres requis',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
                               ),
@@ -372,8 +400,13 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
                               ),
                             ),
                             validator: (value) {
-                              if (_paymentType == 'check' && (value == null || value.isEmpty)) {
-                                return 'Numéro de chèque requis';
+                              if (_paymentType == 'check') {
+                                if (value == null || value.isEmpty) {
+                                  return 'Numéro de chèque requis';
+                                }
+                                if (value.length != 20) {
+                                  return 'Le numéro doit contenir exactement 20 chiffres';
+                                }
                               }
                               return null;
                             },
@@ -408,79 +441,6 @@ class _PaymentFormPageState extends State<PaymentFormPage> {
                             },
                           ),
 
-                          const SizedBox(height: 12),
-
-                          const Text(
-                            'Date du chèque',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          InkWell(
-                            onTap: () => _selectDate(context, true),
-                            child: InputDecorator(
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(DateFormat('dd/MM/yyyy').format(_checkDate)),
-                                  const Icon(Icons.calendar_today, size: 18),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          const Text(
-                            'Statut du chèque',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            value: _checkStatus,
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
-                              ),
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'pending',
-                                child: Text('En attente'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'cleared',
-                                child: Text('Compensé'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'bounced',
-                                child: Text('Rejeté'),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                _checkStatus = value!;
-                              });
-                            },
-                          ),
                         ],
 
                         const SizedBox(height: 16),

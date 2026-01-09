@@ -49,12 +49,9 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialSlip != null) {
-      _slipFuture = Future.value(widget.initialSlip!);
-    } else {
-      final service = getIt<WeighingSlipService>();
-      _slipFuture = service.getSlipById(widget.slipId);
-    }
+    // Toujours charger depuis l'API pour avoir toutes les données (price_per_ton, etc.)
+    final service = getIt<WeighingSlipService>();
+    _slipFuture = service.getSlipById(widget.slipId);
   }
   @override
   Widget build(BuildContext context) {
@@ -614,7 +611,6 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
       List<int> bytes;
 
       // Debug: Check what type of data we received
-      print('Response data type: ${response.data.runtimeType}');
 
       if (response.data is List<int>) {
         bytes = response.data as List<int>;
@@ -640,9 +636,6 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
         throw Exception(
             'Format de données PDF invalide: ${response.data.runtimeType}');
       }
-
-      print('Bytes length: ${bytes.length}');
-      print('First few bytes: ${bytes.take(10).toList()}');
 
       // Save the file using platform-specific implementation
       final result = await saveFile(bytes, filename);

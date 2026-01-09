@@ -92,6 +92,70 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
     }
   }
 
+  void _showDeleteConfirmDialog(WeighingSlip slip, WeighingSlipViewModel vm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.warning, size: 28),
+            SizedBox(width: 12),
+            Text('Confirmer la suppression'),
+          ],
+        ),
+        content: Text(
+          'Êtes-vous sûr de vouloir supprimer le bon ${slip.slipNumber ?? '#${slip.id}'} ?',
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              final ok = await vm.deleteSlip(slip.id);
+              if (!ok && mounted && vm.hasError) {
+                _showErrorDialog(vm.errorMessage ?? 'Erreur suppression');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.errorText,
+              foregroundColor: AppColors.white,
+            ),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error, color: AppColors.errorText, size: 28),
+            SizedBox(width: 12),
+            Text('Erreur'),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _statCard(String title, int count, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -323,12 +387,13 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       },
       onDelete: (e) {
         if (!isEmployee) {
-          vm.deleteSlip(e.id);
+          _showDeleteConfirmDialog(e, vm);
         }
       },
       isLoading: vm.isLoading,
-      hasError: vm.hasError,
-      errorMessage: vm.errorMessage,
+      // Errors are shown as popups; do not display inline table error
+      hasError: false,
+      errorMessage: null,
       emptyMessage: 'Aucun bon trouvé',
       total: vm.total,
       currentPage: vm.currentPage,

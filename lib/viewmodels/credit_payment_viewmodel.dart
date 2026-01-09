@@ -14,10 +14,16 @@ class CreditPaymentViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   List<WeighingSlip> _slipsWithCredit = [];
+  List<WeighingSlip> _allSlipsWithCredit = []; // Store all items before filtering
   List<Payment> _payments = [];
   int _currentPage = 1;
   int _totalPages = 1;
   int _totalRecords = 0;
+  
+  // Filters
+  String _searchQuery = '';
+  String? _dateFrom;
+  String? _dateTo;
 
   // Getters
   bool get isLoading => _isLoading;
@@ -27,13 +33,61 @@ class CreditPaymentViewModel extends ChangeNotifier {
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
   int get totalRecords => _totalRecords;
+  String get searchQuery => _searchQuery;
+  String? get dateFromFilter => _dateFrom;
+  String? get dateToFilter => _dateTo;
+
+  /// Apply local search filter across all fields
+  void _applySearchFilter() {
+    if (_allSlipsWithCredit.isEmpty) {
+      _slipsWithCredit = [];
+      return;
+    }
+    
+    if (_searchQuery.isEmpty) {
+      _slipsWithCredit = List.from(_allSlipsWithCredit);
+      return;
+    }
+    
+    final query = _searchQuery.toLowerCase();
+    _slipsWithCredit = _allSlipsWithCredit.where((slip) {
+      return (slip.slipNumber?.toLowerCase().contains(query) ?? false) ||
+             (slip.clientName?.toLowerCase().contains(query) ?? false) ||
+             (slip.materialName?.toLowerCase().contains(query) ?? false) ||
+             (slip.weightTons.toString().contains(query)) ||
+             (slip.totalAmount.toString().contains(query)) ||
+             ((slip.totalPaid ?? 0).toString().contains(query)) ||
+             ((slip.remainingCredit ?? 0).toString().contains(query));
+    }).toList();
+  }
+
+  /// Search slips with credit (local filtering)
+  void searchSlips(String query) {
+    _searchQuery = query;
+    _applySearchFilter();
+    notifyListeners();
+  }
+
+  /// Set date filters and reload from server
+  void filterByDateRange(String? from, String? to) {
+    _dateFrom = from;
+    _dateTo = to;
+    _currentPage = 1;
+    loadSlipsWithCredit();
+  }
+
+  /// Clear all filters
+  void clearFilters() {
+    _searchQuery = '';
+    _dateFrom = null;
+    _dateTo = null;
+    _currentPage = 1;
+    loadSlipsWithCredit();
+  }
 
   /// Load all weighing slips with remaining credit
   Future<void> loadSlipsWithCredit({
-    String? search,
     int? clientId,
-    String? dateFrom,
-    String? dateTo,
     int page = 1,
     int pageSize = 10,
   }) async {
@@ -43,15 +97,15 @@ class CreditPaymentViewModel extends ChangeNotifier {
 
     try {
       final response = await _paymentService.getSlipsWithCredit(
-        search: search,
         clientId: clientId,
-        dateFrom: dateFrom,
-        dateTo: dateTo,
+        dateFrom: _dateFrom,
+        dateTo: _dateTo,
         page: page,
         pageSize: pageSize,
       );
 
-      _slipsWithCredit = response.items.map((item) => WeighingSlip.fromJson(item)).toList();
+      _allSlipsWithCredit = response.items.map((item) => WeighingSlip.fromJson(item)).toList();
+      _applySearchFilter();
       _currentPage = response.page;
       _totalPages = (response.total / response.pageSize).ceil();
       _totalRecords = response.total;
@@ -59,6 +113,7 @@ class CreditPaymentViewModel extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       _slipsWithCredit = [];
+      _allSlipsWithCredit = [];
     } finally {
       _isLoading = false;
       notifyListeners();

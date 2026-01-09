@@ -29,6 +29,9 @@ class _CreditsContentState extends State<CreditsContent> {
     super.initState();
     _viewModel = getIt<CreditPaymentViewModel>();
     _viewModel!.loadSlipsWithCredit();
+    _searchController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -95,16 +98,14 @@ class _CreditsContentState extends State<CreditsContent> {
   }
 
   void _applyDateFilter() {
-    if (_startDate != null || _endDate != null) {
-      final dateFrom = _startDate != null ? DateFormat('yyyy-MM-dd').format(_startDate!) : null;
-      final dateTo = _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : null;
-      
-      _viewModel!.loadSlipsWithCredit(
-        search: _searchController.text.isEmpty ? null : _searchController.text,
-        dateFrom: dateFrom,
-        dateTo: dateTo,
-      );
-    }
+    final dateFrom = _startDate != null ? DateFormat('yyyy-MM-dd').format(_startDate!) : null;
+    final dateTo = _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : null;
+    
+    _viewModel!.filterByDateRange(dateFrom, dateTo);
+  }
+
+  void _onSearchChanged(String value) {
+    _viewModel!.searchSlips(value);
   }
 
   void _clearDateFilter() {
@@ -112,9 +113,8 @@ class _CreditsContentState extends State<CreditsContent> {
       _startDate = null;
       _endDate = null;
     });
-    _viewModel!.loadSlipsWithCredit(
-      search: _searchController.text.isEmpty ? null : _searchController.text,
-    );
+    _searchController.clear();
+    _viewModel!.clearFilters();
   }
 
   void _openPaymentPage(WeighingSlip slip) {
@@ -201,18 +201,26 @@ class _CreditsContentState extends State<CreditsContent> {
                     Expanded(
                       child: TextField(
                         controller: _searchController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'Rechercher...',
                           border: InputBorder.none,
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 20),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _viewModel!.searchSlips('');
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
                         ),
-                        onSubmitted: (value) {
-                          _applyDateFilter();
-                        },
+                        onChanged: _onSearchChanged,
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.refresh),
-                      onPressed: () => _viewModel!.loadSlipsWithCredit(),
+                      onPressed: () => _viewModel!.clearFilters(),
                     ),
                   ],
                 ),
@@ -259,13 +267,21 @@ class _CreditsContentState extends State<CreditsContent> {
                 flex: 3,
                 child: TextField(
                   controller: _searchController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Rechercher par numéro de bon ou client...',
                     border: InputBorder.none,
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () {
+                              _searchController.clear();
+                              _viewModel!.searchSlips('');
+                              setState(() {});
+                            },
+                          )
+                        : null,
                   ),
-                  onSubmitted: (value) {
-                    _applyDateFilter();
-                  },
+                  onChanged: _onSearchChanged,
                 ),
               ),
               const SizedBox(width: 16),
@@ -296,7 +312,15 @@ class _CreditsContentState extends State<CreditsContent> {
                 ),
               IconButton(
                 icon: const Icon(Icons.refresh),
-                onPressed: () => _viewModel!.loadSlipsWithCredit(),
+                tooltip: 'Actualiser',
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {
+                    _startDate = null;
+                    _endDate = null;
+                  });
+                  _viewModel!.clearFilters();
+                },
               ),
             ],
           );
@@ -367,12 +391,12 @@ class _CreditsContentState extends State<CreditsContent> {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.1),
+        color: AppColors.lightError.withOpacity(0.1),
         borderRadius: BorderRadius.circular(
           AppTheme.borderRadiusMedium,
         ),
         border: Border.all(
-          color: AppColors.warning,
+          color: AppColors.errorText,
           width: 2,
         ),
       ),
@@ -383,7 +407,7 @@ class _CreditsContentState extends State<CreditsContent> {
           const Text(
             'Crédit Total',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
               color: AppColors.grey600,
             ),
@@ -394,9 +418,9 @@ class _CreditsContentState extends State<CreditsContent> {
             child: Text(
               _currencyFormat.format(viewModel.totalCreditAmount),
               style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.warning,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: AppColors.errorText,
               ),
             ),
           ),
@@ -444,8 +468,8 @@ class _CreditsContentState extends State<CreditsContent> {
         value: (slip) => Text(
           _currencyFormat.format(slip.remainingCredit ?? 0),
           style: const TextStyle(
-            color: AppColors.warning,
-            fontWeight: FontWeight.bold,
+            color: AppColors.errorText,
+            fontWeight: FontWeight.w900,
           ),
         ),
         isWidget: true,

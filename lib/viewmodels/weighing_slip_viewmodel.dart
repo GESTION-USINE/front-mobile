@@ -98,34 +98,23 @@ class WeighingSlipViewModel extends BaseViewModel {
       return;
     }
     
-    // Start with all items
-    List<WeighingSlip> filtered = _allItems;
-    
-    // Apply payment type filter locally
-    if (_paymentType != null && _paymentType!.isNotEmpty) {
-      filtered = filtered.where((slip) {
-        final slipPaymentType = slip.paymentType?.toLowerCase() ?? '';
-        return slipPaymentType == _paymentType!.toLowerCase();
-      }).toList();
+    if (_searchQuery == null || _searchQuery!.isEmpty) {
+      _items = _allItems;
+      return;
     }
     
-    // Apply search query filter
-    if (_searchQuery != null && _searchQuery!.isNotEmpty) {
-      final query = _searchQuery!.toLowerCase();
-      filtered = filtered.where((slip) {
-        return (slip.slipNumber?.toLowerCase().contains(query) ?? false) ||
-               (slip.clientName?.toLowerCase().contains(query) ?? false) ||
-               (slip.materialName?.toLowerCase().contains(query) ?? false) ||
-               (slip.weightTons.toString().contains(query)) ||
-               (slip.totalAmount.toString().contains(query)) ||
-               ((slip.totalPaid ?? 0).toString().contains(query)) ||
-               ((slip.remainingCredit ?? 0).toString().contains(query)) ||
-               ((slip.paymentType ?? '').toLowerCase().contains(query)) ||
-               ((slip.isFullyPaid ? 'Payé' : 'Crédit').toLowerCase().contains(query));
-      }).toList();
-    }
-    
-    _items = filtered;
+    final query = _searchQuery!.toLowerCase();
+    _items = _allItems.where((slip) {
+      return (slip.slipNumber?.toLowerCase().contains(query) ?? false) ||
+             (slip.clientName?.toLowerCase().contains(query) ?? false) ||
+             (slip.materialName?.toLowerCase().contains(query) ?? false) ||
+             (slip.weightTons.toString().contains(query)) ||
+             (slip.totalAmount.toString().contains(query)) ||
+             ((slip.totalPaid ?? 0).toString().contains(query)) ||
+             ((slip.remainingCredit ?? 0).toString().contains(query)) ||
+             ((slip.paymentType ?? '').toLowerCase().contains(query)) ||
+             ((slip.isFullyPaid ? 'Payé' : 'Crédit').toLowerCase().contains(query));
+    }).toList();
   }
 
   void searchSlips(String query) { 
@@ -138,11 +127,7 @@ class WeighingSlipViewModel extends BaseViewModel {
   void filterByDateRange(String? from, String? to) { _dateFrom = from; _dateTo = to; _currentPage = 1; loadSlips(); }
   void filterByInvoiced(bool? invoiced) { _isInvoiced = invoiced; _currentPage = 1; loadSlips(); }
   void filterByFullyPaid(bool? paid) { _isFullyPaid = paid; _currentPage = 1; loadSlips(); }
-  void filterByPaymentType(String? type) { 
-    _paymentType = (type == null || type.isEmpty) ? null : type; 
-    _applySearchFilter();
-    notifyListeners();
-  }
+  void filterByPaymentType(String? type) { _paymentType = type; _currentPage = 1; loadSlips(); }
   void changeSorting(String sortBy, String sortOrder) { _sortBy = sortBy; _sortOrder = sortOrder; _currentPage = 1; loadSlips(); }
 
   void resetFilters() {

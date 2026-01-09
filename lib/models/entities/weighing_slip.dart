@@ -38,6 +38,15 @@ class WeighingSlip {
   });
 
   factory WeighingSlip.fromJson(Map<String, dynamic> json) {
+    final weightTons = ((json['weight_tons'] as num?) ?? 0).toDouble();
+    final totalAmount = ((json['total_amount'] as num?) ?? 0).toDouble();
+    double pricePerTon = ((json['price_per_ton'] as num?) ?? 0).toDouble();
+    
+    // Calculer price_per_ton si non fourni mais qu'on a weight et total
+    if (pricePerTon == 0 && weightTons > 0 && totalAmount > 0) {
+      pricePerTon = totalAmount / weightTons;
+    }
+    
     return WeighingSlip(
       id: json['id'] as int,
       slipNumber: json['slip_number'] as String?,
@@ -45,9 +54,9 @@ class WeighingSlip {
       clientName: json['client'] != null ? json['client']['name'] as String? : null,
       materialId: (json['material_id'] as int?) ?? (json['material']?['id'] as int),
       materialName: json['material'] != null ? json['material']['name'] as String? : null,
-      weightTons: ((json['weight_tons'] as num?) ?? 0).toDouble(),
-      pricePerTon: ((json['price_per_ton'] as num?) ?? 0).toDouble(),
-      totalAmount: ((json['total_amount'] as num?) ?? 0).toDouble(),
+      weightTons: weightTons,
+      pricePerTon: pricePerTon,
+      totalAmount: totalAmount,
       invoiceId: json['invoice_id'] as int?,
       totalPaid: (json['credit_info']?['total_paid'] as num?)?.toDouble(),
       remainingCredit: (json['credit_info']?['remaining_credit'] as num?)?.toDouble(),

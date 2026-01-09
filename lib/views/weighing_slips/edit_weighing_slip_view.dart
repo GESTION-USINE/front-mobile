@@ -216,8 +216,6 @@ class _EditWeighingSlipViewState extends State<EditWeighingSlipView> {
                               _buildMaterialDropdown(),
                               const SizedBox(height: 16),
                               _buildWeightField(),
-                              const SizedBox(height: 16),
-                              _buildTotalAmountDisplay(),
                               const SizedBox(height: 32),
 
                               Align(
@@ -380,31 +378,5 @@ class _EditWeighingSlipViewState extends State<EditWeighingSlipView> {
     );
   }
 
-  Widget _buildTotalAmountDisplay() {
-    final total = _calculateTotalAmount();
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.industrialPrimary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.industrialPrimary.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.calculate, color: AppColors.industrialPrimary),
-              SizedBox(width: 8),
-              Text('Montant Total', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.industrialText)),
-            ],
-          ),
-          Text(
-            total == null ? '-' : '${total.toStringAsFixed(2)} DZD',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.industrialPrimary),
-          ),
-        ],
-      ),
-    );
-  }
+
 }
