@@ -6,6 +6,7 @@ class UpdateClientRequest {
   final bool? canPayByCheck;
   final bool? isActive;
   final String? notes;
+  final num? creditLimit;
 
   UpdateClientRequest({
     this.name,
@@ -14,6 +15,7 @@ class UpdateClientRequest {
     this.canPayByCheck,
     this.isActive,
     this.notes,
+    this.creditLimit,
   });
 
   /// Convertir en JSON pour l'API
@@ -27,6 +29,7 @@ class UpdateClientRequest {
     if (canPayByCheck != null) data['can_pay_by_check'] = canPayByCheck;
     if (isActive != null) data['is_active'] = isActive;
     if (notes != null) data['notes'] = notes;
+    if (creditLimit != null) data['credit_limit'] = creditLimit;
     
     return data;
   }

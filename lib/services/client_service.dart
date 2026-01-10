@@ -52,8 +52,6 @@ class ClientService {
         ApiEndpoints.all_clients,
         queryParameters: queryParams,
       );
-
-      
       return ClientsResponse.fromJson(response.data);
     } on DioException {
       rethrow;

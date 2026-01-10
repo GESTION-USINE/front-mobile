@@ -303,6 +303,10 @@ class _ClientsContentState extends State<ClientsContent> {
         },
       ),
       DataTableColumn<dynamic>(
+        label: 'Credit Limite',
+        value: (client) => client?.creditLimit ?? '-',
+      ),
+      DataTableColumn<dynamic>(
         label: ' Chèque',
         isWidget: true,
         value: (client) {

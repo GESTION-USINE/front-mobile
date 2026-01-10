@@ -32,6 +32,7 @@ class _EditClientViewState extends State<EditClientView> {
   late final TextEditingController _phoneController;
   late final TextEditingController _emailController;
   late final TextEditingController _notesController;
+  late final TextEditingController _creditLimitController;
 
   late bool _canPayByCheck;
   late bool _isActive;
@@ -50,6 +51,7 @@ class _EditClientViewState extends State<EditClientView> {
     _notesController = TextEditingController(text: widget.initialClient.notes ?? '');
     _canPayByCheck = widget.initialClient.canPayByCheck;
     _isActive = widget.initialClient.isActive;
+    _creditLimitController = TextEditingController(text: widget.initialClient.creditLimit ?? '0');
   }
 
   @override
@@ -58,6 +60,7 @@ class _EditClientViewState extends State<EditClientView> {
     _phoneController.dispose();
     _emailController.dispose();
     _notesController.dispose();
+    _creditLimitController.dispose();
     super.dispose();
   }
 
@@ -149,6 +152,26 @@ class _EditClientViewState extends State<EditClientView> {
                             if (value == null || value.trim().isEmpty) {
                               return 'Le nom est requis';
                             }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Limite de crédit
+                        const Text('Limite de crédit', style: AppTheme.fieldLabel),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _creditLimitController,
+                          style: const TextStyle(color: AppColors.industrialText),
+                          decoration: AppTheme.industrialInputDecoration(
+                            hint: '0.00',
+                            prefixIcon: Icons.monetization_on,
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) return null;
+                            final v = double.tryParse(value.replaceAll(',', '.'));
+                            if (v == null) return 'Valeur numérique invalide';
                             return null;
                           },
                         ),
@@ -427,6 +450,9 @@ class _EditClientViewState extends State<EditClientView> {
           : false,
       isActive: _isActive,
       notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      creditLimit: _creditLimitController.text.trim().isEmpty
+        ? null
+        : double.tryParse(_creditLimitController.text.replaceAll(',', '.')),
     );
 
     final success = await _viewModel.updateClient(widget.clientId, request);

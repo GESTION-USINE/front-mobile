@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_mvvm_template/core/base/base_viewmodel.dart';
 
 import '../models/entities/client.dart';
@@ -235,18 +236,59 @@ class ClientViewModel extends BaseViewModel {
 
   /// Met à jour un client existant
   Future<bool> updateClient(int clientId, UpdateClientRequest request) async {
-    final result = await runAsync(() async {
-      return await _clientService.updateClient(clientId, request);
-    });
-
-    if (result != null) {
-      // Nettoyer le cache après mise à jour
+    setLoading();
+    try {
+      final updated = await _clientService.updateClient(clientId, request);
+      // On a réussi
       clearAllCache();
-      // Recharger la liste après mise à jour
       await loadClients(refresh: true);
+      setSuccess();
       return true;
+    } on DioException catch (e) {
+      // Parser erreur structurée du backend si présente
+      String message = 'Une erreur est survenue';
+      if (e.error is Map<String, dynamic>) {
+        final err = e.error as Map<String, dynamic>;
+        final code = err['code'] ?? '';
+        final details = err['details'] as Map<String, dynamic>? ?? {};
+        switch (code) {
+          case 'CLIENT_CREDIT_LIMIT_TOO_SMALL':
+            final proposed = details['credit_limit'] ?? 0;
+            final current = details['current_total_remaining_credit'] ?? 0;
+            final deficit = details['deficit'] ?? 0;
+            message = 'La limite de crédit ne peut pas être inférieure au crédit existant\n\n'
+                'Limite proposée: ${proposed.toStringAsFixed(2)} DZD\n'
+                'Crédit restant actuel: ${current.toStringAsFixed(2)} DZD\n'
+                'Déficit: ${deficit.toStringAsFixed(2)} DZD';
+            break;
+          default:
+            message = err['message'] ?? message;
+        }
+      } else if (e.response?.data != null) {
+        final resp = e.response!.data;
+        if (resp is Map<String, dynamic> && resp['error'] != null) {
+          final err = resp['error'] as Map<String, dynamic>;
+          final code = err['code'] ?? '';
+          final details = err['details'] as Map<String, dynamic>? ?? {};
+          if (code == 'CLIENT_CREDIT_LIMIT_TOO_SMALL') {
+            final proposed = details['credit_limit'] ?? 0;
+            final current = details['current_total_remaining_credit'] ?? 0;
+            final deficit = details['deficit'] ?? 0;
+            message = 'La limite de crédit ne peut pas être inférieure au crédit existant\n\n'
+                'Limite proposée: ${proposed.toStringAsFixed(2)} DZD\n'
+                'Crédit restant actuel: ${current.toStringAsFixed(2)} DZD\n'
+                'Déficit: ${deficit.toStringAsFixed(2)} DZD';
+          } else {
+            message = err['message'] ?? message;
+          }
+        }
+      }
+      setError(message);
+      return false;
+    } catch (e) {
+      setError('Une erreur inattendue est survenue');
+      return false;
     }
-    return false;
   }
 
   /// Rafraîchir la liste

@@ -11,6 +11,7 @@ class Client {
   final bool isActive;
   final String? notes;
   final double credit;
+  final String? creditLimit;
   final int createdBy;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -27,12 +28,26 @@ class Client {
     required this.isActive,
     this.notes,
     this.credit = 0.0,
+    this.creditLimit ,
     required this.createdBy,
     required this.createdAt,
     this.updatedAt,
   });
 
   factory Client.fromJson(Map<String, dynamic> json) {
+    // creditLimit can be a number or a string from the API
+    final creditLimitRaw = json['credit_limit'];
+    final String creditLimitValue;
+    
+    if (creditLimitRaw == null) {
+      creditLimitValue = '0';
+    } else if (creditLimitRaw is num) {
+      creditLimitValue = creditLimitRaw.toString();
+    } else if (creditLimitRaw is String) {
+      creditLimitValue = creditLimitRaw.isNotEmpty ? creditLimitRaw : '0';
+    } else {
+      creditLimitValue = '0';
+    }
     return Client(
       id: json['id'] as int,
       name: (json['name'] as String?) ?? '',
@@ -45,6 +60,7 @@ class Client {
       isActive: (json['is_active'] as bool?) ?? true,
       notes: json['notes'] as String?,
       credit: (json['credit'] as num?)?.toDouble() ?? 0.0,
+      creditLimit: creditLimitValue,
       createdBy: (json['created_by'] as int?) ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] != null
