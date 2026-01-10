@@ -56,7 +56,9 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
                 _buildFilters(vm),
                 const SizedBox(height: 12),
 
-                     _buildStats(vm),
+                    _buildStats(vm),
+                    const SizedBox(height: 12),
+                    _buildPaymentsSum(vm),
     const SizedBox(height: 12),
                 _buildTable(vm, isEmployee),
               ],
@@ -76,6 +78,28 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
         _statCard('Bons avec crédit :', vm.todayCreditCount, Icons.credit_card),
         _statCard('Bons payés :', vm.todayPaidCount, Icons.payments_outlined),
       ],
+    );
+  }
+
+  Widget _buildPaymentsSum(WeighingSlipViewModel vm) {
+    final double sumPayments = vm.items.fold<double>(0.0, (prev, e) => prev + (e.paymentAmount ?? 0.0));
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [BoxShadow(color: AppColors.shadowColor, blurRadius: 6)],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.attach_money, color: AppColors.industrialPrimary),
+          const SizedBox(width: 8),
+          const Text('Total payé par les clients pour premier paiement :', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600 ,color: AppColors.industrialText)),
+          const SizedBox(width: 16),
+          Text(sumPayments.toStringAsFixed(2) + ' DA', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 

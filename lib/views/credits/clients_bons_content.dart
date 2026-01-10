@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_template/views/credits/payment_details_page.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
@@ -51,6 +52,14 @@ class _ClientsBonsContentState extends State<ClientsBonsContent> {
     super.dispose();
   }
 
+  void _openPaymentDetails(SlipDetail slip) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PaymentDetailsPage(weighingSlipId: slip.id),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_viewModel == null) {
@@ -70,13 +79,6 @@ class _ClientsBonsContentState extends State<ClientsBonsContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Bons Clients', style: AppTheme.headingLarge),
-                      Text(
-                        'Liste des clients avec leurs bons de pesée et crédits',
-                        style: AppTheme.subtitleMedium
-                            .copyWith(color: AppColors.grey600),
-                      ),
-                      const SizedBox(height: 16),
                       _buildSummaryCard(viewModel),
                       const SizedBox(height: 16),
                       _buildSearchAndFilterBar(),
@@ -870,7 +872,7 @@ class _ClientsBonsContentState extends State<ClientsBonsContent> {
       items: slips,
       columns: columns,
       emptyMessage: 'Aucun bon pour ce client',
-      onRowTap: (s) => _openSlipDetailsById(s.id),
+      onRowTap: (s) => _openPaymentDetails(s),
       trailingBuilder: (s) {
         final canPay = !s.isFullyPaid && s.remainingCredit > 0;
         return ElevatedButton.icon(
