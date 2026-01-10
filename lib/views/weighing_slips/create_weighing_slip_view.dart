@@ -470,6 +470,21 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
                 'Montant demandé: ${requestedAmount.toStringAsFixed(2)} DZD';
             break;
           
+          case 'CLIENT_CREDIT_LIMIT_EXCEEDED':
+            final clientCreditLimit = details['credit_limit'] ?? 0;
+            final currentTotalCredit = details['current_total_remaining_credit'] ?? 0;
+            final requestedCredit = details['requested_credit'] ?? 0;
+            final totalAfter = details['total_credit_after'] ?? 0;
+            final excess = details['excess_amount'] ?? 0;
+            errorMessage = 'Limite de crédit client dépassée!\n\n'
+                'Crédit actuel du client: ${currentTotalCredit.toStringAsFixed(2)} DZD\n'
+                'Crédit demandé pour ce bon: ${requestedCredit.toStringAsFixed(2)} DZD\n'
+                'Total après: ${totalAfter.toStringAsFixed(2)} DZD\n'
+                'Limite autorisée: ${clientCreditLimit.toStringAsFixed(2)} DZD\n'
+                'Dépassement: ${excess.toStringAsFixed(2)} DZD\n\n'
+                'Veuillez réduire le crédit ou demander une augmentation de limite.';
+            break;
+          
           case 'CLIENT_NOT_FOUND':
             errorMessage = 'Client introuvable';
             break;
@@ -604,10 +619,11 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmer le paiement'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -909,6 +925,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
               ),
             ),
           ],
+        ),
         ),
         actions: [
           TextButton(

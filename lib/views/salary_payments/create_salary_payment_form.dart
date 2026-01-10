@@ -33,12 +33,34 @@ class _CreateSalaryPaymentFormState extends State<CreateSalaryPaymentForm> {
 
   DateTime? _selectedPaymentMonth;
   DateTime? _selectedPaymentDate;
-  final _dateFormat = DateFormat('yyyy-MM-dd');
+  final _dateFormat = DateFormat('yyyy-MM');
+  final _monthDisplayFormat = DateFormat('MM/yyyy');
+
+  String _formatMonthSafe(DateTime? date) {
+    if (date == null) return 'Sélectionner un mois';
+    try {
+      return _monthDisplayFormat.format(date);
+    } catch (_) {
+      return '${date.month.toString().padLeft(2, '0')}/${date.year}';
+    }
+  }
+
+  String _formatDateSafe(DateTime? date) {
+    if (date == null) return 'Sélectionner une date';
+    try {
+      // Use a readable display format for the payment date
+      return DateFormat('dd/MM/yyyy').format(date);
+    } catch (_) {
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _selectedPaymentDate = DateTime.now();
+    // Prefill amount with worker's monthly salary
+    _amountController.text = widget.worker.monthlySalary.toStringAsFixed(2);
   }
 
   @override
@@ -49,25 +71,81 @@ class _CreateSalaryPaymentFormState extends State<CreateSalaryPaymentForm> {
   }
 
   Future<void> _selectPaymentMonth() async {
-    final DateTime? picked = await showDatePicker(
+    // Show a simple month/year picker dialog
+    final now = DateTime.now();
+    int initialYear = _selectedPaymentMonth?.year ?? now.year;
+    int initialMonth = _selectedPaymentMonth?.month ?? now.month;
+
+    final picked = await showDialog<DateTime>(
       context: context,
-      initialDate: _selectedPaymentMonth ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.industrialPrimary,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.industrialText,
-            ),
+      builder: (context) {
+        int tmpYear = initialYear;
+        int tmpMonth = initialMonth;
+        return AlertDialog(
+          title: const Text('Sélectionner le mois et l\'année'),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              return SizedBox(
+                width: 300,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButton<int>(
+                            value: tmpMonth,
+                            isExpanded: true,
+                            items: List.generate(12, (i) => i + 1)
+                                .map((m) => DropdownMenuItem(
+                                      value: m,
+                                      child: Text(m.toString().padLeft(2, '0')),
+                                    ))
+                                .toList(),
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() => tmpMonth = v);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: DropdownButton<int>(
+                            value: tmpYear,
+                            isExpanded: true,
+                            items: List.generate(21, (i) => now.year - 10 + i)
+                                .map((y) => DropdownMenuItem(
+                                      value: y,
+                                      child: Text(y.toString()),
+                                    ))
+                                .toList(),
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() => tmpYear = v);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
-          child: child!,
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(DateTime(tmpYear, tmpMonth, 1)),
+              child: const Text('OK'),
+            ),
+          ],
         );
       },
     );
+
     if (picked != null) {
       setState(() {
         _selectedPaymentMonth = picked;
@@ -164,7 +242,8 @@ class _CreateSalaryPaymentFormState extends State<CreateSalaryPaymentForm> {
 
   void _resetForm() {
     _formKey.currentState?.reset();
-    _amountController.clear();
+    // reset amount to worker's salary
+    _amountController.text = widget.worker.monthlySalary.toStringAsFixed(2);
     _notesController.clear();
     setState(() {
       _selectedPaymentMonth = null;
@@ -219,9 +298,7 @@ class _CreateSalaryPaymentFormState extends State<CreateSalaryPaymentForm> {
                         hint: 'Mois de paiement *',
                         prefixIcon: Icons.calendar_month,
                       ).copyWith(
-                        hintText: _selectedPaymentMonth != null
-                            ? _dateFormat.format(_selectedPaymentMonth!)
-                            : 'Sélectionner un mois',
+                        hintText: _formatMonthSafe(_selectedPaymentMonth),
                       ),
                       onTap: _selectPaymentMonth,
                       validator: (value) {
@@ -265,9 +342,7 @@ class _CreateSalaryPaymentFormState extends State<CreateSalaryPaymentForm> {
                         hint: 'Date de paiement *',
                         prefixIcon: Icons.calendar_today,
                       ).copyWith(
-                        hintText: _selectedPaymentDate != null
-                            ? _dateFormat.format(_selectedPaymentDate!)
-                            : 'Sélectionner une date',
+                        hintText: _formatDateSafe(_selectedPaymentDate),
                       ),
                       onTap: _selectPaymentDate,
                       validator: (value) {

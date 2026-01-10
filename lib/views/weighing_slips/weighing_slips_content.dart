@@ -79,8 +79,8 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
     );
   }
 
-  String _formatPaymentType(String? type) {
-    if (type == null || type.isEmpty) return '-';
+  String _formatPaymentType(String? type) {  
+    if (type == null || type.isEmpty) return 'Espèces';
     switch (type.toLowerCase()) {
       case 'cash':
         return 'Espèces';

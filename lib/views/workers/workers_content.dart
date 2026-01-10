@@ -232,7 +232,7 @@ class _WorkersContentState extends State<WorkersContent> {
       showActions: true,
       showEditAction: true,
       showDeleteAction: false,
-      showCustomActionButton: true,
+      showCustomActionButton: false,
       customActionIcon: Icons.payments,
       customActionTooltip: 'Paiements',
       onEdit: (worker) {

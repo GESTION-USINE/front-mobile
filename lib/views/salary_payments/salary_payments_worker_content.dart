@@ -117,7 +117,6 @@ class _SalaryPaymentsWorkerContentState
       _dateToFilter = null;
       _paymentMonthController.clear();
     });
-    widget.viewModel.resetFilters();
   }
 
   void _handleEdit(SalaryPayment payment) {

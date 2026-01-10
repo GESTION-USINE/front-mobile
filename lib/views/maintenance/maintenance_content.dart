@@ -240,7 +240,7 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
 
   Widget _buildTotalCostCard(MaintenanceViewModel viewModel) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: AppColors.industrialPrimary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
@@ -262,7 +262,7 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
                 'Coût total',
                 style: TextStyle(
                   color: AppColors.industrialTextLight,
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -277,12 +277,12 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
               ),
             ],
           ),
-          const SizedBox(width: 24),
+          const SizedBox(width: 18),
           Text(
             '${viewModel.total} dépense${viewModel.total > 1 ? 's' : ''}',
             style: const TextStyle(
               color: AppColors.industrialTextLight,
-              fontSize: 14,
+              fontSize: 10,
             ),
           ),
         ],

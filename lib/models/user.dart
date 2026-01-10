@@ -35,14 +35,16 @@ class User {
       username: json['username'] as String,
       email: json['email'] as String?,
       phone: json['phone'] as String?,
-      role: json['role'] as String,
+      role: json['role'] as String? ?? 'employe',
       isActive: json['is_active'] as bool? ?? true,
       canModifyInvoices: json['can_modify_invoices'] as bool? ?? false,
       canAccessFullTraceability: json['can_access_full_traceability'] as bool? ?? false,
       canAccessRemotely: json['can_access_remotely'] as bool? ?? false,
       creditLimit: (json['credit_limit'] as num?)?.toDouble() ?? 0.0,
       currentCreditUsed: (json['current_credit_used'] as num?)?.toDouble() ?? 0.0,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'] as String) 
+          : DateTime.now(),
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at'] as String) : null,
     );
   }

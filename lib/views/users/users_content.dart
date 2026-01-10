@@ -8,6 +8,7 @@ import '../../routes/app_router.dart';
 import '../../di/injection_container.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../widgets/generic_data_table.dart';
+import '../../models/user.dart';
 
 /// Contenu de la liste des utilisateurs (sans wrapper)
 class UsersContent extends StatefulWidget {
@@ -251,10 +252,6 @@ class _UsersContentState extends State<UsersContent> {
         value: (user) => user?.username ?? '-',
       ),
       DataTableColumn<dynamic>(
-        label: 'Email',
-        value: (user) => user?.email ?? '-',
-      ),
-      DataTableColumn<dynamic>(
         label: 'Téléphone',
         value: (user) => user?.phone ?? '-',
       ),
@@ -287,12 +284,14 @@ class _UsersContentState extends State<UsersContent> {
       columns: columnsToDisplay,
       showActions: true,
       showEditAction: true,
-      showDeleteAction: false,
+      showDeleteAction: true,
+      deleteLabel: 'Désactiver',
+      deleteIcon: Icons.block,
       onEdit: (user) {
         context.go('/users/${user.id}/edit', extra: user);
       },
       onDelete: (user) {
-        // Delete action disabled
+        _confirmDeactivate(user as User, viewModel);
       },
       isLoading: viewModel.isLoading,
       hasError: viewModel.hasError,
@@ -310,6 +309,71 @@ class _UsersContentState extends State<UsersContent> {
       enableCustomWindow: false,
       showCustomActionButton: false,
     );
+  }
+
+  Future<void> _confirmDeactivate(User user, UserViewModel viewModel) async {
+    if (!mounted) return;
+
+    if (!user.isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Utilisateur déjà désactivé'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Désactiver l\'utilisateur ?'),
+        content: Text(
+            'Utilisateur : ${user.username}\nCette action bloque les accès de cet utilisateur.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: AppTheme.industrialPrimaryButton,
+            child: const Text('Désactiver'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    viewModel.clearError();
+    await viewModel.deactivateUser(user.id);
+
+    if (!mounted) return;
+
+    if (viewModel.isSuccess) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Utilisateur désactivé avec succès'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      await viewModel.loadUsers(refresh: true);
+    } else if (viewModel.hasError) {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Désactivation impossible'),
+          content: Text(viewModel.errorMessage ?? 'Erreur inconnue'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }
 

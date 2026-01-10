@@ -91,7 +91,6 @@ class WeighingSlipService {
     try {
       final response = await _apiClient.get(ApiEndpoints.weighingSlipById(id));
       final data = response.data['data'] as Map<String, dynamic>;
-      print( WeighingSlip.fromJson(data));
       return WeighingSlip.fromJson(data);
     } on DioException {
       rethrow;

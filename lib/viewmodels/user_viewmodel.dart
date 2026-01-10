@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_mvvm_template/core/base/base_viewmodel.dart';
 
 import '../models/user.dart';
@@ -183,14 +184,19 @@ class UserViewModel extends BaseViewModel {
   /// Update user
   Future<void> updateUser(int userId, UpdateUserRequest request) async {
     _updateRequest = request;
+    debugPrint('=== UPDATE USER START ===');
+    debugPrint('Request: ${request.toJson()}');
     await runAsync(() async {
       final updatedUser = await _userService.updateUser(userId, request);
+      debugPrint('Update successful: ${updatedUser.id}');
       _selectedUser = updatedUser;
-      // Nettoyer le cache après mise à jour
+      // Nettoyer le cache après mise à jour - la liste sera rechargée automatiquement
+      // quand on navigue vers /users
       clearAllCache();
-      // Reload users list to reflect the update
-      await loadUsers(refresh: true);
     });
+    debugPrint('=== UPDATE USER END === State: $state, Error: $errorMessage');
+    // Don't call loadUsers here - it would overwrite the success state
+    // The cache is cleared so the list will be refreshed when navigating to /users
   }
 
   /// Deactivate user

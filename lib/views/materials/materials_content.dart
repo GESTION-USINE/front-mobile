@@ -257,10 +257,6 @@ class _MaterialsContentState extends State<MaterialsContent> {
         },
       ),
       DataTableColumn<dynamic>(
-        label: 'Description',
-        value: (material) => material?.description ?? '-',
-      ),
-      DataTableColumn<dynamic>(
         label: 'Statut',
         value: (material) => (material?.isActive ?? false) ? 'Actif' : 'Inactif',
       ),

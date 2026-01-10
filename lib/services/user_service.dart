@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/network/api_client.dart';
 import '../models/user.dart';
@@ -69,14 +70,23 @@ class UserService {
   /// Update user
   Future<User> updateUser(int userId, UpdateUserRequest request) async {
     try {
+      debugPrint('=== SERVICE updateUser ===');
+      debugPrint('URL: /users/$userId');
+      debugPrint('Data: ${request.toJson()}');
       final response = await _apiClient.patch(
         '/users/$userId',
         data: request.toJson(),
       );
+      debugPrint('Response: ${response.data}');
 
       final data = response.data['data'] as Map<String, dynamic>;
       return User.fromJson(data);
-    } on DioException {
+    } on DioException catch (e) {
+      debugPrint('DioException: ${e.message}');
+      debugPrint('Response data: ${e.response?.data}');
+      rethrow;
+    } catch (e) {
+      debugPrint('Other exception: $e');
       rethrow;
     }
   }

@@ -425,6 +425,8 @@ class _EditUserViewState extends State<EditUserView> {
 
   Future<void> _updateUser() async {
     if (!_formKey.currentState!.validate()) return;
+    // Clear any previous error state so stale errors don't block navigation
+    _viewModel.clearError();
 
     final request = UpdateUserRequest(
       email: _emailController.text.trim().isEmpty
@@ -441,7 +443,7 @@ class _EditUserViewState extends State<EditUserView> {
 
     await _viewModel.updateUser(widget.userId, request);
 
-    if (!_viewModel.hasError && mounted) {
+    if (_viewModel.isSuccess && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Utilisateur mis à jour avec succès'),
