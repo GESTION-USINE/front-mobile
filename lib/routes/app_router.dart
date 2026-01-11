@@ -358,12 +358,12 @@ class AppRouter {
               ),
             ),
            
-           GoRoute(
-              path: clientsCredit,
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: ClientCreditContent(),
-              ),
-            ),
+          //  GoRoute(
+          //     path: clientsCredit,
+          //     pageBuilder: (context, state) => const NoTransitionPage(
+          //       child: ClientCreditContent(),
+          //     ),
+          //   ),
 
            GoRoute(
             path: maintenance,
