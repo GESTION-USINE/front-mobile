@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_template/views/credits/payment_details_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'dart:convert' show base64Decode;
@@ -34,7 +35,7 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
   late Future<WeighingSlip> _slipFuture;
 
   String _formatPaymentType(String? type) {
-    if (type == null || type.isEmpty) return '-';
+    if (type == null || type.isEmpty) return 'Espèces';
     switch (type.toLowerCase()) {
       case 'cash':
         return 'Espèces';
@@ -44,6 +45,14 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
       default:
         return type;
     }
+  }
+
+  void _openPaymentDetails(WeighingSlip slip) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PaymentDetailsPage(weighingSlipId: slip.id),
+      ),
+    );
   }
 
   @override
@@ -130,7 +139,8 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                 ),
             ],
           ),
-          body: Center(
+          body: Align(
+            alignment: Alignment.topCenter,
             child: Container(
               constraints: const BoxConstraints(maxWidth: 800),
               margin: const EdgeInsets.all(16),
@@ -145,8 +155,10 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                   ),
                 ],
               ),
-              child: Column(
-                children: [
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                   // Header
                   Container(
                     padding: const EdgeInsets.all(24),
@@ -213,12 +225,12 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                   ),
 
                   // Body
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                           // Client Info
                           Row(
                             children: [
@@ -399,7 +411,7 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                             ),
                           ),
 
-                          const Spacer(),
+                          const SizedBox(height: 24),
 
                           // Total Section
                           Row(
@@ -529,47 +541,50 @@ class _WeighingSlipDetailViewState extends State<WeighingSlipDetailView> {
                         ],
                       ),
                     ),
-                  ),
 
-                  // Footer
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: const BoxDecoration(
-                      color: AppColors.grey100,
-                      border: Border(
-                        top: BorderSide(color: AppColors.grey300),
+                    // Footer
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: const BoxDecoration(
+                        color: AppColors.grey100,
+                        border: Border(
+                          top: BorderSide(color: AppColors.grey300),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          if (slip.invoiceId != null)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  const Text(
+                                    'Facture N°',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.grey600,
+                                    ),
+                                  ),
+                                  Text(
+                                    slip.invoiceId.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.industrialText,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (slip.invoiceId != null)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              const Text(
-                                'Facture N°',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.grey600,
-                                ),
-                              ),
-                              Text(
-                                slip.invoiceId.toString(),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.industrialText,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+          ),
           ),
         );
       },
