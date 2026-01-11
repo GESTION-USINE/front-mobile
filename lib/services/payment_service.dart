@@ -6,6 +6,7 @@ import '../models/request/create_payment_request.dart';
 import '../models/response/payment_response.dart';
 import '../models/response/payment_details_response.dart';
 import '../models/response/weighing_slips_response.dart';
+import '../models/response/credits_payments_response.dart';
 
 class PaymentService {
   final ApiClient _apiClient;
@@ -78,6 +79,21 @@ class PaymentService {
         '${ApiEndpoints.payments}/weighing-slips/$weighingSlipId',
       );
       return PaymentDetailsResponse.fromJson(response.data);
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  /// Get daily credits payments (encaissements), filterable by date (YYYY-MM-DD)
+  Future<CreditsPaymentsResponse> getCreditsPayments({String? date}) async {
+    try {
+      final response = await _apiClient.get(
+        ApiEndpoints.creditsPayments,
+        queryParameters: {
+          if (date != null) 'date': date,
+        },
+      );
+      return CreditsPaymentsResponse.fromJson(response.data);
     } on DioException {
       rethrow;
     }

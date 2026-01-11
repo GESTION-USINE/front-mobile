@@ -34,29 +34,29 @@ class _ProfileViewState extends State<ProfileView> {
       value: _viewModel,
       child: Scaffold(
         backgroundColor: AppColors.industrialBackground,
-        appBar: AppBar(
-          backgroundColor: AppColors.white,
-          elevation: 2,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.industrialPrimary),
-            onPressed: () => context.go('/dashboard'),
-          ),
-          title: const Text(
-            'Mon Profil',
-            style: TextStyle(
-              color: AppColors.industrialPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
-              onPressed: _loadProfile,
-              tooltip: 'Actualiser',
-            ),
-            const SizedBox(width: 16),
-          ],
-        ),
+        // appBar: AppBar(
+        //   backgroundColor: AppColors.white,
+        //   elevation: 2,
+        //   leading: IconButton(
+        //     icon: const Icon(Icons.arrow_back, color: AppColors.industrialPrimary),
+        //     onPressed: () => context.go('/dashboard'),
+        //   ),
+        //   title: const Text(
+        //     'Mon Profil',
+        //     style: TextStyle(
+        //       color: AppColors.industrialPrimary,
+        //       fontWeight: FontWeight.bold,
+        //     ),
+        //   ),
+        //   actions: [
+        //     IconButton(
+        //       icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),
+        //       onPressed: _loadProfile,
+        //       tooltip: 'Actualiser',
+        //     ),
+        //     const SizedBox(width: 16),
+        //   ],
+        // ),
         body: Consumer<ProfileViewModel>(
           builder: (context, viewModel, child) {
             if (viewModel.isLoading) {

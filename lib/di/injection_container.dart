@@ -27,6 +27,7 @@ import '../viewmodels/weighing_slip_viewmodel.dart';
 import '../viewmodels/maintenance_viewmodel.dart';
 import '../viewmodels/worker_viewmodel.dart';
 import '../viewmodels/credit_payment_viewmodel.dart';
+import '../viewmodels/credits_payments_viewmodel.dart';
 import '../viewmodels/salary_payement_viewmodel.dart';
 import '../viewmodels/clients_credit_viewmodel.dart';
 import '../viewmodels/clients_with_slips_viewmodel.dart';
@@ -138,6 +139,10 @@ Future<void> initDependencies() async {
     () => CreditPaymentViewModel(getIt<PaymentService>()),
   );
 
+  getIt.registerLazySingleton<CreditsPaymentsViewModel>(
+    () => CreditsPaymentsViewModel(getIt<PaymentService>()),
+  );
+
   getIt.registerLazySingleton<SalaryPaymentViewModel>(
     () => SalaryPaymentViewModel(getIt<SalaryPaymentService>()),
   );
@@ -184,6 +189,7 @@ void _markAllViewModelsAsSingletons() {
   getIt<MaintenanceViewModel>().markAsSingleton();
   getIt<WorkerViewModel>().markAsSingleton();
   getIt<CreditPaymentViewModel>().markAsSingleton();
+  getIt<CreditsPaymentsViewModel>().markAsSingleton();
   getIt<SalaryPaymentViewModel>().markAsSingleton();
   getIt<ClientsCreditViewModel>().markAsSingleton();
   getIt<ClientsWithSlipsViewModel>().markAsSingleton();

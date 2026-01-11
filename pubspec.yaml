@@ -46,10 +46,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon.png
+    - assets/logo.png
 
-  # Assets pour les traductions
-  # assets:
-  #   - assets/lang/
 
 # Configuration MSIX pour Windows
 msix_config:

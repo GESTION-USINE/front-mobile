@@ -43,6 +43,15 @@ class MenuConfig {
           allowedRoles: ['super_admin', 'associe', 'employe'],
         ),
 
+        // Encaissements du jour
+        const MenuItem(
+          id: 'credits_payments',
+          title: 'Encaissements',
+          icon: Icons.payments_outlined,
+          route: '/credits-payments',
+          allowedRoles: ['super_admin'],
+        ),
+
         // Gestion des matériaux - Super admin et associé seulement
         const MenuItem(
           id: 'materials',

@@ -32,6 +32,8 @@ class ApiEndpoints {
   // Payments
   // ignore: constant_identifier_names
   static const String payments = '/payments';
+  // Encaissements de crédits (journalier)
+  static const String creditsPayments = '/payments/credits';
 
   // Weighing Slips (Bons de pesée)
   // ignore: constant_identifier_names

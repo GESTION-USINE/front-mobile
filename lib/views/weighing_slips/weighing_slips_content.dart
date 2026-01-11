@@ -312,7 +312,7 @@ class _WeighingSlipsContentState extends State<WeighingSlipsContent> {
       IconButton(
         onPressed: () {
           _searchController.clear();
-          vm.resetFilters();
+          vm.refresh();
         },
         iconSize: 25,
         icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),

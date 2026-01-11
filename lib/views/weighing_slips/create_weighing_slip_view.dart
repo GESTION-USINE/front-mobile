@@ -445,6 +445,7 @@ class _CreateWeighingSlipViewState extends State<CreateWeighingSlipView> {
           ),
         );
         context.go('/weighing-slips');
+        _slipViewModel.refresh();
       }
     } on DioException catch (e) {
       setState(() => _isCreatingSlip = false);

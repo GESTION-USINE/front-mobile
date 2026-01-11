@@ -36,6 +36,7 @@ import '../views/workers/edit_worker_view.dart';
 import '../views/users/create_user_view.dart';
 import '../views/users/edit_user_view.dart';
 import '../views/credits/credits_content.dart';
+import '../views/credits/credits_payments_content.dart';
 import '../views/statistics/statistics_dashboard_content.dart';
 import '../views/statistics/statistics_sales_content.dart';
 import '../views/statistics/statistics_purchases_content.dart';
@@ -84,6 +85,7 @@ class AppRouter {
   static const String slipsDetail = '/weighing-slips/:id';
   static const String slipsEdit = '/weighing-slips/:id/edit';
   static const String credits = '/credits';
+  static const String creditsPayments = '/credits-payments';
   static const String clientsBons = '/clients-bons';
   static const String clientsCredit = '/clients-credit';
   static const String statisticsPath = '/statistics';
@@ -337,6 +339,14 @@ class AppRouter {
               path: credits,
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: CreditsContent(),
+              ),
+            ),
+
+            // Encaissements (paiements du jour)
+            GoRoute(
+              path: creditsPayments,
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: CreditsPaymentsContent(),
               ),
             ),
 
