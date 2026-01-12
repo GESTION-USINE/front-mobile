@@ -45,24 +45,25 @@ class _StatisticsDashboardContentState extends State<StatisticsDashboardContent>
 
     // Par defaut, on aligne le dashboard sur l'overview (periode globale)
    
-_dateFrom = DateTime.now();
-_dateTo = DateTime.now();
-_selectedDay = DateTime.now();
+    _dateFrom = DateTime.now();
+    _dateTo = DateTime.now();
+    _selectedDay = DateTime.now();
 
-_viewModel.refreshAll();
-    // Charge initial
     _viewModel.refreshAll();
-  }
+        // Charge initial
+        _viewModel.refreshAll();
+      }
 
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
+      @override
+      void dispose() {
+        _viewModel.dispose();
+        super.dispose();
+      }
 
   Future<void> _applyDateRange(StatsViewModel vm, DateTime from, DateTime to) async {
     // On aligne toutes les periodes sur le meme filtre global
     await Future.wait([
+      vm.loadDailyStats(from),
       vm.loadOverviewStats(from, to),
       vm.loadPaymentsStats(from, to),
       vm.loadExpensesStats(from, to, groupBy: vm.groupBy),
@@ -124,6 +125,10 @@ _viewModel.refreshAll();
                         SizedBox(
                           width: isWide ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth,
                           child: _buildTopClientsCard(viewModel),
+                        ),
+                        SizedBox(
+                          width: isWide ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth,
+                          child: _buildMaterialsBreakdownCard(viewModel),
                         ),
                       ],
                     );
@@ -434,24 +439,24 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
   Widget _buildKpiRow(StatsViewModel vm) {
     // Récupération safe des valeurs
     final salesTotal = _safeNum(_try(() {
-      final os = vm.overviewStats as dynamic;
-      return os?.sales?.salesTotal ?? 0;
+      final os = vm.dailyStats as dynamic;
+      return os?.weighingSlips?.totalAmount ?? 0;
     }));
     final slipsCount = _safeInt(_try(() {
-      final os = vm.overviewStats as dynamic;
-      return os?.sales?.slipsCount ?? 0;
+      final os = vm.dailyStats as dynamic;
+      return os?.weighingSlips?.count ?? 0;
+    }));
+    final slipsTons = _safeInt(_try(() {
+      final os = vm.dailyStats as dynamic;
+      return os?.weighingSlips?.totalWeightTons ?? 0;
     }));
     final creditRemaining = _safeNum(_try(() {
-      final os = vm.overviewStats as dynamic;
-      return os?.credit?.remainingTotal ?? 0;
-    }));
-    final netCashflow = _safeNum(_try(() {
-      final os = vm.overviewStats as dynamic;
-      return os?.netCashflow ?? 0;
+      final os = vm.dailyStats as dynamic;
+      return os?.credit?.remaining ?? 0;
     }));
     final paymentsTotal = _safeNum(_try(() {
-      final ps = vm.paymentsStats as dynamic;
-      return ps?.grandTotal ?? 0;
+      final ps = vm.dailyStats as dynamic;
+      return ps?.payments?.total ?? 0;
     }));
     final expensesTotal = _safeNum(_try(() {
       final es = vm.expensesStats as dynamic;
@@ -459,7 +464,7 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
     }));
 
     // Fallback net cashflow si non present
-    final computedNet = (netCashflow == 0) ? (paymentsTotal - expensesTotal) : netCashflow;
+    final computedNet = paymentsTotal - expensesTotal ;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -500,12 +505,12 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
             SizedBox(
               width: cardWidth,
               child: KpiCard(
-                title: 'Frais et Salaires',
-                value: _formatMoney(expensesTotal),
-                icon: Icons.receipt_long,
-                accent: AppColors.industrialPrimary,
-                  isLoading: vm.isLoading && vm.expensesStats == null,
-                  hasError: vm.hasError && vm.expensesStats == null,
+                title: 'Net cashflow',
+                value: _formatMoney(computedNet),
+                icon: Icons.trending_up,
+                accent: computedNet >= 0 ? AppColors.success : AppColors.danger,
+                  isLoading: vm.isLoading,
+                  hasError: vm.hasError && (vm.paymentsStats == null || vm.expensesStats == null),
                   titleFontSize: 12,
                   valueFontSize: 18,
               ),
@@ -513,12 +518,12 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
             SizedBox(
               width: cardWidth,
               child: KpiCard(
-                title: 'Net cashflow',
-                value: _formatMoney(computedNet),
-                icon: Icons.trending_up,
-                accent: computedNet >= 0 ? AppColors.success : AppColors.danger,
-                  isLoading: vm.isLoading,
-                  hasError: vm.hasError && (vm.paymentsStats == null || vm.expensesStats == null),
+                title: 'Frais et Salaires',
+                value: _formatMoney(expensesTotal),
+                icon: Icons.receipt_long,
+                accent: AppColors.industrialPrimary,
+                  isLoading: vm.isLoading && vm.expensesStats == null,
+                  hasError: vm.hasError && vm.expensesStats == null,
                   titleFontSize: 12,
                   valueFontSize: 18,
               ),
@@ -549,6 +554,19 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
                   valueFontSize: 18,
               ),
             ),
+            SizedBox(
+              width: cardWidth,
+              child: KpiCard(
+                title: 'Slips en tonnes',
+                value: slipsTons.toString(),
+                icon: Icons.receipt,
+                accent: AppColors.industrialPrimary,
+                  isLoading: vm.isLoading && vm.overviewStats == null,
+                  hasError: vm.hasError && vm.overviewStats == null,
+                  titleFontSize: 12,
+                  valueFontSize: 18,
+              ),
+            ),
           ],
         );
       },
@@ -560,19 +578,23 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
   // -------------------------
   Widget _buildPaymentsChartCard(StatsViewModel vm) {
     final cash = _safeNum(_try(() {
-      final ps = vm.paymentsStats as dynamic;
-      return ps?.payments?.cash?.totalAmount ?? 0;
+      final ps = vm.dailyStats as dynamic;
+      return ps?.payments?.versementsTotalCash ?? 0;
     }));
     final check = _safeNum(_try(() {
-      final ps = vm.paymentsStats as dynamic;
-      return ps?.payments?.check?.totalAmount ?? 0;
+      final ps = vm.dailyStats as dynamic;
+      return ps?.payments?.versementsTotalCheck ?? 0;
     }));
-    final guarantee = _safeNum(_try(() {
-      final ps = vm.paymentsStats as dynamic;
-      return ps?.payments?.guaranteeCheck?.totalAmount ?? 0;
+    final check_initial = _safeNum(_try(() {
+      final ps = vm.dailyStats as dynamic;
+      return ps?.payments?.initialPaymentsTotalCheck ?? 0;
+    }));
+    final cash_initial = _safeNum(_try(() {
+      final ps = vm.dailyStats as dynamic;
+      return ps?.payments?.initialPaymentsTotalCash ?? 0;
     }));
 
-    final maxVal = [cash, check, guarantee].fold<double>(0, (p, e) => e > p ? e : p);
+    final maxVal = [cash, check, check_initial, cash_initial].fold<double>(0, (p, e) => e > p ? e : p);
 
     return _SectionCard(
       title: 'Repartition des paiements',
@@ -582,12 +604,16 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _MiniBarRow(label: 'Cash', value: cash, max: maxVal),
+          _MiniBarRow(label: 'Cash Versé', value: cash, max: maxVal),
           const SizedBox(height: 10),
-          _MiniBarRow(label: 'Cheque', value: check, max: maxVal),
+          _MiniBarRow(label: 'Cheque Versé', value: check, max: maxVal),
+          const SizedBox(height: 10),
+          _MiniBarRow(label: 'Cash initial', value: cash_initial, max: maxVal),
+          const SizedBox(height: 10),
+          _MiniBarRow(label: 'Cheque initial', value: check_initial, max: maxVal),
           const SizedBox(height: 16),
           Text(
-            'Total: ${_formatMoney(cash + check + guarantee)}',
+            'Total: ${_formatMoney(cash + check + cash_initial + check_initial)}',
             style: const TextStyle(
               color: AppColors.industrialText,
               fontWeight: FontWeight.w600,
@@ -735,6 +761,77 @@ Future<DateTime?> _pickDate(BuildContext context, DateTime initial) {
                         ),
                       Text(
                         _formatMoney(total),
+                        style: const TextStyle(
+                          color: AppColors.industrialPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+    );
+  }
+
+  Widget _buildMaterialsBreakdownCard(StatsViewModel vm) {
+    final materials = _try(() {
+      final ds = vm.dailyStats as dynamic;
+      return ds?.weighingSlips?.materials ?? <dynamic>[];
+    }) as List<dynamic>?;
+
+    final items = (materials ?? [])
+        .map((m) {
+          final name = _try(() => m['material_name']) ?? _try(() => m.materialName) ?? _try(() => m['materialName']) ;
+          final tons = _try(() => m['total_weight_tons']) ?? _try(() => m.totalWeightTons) ?? _try(() => m['totalWeightTons']);
+          final amount = _try(() => m['total_amount']) ?? _try(() => m.totalAmount) ?? _try(() => m['totalAmount']);
+          return {
+            'material_name': name ?? '-',
+            'total_weight_tons': tons ?? '0',
+            'total_amount': amount ?? 0,
+          };
+        })
+        .where((m) => m != null)
+        .toList();
+
+    return _SectionCard(
+      title: 'Répartition par matériau',
+      subtitle: _periodLabel(_dateFrom, _dateTo),
+      isLoading: vm.isLoading && vm.dailyStats == null,
+      hasError: vm.hasError && vm.dailyStats == null,
+      child: (items.isEmpty)
+          ? const Text('Aucun matériau trouvé pour cette période.', style: TextStyle(color: AppColors.industrialTextLight))
+          : Column(
+              children: items.map((m) {
+                final name = _try(() => m['material_name']) ?? _try(() => m['materialName']) ?? '-';
+                final tonsRaw = _try(() => m['total_weight_tons']) ?? _try(() => m['totalWeightTons']) ?? '0';
+                final amountRaw = _try(() => m['total_amount']) ?? _try(() => m['totalAmount']) ?? 0;
+                final tons = tonsRaw.toString();
+                final amount = _safeNum(amountRaw);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          name.toString(),
+                          style: const TextStyle(
+                            color: AppColors.industrialText,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Text(
+                          '$tons t',
+                          style: const TextStyle(color: AppColors.industrialTextLight, fontSize: 12),
+                        ),
+                      ),
+                      Text(
+                        _formatMoney(amount),
                         style: const TextStyle(
                           color: AppColors.industrialPrimary,
                           fontWeight: FontWeight.bold,

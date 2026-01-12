@@ -106,15 +106,23 @@ abstract class BaseViewModel extends ChangeNotifier {
     } on DioException catch (e) {
       // Extraire le message d'erreur de la réponse du backend
       String errorMessage = 'Une erreur est survenue';
-      if (e.error is Map<String, dynamic>) {
-        final errorData = e.error as Map<String, dynamic>;
-        errorMessage = errorData['message'] ?? errorMessage;
-      } else if (e.response?.data != null) {
-        final responseData = e.response!.data;
-        if (responseData is Map<String, dynamic> && responseData['error'] != null) {
-          errorMessage = responseData['error']['message'] ?? errorMessage;
+      try {
+        if (e.error is Map<String, dynamic>) {
+          final errorData = e.error as Map<String, dynamic>;
+          errorMessage = errorData['message'] ?? errorMessage;
+        } else if (e.response?.data != null) {
+          final responseData = e.response!.data;
+          if (responseData is Map<String, dynamic> && responseData['error'] != null) {
+            errorMessage = responseData['error']['message'] ?? errorMessage;
+          }
         }
+      } catch (_) {
+        // ignore parsing errors
       }
+      // Log detailed DioException in debug mode
+      try {
+       
+      } catch (_) {}
       setError(errorMessage);
       return null;
     } catch (e) {

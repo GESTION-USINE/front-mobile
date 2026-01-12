@@ -86,6 +86,15 @@ class MenuConfig {
           allowedRoles: ['super_admin'],
         ),
 
+        // Flux de trésorerie
+        const MenuItem(
+          id: 'cashflow',
+          title: 'Flux de trésorerie',
+          icon: Icons.account_balance_wallet_outlined,
+          route: '/statistics/cashflow',
+          allowedRoles: ['super_admin', 'associe'],
+        ),
+
         // // Statistiques avec sous-menus
         // const MenuItem(
         //   id: 'statistiques',

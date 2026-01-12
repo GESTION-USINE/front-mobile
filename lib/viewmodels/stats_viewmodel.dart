@@ -5,7 +5,9 @@ import 'package:flutter_mvvm_template/models/entities/expenses_stats.dart';
 import 'package:flutter_mvvm_template/models/entities/top_stats.dart';
 import 'package:flutter_mvvm_template/models/entities/overview_stats.dart';
 import 'package:flutter_mvvm_template/models/entities/sales_trend_stats.dart';
+import 'package:flutter_mvvm_template/models/entities/cashflow_by_day.dart';
 import 'package:flutter_mvvm_template/services/stats_service.dart';
+import 'package:flutter/foundation.dart';
 
 /// ViewModel pour gérer les statistiques
 class StatsViewModel extends BaseViewModel {
@@ -69,6 +71,15 @@ class StatsViewModel extends BaseViewModel {
   DateTime get salesTrendDateTo => _salesTrendDateTo;
   String get salesTrendGroupBy => _salesTrendGroupBy;
 
+  // Cashflow By Day Stats
+  CashflowByDay? _cashflowByDay;
+  DateTime _cashflowDateFrom = DateTime.now().subtract(Duration(days: 30));
+  DateTime _cashflowDateTo = DateTime.now();
+
+  CashflowByDay? get cashflowByDay => _cashflowByDay;
+  DateTime get cashflowDateFrom => _cashflowDateFrom;
+  DateTime get cashflowDateTo => _cashflowDateTo;
+
   /// Charge les statistiques quotidiennes pour une date donnée
   Future<void> loadDailyStats(DateTime date) async {
     _selectedDailyDate = date;
@@ -76,7 +87,6 @@ class StatsViewModel extends BaseViewModel {
     final result = await runAsync(() async {
       return await _statsService.getDailyStats(date);
     });
-
     if (result != null) {
       _dailyStats = result;
       notifyListeners();
@@ -97,7 +107,6 @@ class StatsViewModel extends BaseViewModel {
     final result = await runAsync(() async {
       return await _statsService.getPaymentsStats(dateFrom, dateTo);
     });
-
     if (result != null) {
       _paymentsStats = result;
       notifyListeners();
@@ -260,5 +269,34 @@ class StatsViewModel extends BaseViewModel {
   Future<void> refreshExpensesStats() async {
     await loadExpensesStats(_expensesDateFrom, _expensesDateTo,
         groupBy: _groupBy);
+  }
+
+  /// Charge les données de cashflow quotidien pour une période
+  Future<void> loadCashflowByDay(DateTime dateFrom, DateTime dateTo) async {
+    _cashflowDateFrom = dateFrom;
+    _cashflowDateTo = dateTo;
+
+    final result = await runAsync(() async {
+      return await _statsService.getCashflowByDay(dateFrom, dateTo);
+    });
+
+    if (result != null) {
+      _cashflowByDay = result;
+    } else {
+      // Ensure cashflowByDay is never left null after a load attempt
+      _cashflowByDay = CashflowByDay.fromJson({});
+      if (kDebugMode) debugPrint('loadCashflowByDay: result was null, assigned empty CashflowByDay');
+    }
+    notifyListeners();
+  }
+
+  /// Change la période des données de cashflow
+  void setCashflowDateRange(DateTime dateFrom, DateTime dateTo) {
+    loadCashflowByDay(dateFrom, dateTo);
+  }
+
+  /// Rafraîchit les données de cashflow
+  Future<void> refreshCashflowByDay() async {
+    await loadCashflowByDay(_cashflowDateFrom, _cashflowDateTo);
   }
 }

@@ -42,6 +42,7 @@ import '../views/statistics/statistics_sales_content.dart';
 import '../views/statistics/statistics_purchases_content.dart';
 import '../views/statistics/statistics_inventory_content.dart';
 import '../views/statistics/statistics_workers_content.dart';
+import '../views/statistics/cashflow_by_day_content.dart';
 import '../views/credits/clients_bons_content.dart';
 import '../views/credits/client_credit_content.dart';
 import '../views/profile/profile_view.dart';
@@ -94,6 +95,7 @@ class AppRouter {
   static const String statisticsPurchases = '/statistics/purchases';
   static const String statisticsInventory = '/statistics/inventory';
   static const String statisticsWorkers = '/statistics/workers';
+  static const String statisticsCashflow = '/statistics/cashflow';
 
   /// Crée le router avec redirection basée sur l'authentification
   static GoRouter createRouter(UserProvider userProvider) {
@@ -468,6 +470,14 @@ class AppRouter {
               path: '$statisticsPath/workers',
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: StatisticsWorkersContent(),
+              ),
+            ),
+
+            // Statistiques - Flux de trésorerie
+            GoRoute(
+              path: '$statisticsPath/cashflow',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: CashflowByDayContent(),
               ),
             ),
 

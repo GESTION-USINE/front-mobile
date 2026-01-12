@@ -6,6 +6,7 @@ import '../models/entities/expenses_stats.dart';
 import '../models/entities/top_stats.dart';
 import '../models/entities/overview_stats.dart';
 import '../models/entities/sales_trend_stats.dart';
+import '../models/entities/cashflow_by_day.dart';
 import 'package:intl/intl.dart';
 
 /// Service pour gérer les statistiques
@@ -208,5 +209,35 @@ class StatsService {
       rethrow;
     }
   }
-}
 
+  /// Récupère les données de cashflow quotidien sur une période
+  ///
+  /// [dateFrom] - Date de début au format yyyy-MM-dd
+  /// [dateTo] - Date de fin au format yyyy-MM-dd
+  ///
+  /// Retourne CashflowByDay contenant les données journalières et les totaux
+  Future<CashflowByDay> getCashflowByDay(
+    DateTime dateFrom,
+    DateTime dateTo,
+  ) async {
+    try {
+      final formattedDateFrom = DateFormat('yyyy-MM-dd').format(dateFrom);
+      final formattedDateTo = DateFormat('yyyy-MM-dd').format(dateTo);
+
+      final response = await _apiClient.get(
+        '/stats/cashflow-by-day',
+        queryParameters: {
+          'date_from': formattedDateFrom,
+          'date_to': formattedDateTo,
+        },
+      );
+
+      final data = response.data['data'] as Map<String, dynamic>;
+      print('Cashflow By Day Data: $response');
+      return CashflowByDay.fromJson(data);
+    } on DioException {
+      print('Cashflow By Day Data: Error fetching data');
+      rethrow;
+    }
+  }
+}
