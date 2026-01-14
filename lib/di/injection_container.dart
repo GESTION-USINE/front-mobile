@@ -19,6 +19,7 @@ import '../services/salary_payement.dart';
 import '../services/stats_service.dart';
 import '../services/user_service.dart';
 import '../services/credit_risk_service.dart';
+import '../services/invoice_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/product_viewmodel.dart';
 import '../viewmodels/client_viewmodel.dart';
@@ -34,6 +35,7 @@ import '../viewmodels/clients_with_slips_viewmodel.dart';
 import '../viewmodels/stats_viewmodel.dart';
 import '../viewmodels/user_viewmodel.dart';
 import '../viewmodels/credit_risk_viewmodel.dart';
+import '../viewmodels/invoice_viewmodel.dart';
 import '../viewmodels/profile_viewmodel.dart';
 
 final getIt = GetIt.instance;
@@ -98,6 +100,10 @@ Future<void> initDependencies() async {
 
   getIt.registerLazySingleton<CreditRiskService>(
     () => CreditRiskService(getIt<ApiClient>()),
+  );
+
+  getIt.registerLazySingleton<InvoiceService>(
+    () => InvoiceService(getIt<ApiClient>()),
   );
 
   // ==================== ViewModels ====================
@@ -170,6 +176,13 @@ Future<void> initDependencies() async {
     () => ProfileViewModel(getIt<UserService>()),
   );
 
+  getIt.registerLazySingleton<InvoiceViewModel>(
+    () => InvoiceViewModel(
+      getIt<InvoiceService>(),
+      getIt<WeighingSlipService>(),
+    ),
+  );
+
  
 
   // ==================== Initialisation ====================
@@ -197,6 +210,7 @@ void _markAllViewModelsAsSingletons() {
   getIt<UserViewModel>().markAsSingleton();
   getIt<CreditRiskViewModel>().markAsSingleton();
   getIt<ProfileViewModel>().markAsSingleton();
+  getIt<InvoiceViewModel>().markAsSingleton();
 }
 
 /// Initialiser les providers qui nécessitent une initialisation async

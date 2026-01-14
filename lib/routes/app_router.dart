@@ -46,6 +46,10 @@ import '../views/statistics/cashflow_by_day_content.dart';
 import '../views/credits/clients_bons_content.dart';
 import '../views/credits/client_credit_content.dart';
 import '../views/profile/profile_view.dart';
+import '../views/invoices/create_invoice_view.dart';
+import '../views/invoices/invoice_detail_view.dart';
+import '../views/invoices/edit_invoice_view.dart';
+import '../models/entities/invoice.dart';
 
 class AppRouter {
   AppRouter._();
@@ -96,6 +100,11 @@ class AppRouter {
   static const String statisticsInventory = '/statistics/inventory';
   static const String statisticsWorkers = '/statistics/workers';
   static const String statisticsCashflow = '/statistics/cashflow';
+
+  // Invoices routes
+  static const String invoicesCreate = '/invoices/create';
+  static const String invoicesDetail = '/invoices/:id';
+  static const String invoicesEdit = '/invoices/:id/edit';
 
   /// Crée le router avec redirection basée sur l'authentification
   static GoRouter createRouter(UserProvider userProvider) {
@@ -282,6 +291,41 @@ class AppRouter {
             return EditWeighingSlipView(
               slipId: int.parse(id),
               initialSlip: slip,
+            );
+          },
+        ),
+
+        // Route de création de facture (hors du shell - fullscreen)
+        GoRoute(
+          path: invoicesCreate,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) => const CreateInvoiceView(),
+        ),
+
+        // Route de détails de facture (hors du shell - fullscreen)
+        GoRoute(
+          path: invoicesDetail,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            final invoice = state.extra as Invoice?;
+            return InvoiceDetailView(
+              invoiceId: int.parse(id),
+              initialInvoice: invoice,
+            );
+          },
+        ),
+
+        // Route de modification de facture (hors du shell - fullscreen)
+        GoRoute(
+          path: invoicesEdit,
+          parentNavigatorKey: _rootNavigatorKey,
+          builder: (context, state) {
+            final id = state.pathParameters['id']!;
+            final invoice = state.extra as Invoice?;
+            return EditInvoiceView(
+              invoiceId: int.parse(id),
+              initialInvoice: invoice,
             );
           },
         ),

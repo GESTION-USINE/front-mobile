@@ -45,6 +45,7 @@ class AppSidebar extends StatelessWidget {
         final hasSlips = baseMenu.any((m) => m.id == 'weighing_slips');
         final hasClientsCredit = baseMenu.any((m) => m.id == 'clients_credit');
         final hasBonsClients = baseMenu.any((m) => m.id == 'clients_bons');
+        final hasInvoices = baseMenu.any((m) => m.id == 'invoices');
         const bonsClientsItem = MenuItem(
           id: 'clients_bons',
           title: 'Bons Clients',
@@ -52,7 +53,14 @@ class AppSidebar extends StatelessWidget {
           route: AppRouter.clientsBons,
           allowedRoles: ['super_admin', 'associe'],
         );
-        final menuItems = [...baseMenu, if (!hasSlips) slipsItem, if (!hasClientsCredit) creditItem, if (!hasBonsClients) bonsClientsItem];
+        const invoicesItem = MenuItem(
+          id: 'invoices',
+          title: 'Factures',
+          icon: Icons.receipt_long_outlined,
+          route: AppRouter.invoices,
+          allowedRoles: ['super_admin', 'associe'],
+        );
+        final menuItems = [...baseMenu, if (!hasSlips) slipsItem, if (!hasClientsCredit) creditItem, if (!hasBonsClients) bonsClientsItem, if (!hasInvoices) invoicesItem];
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 300),

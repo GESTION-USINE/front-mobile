@@ -52,4 +52,7 @@ class ApiEndpoints {
   
   static String userById(String userId) => '/users/$userId';
 
+  // Invoices (Factures)
+  static const String invoices = '/invoices';
+  static String invoiceById(int id) => '/invoices/$id';
 }
