@@ -34,8 +34,8 @@ class _InvoicesContentState extends State<InvoicesContent> {
     super.initState();
     _viewModel = getIt<InvoiceViewModel>();
     _clientViewModel = getIt<ClientViewModel>();
-    // Force un refresh pour éviter un cache éventuellement vide
-    _viewModel.loadInvoices(refresh: true);
+    // Charger les factures en utilisant le cache si disponible
+    _viewModel.loadInvoices();
     _loadClients();
     _searchController.addListener(() {
       setState(() {});
@@ -307,7 +307,7 @@ class _InvoicesContentState extends State<InvoicesContent> {
           setState(() {
             _selectedClientId = null;
           });
-          vm.resetFilters();
+          vm.refresh();
         },
         iconSize: 25,
         icon: const Icon(Icons.refresh, color: AppColors.industrialPrimary),

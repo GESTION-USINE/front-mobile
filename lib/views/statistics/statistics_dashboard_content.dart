@@ -44,15 +44,15 @@ class _StatisticsDashboardContentState extends State<StatisticsDashboardContent>
     _viewModel = getIt<StatsViewModel>();
 
     // Par defaut, on aligne le dashboard sur l'overview (periode globale)
-   
     _dateFrom = DateTime.now();
     _dateTo = DateTime.now();
     _selectedDay = DateTime.now();
 
-    _viewModel.refreshAll();
-        // Charge initial
-        _viewModel.refreshAll();
-      }
+    // Charge les donnees de la date actuelle au demarrage
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _applyDateRange(_viewModel, _dateFrom!, _dateTo!);
+    });
+  }
 
       @override
       void dispose() {
