@@ -63,7 +63,7 @@ class _InvoicesContentState extends State<InvoicesContent> {
   Widget build(BuildContext context) {
     final user = Provider.of<UserProvider>(context, listen: false).currentUser;
     final userRole = user == null ? null : user.role.toLowerCase();
-    final bool canCreate = userRole == 'super_admin' || userRole == 'associe';
+    final bool canCreate = userRole == 'super_admin' || userRole == 'associe' || (user?.canModifyInvoices ?? false);
     final bool canDelete = userRole == 'super_admin' || userRole == 'associe' || (user?.canModifyInvoices ?? false);
 
     return ChangeNotifierProvider.value(

@@ -11,6 +11,7 @@ import '../../models/entities/maintenance_expense.dart';
 import '../../models/request/update_maintenance_expense_request.dart';
 import '../widgets/error_message_box.dart';
 import '../../core/constants/machine_types.dart';
+import '../../providers/user_provider.dart';
 
 /// Vue pour modifier des frais existants
 class EditMaintenanceView extends StatefulWidget {
@@ -84,6 +85,11 @@ class _EditMaintenanceViewState extends State<EditMaintenanceView> {
         ),
         body: Consumer<MaintenanceViewModel>(
           builder: (context, viewModel, child) {
+            final String? role = context.select<UserProvider, String?>(
+              (p) => p.currentUser?.role,
+            );
+            final String? roleLower = role?.toLowerCase();
+            final bool canEditDate = roleLower == 'super_admin' || roleLower == 'associe';
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Center(
@@ -138,7 +144,7 @@ class _EditMaintenanceViewState extends State<EditMaintenanceView> {
                                     .toList(),
                                 decoration: AppTheme.industrialInputDecoration(
                                   hint: 'Sélectionner le type de frais',
-                                  prefixIcon: Icons.precision_manufacturing,
+                                  prefixIcon: Icons.category ,
                                 ),
                                 onChanged: (value) {
                                   setState(() {
@@ -202,12 +208,12 @@ class _EditMaintenanceViewState extends State<EditMaintenanceView> {
                         const Text('Date des frais *', style: AppTheme.fieldLabel),
                         const SizedBox(height: 8),
                         InkWell(
-                          onTap: () => _selectDate(context),
+                          onTap: canEditDate ? () => _selectDate(context) : null,
                           child: InputDecorator(
                             decoration: AppTheme.industrialInputDecoration(
                               hint: 'Sélectionner une date',
                               prefixIcon: Icons.calendar_today,
-                            ),
+                            ).copyWith(enabled: canEditDate),
                             child: Text(
                               _dateFormat.format(_selectedDate),
                               style: const TextStyle(

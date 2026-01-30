@@ -10,6 +10,7 @@ import '../../viewmodels/maintenance_viewmodel.dart';
 import '../../models/request/create_maintenance_expense_request.dart';
 import '../widgets/error_message_box.dart';
 import '../../core/constants/machine_types.dart';
+import '../../providers/user_provider.dart';
 
 /// Vue pour créer de nouveaux frais
 class CreateMaintenanceView extends StatefulWidget {
@@ -69,6 +70,12 @@ class _CreateMaintenanceViewState extends State<CreateMaintenanceView> {
         ),
         body: Consumer<MaintenanceViewModel>(
           builder: (context, viewModel, child) {
+            final String? role = context.select<UserProvider, String?>(
+              (p) => p.currentUser?.role,
+            );
+            final String? roleLower = role?.toLowerCase();
+            final bool canEditDate = roleLower == 'super_admin' || roleLower == 'associe';
+            final DateTime displayDate = canEditDate ? _selectedDate : DateTime.now();
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Center(
@@ -123,7 +130,7 @@ class _CreateMaintenanceViewState extends State<CreateMaintenanceView> {
                               .toList(),
                           decoration: AppTheme.industrialInputDecoration(
                             hint: 'Sélectionner une catégorie',
-                            prefixIcon: Icons.precision_manufacturing,
+                            prefixIcon: Icons.category ,
                           ),
                           onChanged: (value) {
                             setState(() {
@@ -187,14 +194,14 @@ class _CreateMaintenanceViewState extends State<CreateMaintenanceView> {
                         const Text('Date des frais *', style: AppTheme.fieldLabel),
                         const SizedBox(height: 8),
                         InkWell(
-                          onTap: () => _selectDate(context),
+                          onTap: canEditDate ? () => _selectDate(context) : null,
                           child: InputDecorator(
                             decoration: AppTheme.industrialInputDecoration(
                               hint: 'Sélectionner une date',
                               prefixIcon: Icons.calendar_today,
-                            ),
+                            ).copyWith(enabled: canEditDate),
                             child: Text(
-                              _dateFormat.format(_selectedDate),
+                              _dateFormat.format(displayDate),
                               style: const TextStyle(
                                 color: AppColors.industrialText,
                                 fontSize: 16,
@@ -317,11 +324,16 @@ class _CreateMaintenanceViewState extends State<CreateMaintenanceView> {
   Future<void> _createExpense() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final String? role = context.read<UserProvider>().currentUser?.role;
+    final String? roleLower = role?.toLowerCase();
+    final bool canEditDate = roleLower == 'super_admin' || roleLower == 'associe';
+    final DateTime maintenanceDate = canEditDate ? _selectedDate : DateTime.now();
+
     final request = CreateMaintenanceExpenseRequest(
       machineType: _selectedMachineType?.trim() ?? '',
       description: _descriptionController.text.trim(),
       cost: double.parse(_costController.text.trim()),
-      maintenanceDate: _selectedDate,
+      maintenanceDate: maintenanceDate,
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),

@@ -13,7 +13,7 @@ class MenuConfig {
           title: 'Tableau de bord',
           icon: Icons.dashboard_outlined,
           route: '/statistics/dashboard',
-          allowedRoles: [], // Tous les rôles
+          allowedRoles: ['super_admin', 'associe'], 
         ),
 
         // Gestion des clients

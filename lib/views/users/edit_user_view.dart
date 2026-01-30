@@ -29,6 +29,8 @@ class _EditUserViewState extends State<EditUserView> {
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _creditLimitController;
+  late final TextEditingController _passwordController;
+  late final TextEditingController _confirmPasswordController;
 
   late bool _canModifyInvoices;
   late bool _canAccessFullTraceability;
@@ -46,6 +48,8 @@ class _EditUserViewState extends State<EditUserView> {
     _phoneController = TextEditingController(text: widget.initialUser.phone ?? '');
     _creditLimitController = TextEditingController(
         text: widget.initialUser.creditLimit.toString());
+    _passwordController = TextEditingController();
+    _confirmPasswordController = TextEditingController();
     
     _canModifyInvoices = widget.initialUser.canModifyInvoices;
     _canAccessFullTraceability = widget.initialUser.canAccessFullTraceability;
@@ -57,6 +61,8 @@ class _EditUserViewState extends State<EditUserView> {
     _emailController.dispose();
     _phoneController.dispose();
     _creditLimitController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -201,6 +207,53 @@ class _EditUserViewState extends State<EditUserView> {
                             color: AppColors.industrialTextLight,
                             fontSize: 12,
                           ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Mot de passe (optionnel)
+                        const Text('Mot de passe (optionnel)', style: AppTheme.fieldLabel),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _passwordController,
+                          style: const TextStyle(color: AppColors.industrialText),
+                          decoration: AppTheme.industrialInputDecoration(
+                            hint: 'Laisser vide pour conserver le mot de passe actuel',
+                            prefixIcon: Icons.lock,
+                          ),
+                          obscureText: true,
+                          validator: (value) {
+                            if (value != null && value.isNotEmpty) {
+                              if (value.length < 6) {
+                                return 'Le mot de passe doit contenir au moins 6 caractères';
+                              }
+                              if (value != _confirmPasswordController.text) {
+                                return 'Les mots de passe ne correspondent pas';
+                              }
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Confirmation mot de passe
+                        const Text('Confirmer le mot de passe', style: AppTheme.fieldLabel),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _confirmPasswordController,
+                          style: const TextStyle(color: AppColors.industrialText),
+                          decoration: AppTheme.industrialInputDecoration(
+                            hint: 'Confirmer le nouveau mot de passe',
+                            prefixIcon: Icons.lock_outline,
+                          ),
+                          obscureText: true,
+                          validator: (value) {
+                            if (_passwordController.text.isNotEmpty) {
+                              if (value != _passwordController.text) {
+                                return 'Les mots de passe ne correspondent pas';
+                              }
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 24),
 
@@ -439,6 +492,9 @@ class _EditUserViewState extends State<EditUserView> {
       canAccessFullTraceability: _canAccessFullTraceability,
       canAccessRemotely: _canAccessRemotely,
       creditLimit: double.tryParse(_creditLimitController.text.trim()),
+      password: _passwordController.text.isEmpty
+          ? null
+          : _passwordController.text,
     );
 
     await _viewModel.updateUser(widget.userId, request);

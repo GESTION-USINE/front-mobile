@@ -169,7 +169,7 @@ class _MaintenanceContentState extends State<MaintenanceContent> {
             dropdownColor: AppColors.white,
             decoration: AppTheme.industrialInputDecoration(
               hint: 'Type de frais...',
-              prefixIcon: Icons.precision_manufacturing,
+              prefixIcon: Icons.category ,
             ),
             items: [
               const DropdownMenuItem<String>(

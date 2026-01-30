@@ -159,6 +159,7 @@ class UpdateUserRequest {
   final bool? canAccessFullTraceability;
   final bool? canAccessRemotely;
   final double? creditLimit;
+  final String? password;
 
   UpdateUserRequest({
     this.email,
@@ -167,6 +168,7 @@ class UpdateUserRequest {
     this.canAccessFullTraceability,
     this.canAccessRemotely,
     this.creditLimit,
+    this.password,
   });
 
   Map<String, dynamic> toJson() {
@@ -177,6 +179,7 @@ class UpdateUserRequest {
       if (canAccessFullTraceability != null) 'can_access_full_traceability': canAccessFullTraceability,
       if (canAccessRemotely != null) 'can_access_remotely': canAccessRemotely,
       if (creditLimit != null) 'credit_limit': creditLimit,
+      if (password != null) 'password': password,
     };
   }
 }
