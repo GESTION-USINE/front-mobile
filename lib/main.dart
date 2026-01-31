@@ -6,6 +6,7 @@ import 'providers/user_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/sidebar_provider.dart';
+import 'viewmodels/notification_viewmodel.dart';
 import 'app.dart';
 
 void main() async {
@@ -21,6 +22,7 @@ void main() async {
         ChangeNotifierProvider.value(value: getIt<ThemeProvider>()),
         ChangeNotifierProvider.value(value: getIt<LocaleProvider>()),
         ChangeNotifierProvider.value(value: getIt<SidebarProvider>()),
+        ChangeNotifierProvider.value(value: getIt<NotificationViewModel>()),
       ],
       child: const MyApp(),
     ),

@@ -7,6 +7,7 @@ import 'providers/user_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/sidebar_provider.dart';
+import 'viewmodels/notification_viewmodel.dart';
 import 'core/theme/app_theme.dart';
 import 'core/localization/app_localizations.dart';
 import 'routes/app_router.dart';
@@ -30,6 +31,12 @@ class _MyAppState extends State<MyApp> {
     final userProvider = context.read<UserProvider>();
     _router = AppRouter.createRouter(userProvider);
     _routerInitialized = true;
+    
+      // Charger le count des notifications si l'utilisateur est connecté
+      if (userProvider.isLoggedIn) {
+        final notificationViewModel = context.read<NotificationViewModel>();
+        notificationViewModel.loadUnreadCount();
+      }
   }
 
   @override

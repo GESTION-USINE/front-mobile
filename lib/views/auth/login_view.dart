@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mvvm_template/providers/user_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -315,7 +316,12 @@ class _LoginViewState extends State<LoginView> {
     );
 
     if (success && mounted) {
-      context.go(AppRouter.dashboard);
+      final role = context.read<UserProvider>().currentUser?.role.toLowerCase();
+      if (role == 'employe') {
+        context.go(AppRouter.clients);
+      } else {
+        context.go(AppRouter.dashboard);
+      }
     }
   }
 }

@@ -20,6 +20,7 @@ import '../services/stats_service.dart';
 import '../services/user_service.dart';
 import '../services/credit_risk_service.dart';
 import '../services/invoice_service.dart';
+import '../services/notification_service.dart';
 import '../viewmodels/auth_viewmodel.dart';
 import '../viewmodels/product_viewmodel.dart';
 import '../viewmodels/client_viewmodel.dart';
@@ -37,6 +38,7 @@ import '../viewmodels/user_viewmodel.dart';
 import '../viewmodels/credit_risk_viewmodel.dart';
 import '../viewmodels/invoice_viewmodel.dart';
 import '../viewmodels/profile_viewmodel.dart';
+import '../viewmodels/notification_viewmodel.dart';
 
 final getIt = GetIt.instance;
 
@@ -104,6 +106,10 @@ Future<void> initDependencies() async {
 
   getIt.registerLazySingleton<InvoiceService>(
     () => InvoiceService(getIt<ApiClient>()),
+  );
+
+  getIt.registerLazySingleton<NotificationService>(
+    () => NotificationService(getIt<ApiClient>()),
   );
 
   // ==================== ViewModels ====================
@@ -183,6 +189,10 @@ Future<void> initDependencies() async {
     ),
   );
 
+  getIt.registerLazySingleton<NotificationViewModel>(
+    () => NotificationViewModel(getIt<NotificationService>()),
+  );
+
  
 
   // ==================== Initialisation ====================
@@ -211,6 +221,7 @@ void _markAllViewModelsAsSingletons() {
   getIt<CreditRiskViewModel>().markAsSingleton();
   getIt<ProfileViewModel>().markAsSingleton();
   getIt<InvoiceViewModel>().markAsSingleton();
+  getIt<NotificationViewModel>().markAsSingleton();
 }
 
 /// Initialiser les providers qui nécessitent une initialisation async

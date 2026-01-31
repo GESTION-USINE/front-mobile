@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/user_provider.dart';
 import '../../di/injection_container.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/notification_viewmodel.dart';
 import '../../routes/app_router.dart';
 
 class AppNavBar extends StatelessWidget {
@@ -27,6 +28,7 @@ class AppNavBar extends StatelessWidget {
     if (location.contains(AppRouter.traceability)) return 'Traçabilité';
     if (location.contains(AppRouter.dashboard)) return 'Tableau de Bord';
     if(location.contains(AppRouter.profile)) return 'Mon Profil';
+    if (location.contains(AppRouter.notifications)) return 'Notifications';
     return 'Accueil';
   }
 
@@ -47,6 +49,7 @@ class AppNavBar extends StatelessWidget {
     if (location.contains(AppRouter.traceability)) return Icons.timeline;
     if (location.contains(AppRouter.dashboard)) return Icons.dashboard;
     if(location.contains(AppRouter.profile)) return Icons.person; 
+    if (location.contains(AppRouter.notifications)) return Icons.notifications;
     return Icons.home;
   }
 
@@ -57,6 +60,11 @@ class AppNavBar extends StatelessWidget {
     return Consumer<UserProvider>(
       builder: (context, userProvider, _) {
         final user = userProvider.currentUser;
+        if (user != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<NotificationViewModel>().ensureUnreadCountLoaded();
+          });
+        }
 
         return Container(
           height: 48,
@@ -98,6 +106,21 @@ class AppNavBar extends StatelessWidget {
 
                 // Informations utilisateur
                 if (user != null) ...[
+              Consumer<NotificationViewModel>(
+                builder: (context, notificationViewModel, _) {
+                  return Badge(
+                    isLabelVisible: notificationViewModel.unreadCount > 0,
+                    label: Text('${notificationViewModel.unreadCount}'),
+                    backgroundColor: AppColors.errorText,
+                    child: IconButton(
+                      onPressed: () => context.go(AppRouter.notifications),
+                      icon: const Icon(Icons.notifications, color: AppColors.industrialPrimary),
+                      tooltip: 'Notifications',
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
               // Rôle badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

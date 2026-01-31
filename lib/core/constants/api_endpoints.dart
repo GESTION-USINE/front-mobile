@@ -48,6 +48,11 @@ class ApiEndpoints {
   static const String users = '/users';
   static const String userProfile = '/users/profile';
 
+  // Notifications
+  static const String notifications = '/notifications';
+  static const String notificationsUnreadCount = '/notifications/unread/count';
+  static String notificationMarkAsRead(int id) => '/notifications/$id/read';
+
   // Products
   static const String products = '/products';
   

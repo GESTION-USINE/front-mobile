@@ -50,6 +50,7 @@ import '../views/invoices/create_invoice_view.dart';
 import '../views/invoices/invoice_detail_view.dart';
 import '../views/invoices/edit_invoice_view.dart';
 import '../models/entities/invoice.dart';
+import '../views/notifications/notifications_content.dart';
 
 class AppRouter {
   AppRouter._();
@@ -85,6 +86,7 @@ class AppRouter {
   static const String traceability = '/traceability';
   static const String settings = '/settings';
   static const String profile = '/profile';
+  static const String notifications = '/notifications';
   static const String slips = '/weighing-slips';
   static const String slipsCreate = '/weighing-slips/create';
   static const String slipsDetail = '/weighing-slips/:id';
@@ -530,6 +532,14 @@ class AppRouter {
               path: profile,
               pageBuilder: (context, state) => const NoTransitionPage(
                 child: ProfileView(),
+              ),
+            ),
+
+            // Notifications
+            GoRoute(
+              path: notifications,
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: NotificationsContent(),
               ),
             ),
           ],

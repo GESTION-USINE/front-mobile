@@ -66,7 +66,7 @@ class MenuConfig {
           title: 'Frais',
           icon: Icons.money_outlined,
           route: '/maintenance',
-          allowedRoles: ['super_admin', 'associe'],
+          allowedRoles: ['super_admin', 'associe','employe'],
         ),
 
          const MenuItem(
